@@ -1,0 +1,4 @@
+bin/
+*.exe
+testdata/site/*.log
+output/*
