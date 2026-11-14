@@ -90,9 +90,9 @@ func Run(cfg config.Config, initialURL string) error {
 			Y:               y,
 			MinWidth:        860,
 			MinHeight:       560,
-			BackgroundColor: "light-dark(#f6f7f9, #111318)",
+			BackgroundColor: "light-dark(#F7F5F0, #1F1C18)",
 			TitleBarStyle:   mygo.TitleBarHidden,
-			TitleBarHeight:  44,
+			TitleBarHeight:  46,
 			Content:         ui.View(a.view),
 		})
 		applyIcon(a.win)
