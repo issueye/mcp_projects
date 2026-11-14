@@ -12,6 +12,7 @@ import {
 } from "./panels.js";
 import { pollNodes } from "./sync.js";
 import { closeCanvasMenus } from "./view.js";
+import { exportProject, exportAllProjects, importProjectFile } from "./project-io.js";
 // ---- 左侧双浮窗：项目 / 设计体系各自独立收起 ----
 // 收起只隐藏 body、保留标题条，因此不需要额外的「展开把手」，也不会出现收起来拉不回来的问题。
 function setPanelCollapsed(which, collapsed) {
@@ -49,8 +50,18 @@ $("tree-menu").addEventListener("click", async (e) => {
   closeTreeMenu();
   const act = btn.dataset.menu;
   if (act === "manage") openProjectModal();
+  else if (act === "export") await exportProject(S.project);
+  else if (act === "export-all") await exportAllProjects();
+  else if (act === "import") $("import-file").click();
   else if (act === "arrange") await arrangeByProject(false);
   else if (act === "refresh") { await reloadProjects(); await pollNodes(); }
+});
+
+// 导入入口：文件选择独立于菜单，选完立刻清理 value，同一个文件可以再导一次。
+$("import-file").addEventListener("change", async (e) => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = "";
+  await importProjectFile(file);
 });
 
 $("tree-filter").addEventListener("input", (e) => {
@@ -123,6 +134,14 @@ window.addEventListener("keydown", (e) => {
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
   e.preventDefault();
   openProjectModal();
+});
+
+// 项目管理行上的「导出」：只发导出请求，不关闭弹层（用户可能连续导出多个项目）。
+$("proj-rows").addEventListener("click", (e) => {
+  const btn = e.target.closest('[data-act="export"]');
+  if (!btn) return;
+  const row = btn.closest(".proj-row");
+  if (row) exportProject(row.dataset.id);
 });
 
 $("proj-create").addEventListener("click", createProjectFromModal);

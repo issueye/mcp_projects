@@ -8,12 +8,12 @@ import { S, $, tokenColor, tokenPx } from "./state.js";
 import { focusables, closeAsk, submitAsk, uiConfirm, uiAsk, toast, isAskOpen, esc } from "./ui.js";
 import { api } from "./net.js";
 import { emit, EVT_THEME_CHANGE } from "./bus.js";
-import { projectName, exitSolo, loadProjects } from "./projects.js";
+import { projectName, exitSolo, loadProjects, isAllScope, ensureGroupLayout } from "./projects.js";
 import { isProjectModalOpen, closeProjectModal, closeTreeMenu } from "./panels.js";
 import { removeNodeEl, addNodeEl, selectNode, showEmptyHint } from "./nodes.js";
 import { scheduleEdges } from "./edges.js";
 import {
-  applyTransform, closeCanvasMenus, centerView, fitView, loadCanvasPresets,
+  applyTransform, closeCanvasMenus, centerView, fitView, loadCanvasPresets, focusContent,
 } from "./view.js";
 import { pollNodes } from "./sync.js";
 import { setPanelCollapsed } from "./dock.js";
@@ -155,10 +155,14 @@ try {
 loadCanvasPresets();
 loadProjects().then(() => {
   if (!S.projects.length) showEmptyHint();
-  pollNodes({ full: true }).then(() => {
+  pollNodes({ full: true }).then(async () => {
     if (S.nodes.size === 0) showEmptyHint();
-    if (S.canvas) centerView(true);
-    else fitView();
+    // 「全部」视图首屏也要把相互遮挡的项目分组分开：不同项目都从原点起排，
+    // 重叠会把内容互相盖住 —— 分开之后每块设计稿才真的能看见。
+    if (isAllScope()) await ensureGroupLayout();
+    // 首屏用「可读视角」而不是缩略总览：打开就能直接读到设计内容，
+    // 画布长度随内容延长，其余部分用拖动/滚轮浏览。
+    focusContent();
   });
 });
 setInterval(pollNodes, 2000);

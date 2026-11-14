@@ -1,7 +1,7 @@
 /* adago-design 画布 · 视图变换：平移/缩放/适配/居中、画布控制菜单、比例预设、可视区计算。 */
 "use strict";
 
-import { S, $, world, grid, paperEl, UI } from "./state.js";
+import { S, $, world, grid, paperEl, UI, tokenPx } from "./state.js";
 import { icon } from "./icons-bridge.js";
 import { esc, toast, setTip } from "./ui.js";
 import { api } from "./net.js";
@@ -27,7 +27,30 @@ function zoomAt(cx, cy, factor) {
   scheduleEdges("*");
 }
 
-function fitView() {
+// 适配几何的统一实现：**以「内容全部可见」为第一原则**（zoom-to-fit）。
+// 只有在 rect 本身比可视区还大（几乎不会发生，除非单块内容巨大）时才不缩到底，
+// 此时对齐内容左上角，让人知道「后面还有，拖动/滚轮继续看」。
+// opt.pad / opt.cap 可覆盖外边距与最大放大倍数。
+function fitRect(rect, opt) {
+  const o = opt || {};
+  const v = visibleRect();
+  const pad = o.pad != null ? o.pad : 64;
+  const availW = Math.max(60, v.w - pad * 2);
+  const availH = Math.max(60, v.h - pad * 2);
+  const cap = o.cap || 1.2;
+  let scale = Math.min(availW / rect.w, availH / rect.h, cap);
+  scale = Math.min(4, Math.max(0.04, scale));
+  S.scale = scale;
+  const overflowX = rect.w * scale > availW;
+  const overflowY = rect.h * scale > availH;
+  S.tx = overflowX ? v.x + pad - rect.x * scale : v.x + v.w / 2 - (rect.x + rect.w / 2) * scale;
+  S.ty = overflowY ? v.y + pad - rect.y * scale : v.y + v.h / 2 - (rect.y + rect.h / 2) * scale;
+  applyTransform();
+  scheduleEdges("*");
+  scheduleLabels();
+}
+
+function fitView(opt) {
   const soloNode = S.solo ? S.nodes.get(S.solo) : null;
   const pool = soloNode ? [soloNode] : [...S.nodes.values()];
   if (!pool.length) { S.tx = innerWidth / 2 - 200; S.ty = innerHeight / 2 - 150; S.scale = 1; applyTransform(); return; }
@@ -40,19 +63,27 @@ function fitView() {
   // 全部视图：行首标签（约 152px 宽）在内容左侧，把它算进边界（聚焦时无标签）
   const labelPad = !soloNode && isAllScope() && S.nodes.size > 0 ? 170 : 0;
   minX -= labelPad;
-  const bw = maxX - minX + pad * 2, bh = maxY - minY + pad * 2;
-  const gutter = leftDockWidth();
-  const availW = innerWidth - (soloNode ? gutter + UI.inspectorW : gutter + UI.gutter * 2 + 48);
-  const availH = innerHeight - (soloNode ? 150 : UI.topSafe + UI.gutter * 3);
-  const cap = soloNode ? 1.6 : 1.2;
-  const scale = Math.min(cap, Math.max(0.08, Math.min(availW / bw, availH / bh)));
-  S.scale = scale;
-  // 居中到「浮窗右侧、工具条下方、检查器左侧」的可见区
-  const v = visibleRect();
-  S.tx = v.x + v.w / 2 - (minX + maxX) / 2 * scale;
-  S.ty = v.y + v.h / 2 - (minY + maxY) / 2 * scale;
-  applyTransform();
-  scheduleEdges("*");
+  fitRect(
+    { x: minX, y: minY, w: maxX - minX, h: maxY - minY },
+    Object.assign({ pad: pad, cap: soloNode ? 1.6 : 1.2 }, opt || {}),
+  );
+}
+
+// fitNode 把单张设计稿整体放进视野：双击单独展示、树里定位、选中后按 F 都用它。
+// 语义是「这张稿必须完整可见」，所以缩放不设可读下限。
+function fitNode(id) {
+  const n = S.nodes.get(id);
+  if (!n) return false;
+  fitRect({ x: n.x, y: n.y, w: n.width, h: n.height }, { pad: 40, cap: 2 });
+  return true;
+}
+
+// focusContent 是首屏 / 切项目 / 导入后的默认视角：把当前作用域的全部内容
+// 完整放进视野（不裁切任何设计稿）。要看清单张稿用双击或选中后按 F。
+function focusContent() {
+  const b = canvasBounds();
+  if (!b) return;
+  fitRect(b, { pad: b.kind === "canvas" ? 56 : 48, cap: 1.6 });
 }
 
 // ---------------- 画布版式（选择 / 比例 / 居中） ----------------
@@ -66,8 +97,24 @@ function currentProject() {
 }
 
 function canvasCaption(c) {
-  if (!c || !c.width) return "自由画布";
+  if (!c || !c.width) return "随内容";
   return c.width + "×" + c.height + " · " + (c.ratio || "custom");
+}
+
+// 内容包围盒：纸面「随内容」模式的唯一几何来源。
+// 分组框（frame）也计入 —— 它是成员的背板，漏掉会让纸面比视觉内容短一截。
+function contentBounds() {
+  let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
+  let any = false;
+  for (const n of S.nodes.values()) {
+    any = true;
+    minX = Math.min(minX, n.x);
+    minY = Math.min(minY, n.y);
+    maxX = Math.max(maxX, n.x + n.width);
+    maxY = Math.max(maxY, n.y + n.height);
+  }
+  if (!any) return null;
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
 }
 
 // 从项目列表同步当前画布版式，并刷新纸张与工具条。
@@ -77,13 +124,48 @@ function syncCanvasFromScope() {
   renderCanvas();
 }
 
+// 纸面渲染：固定比例用配置尺寸；没有配置（自由画布）时随内容包围盒伸缩，
+// 让画布的长度始终跟上设计稿 —— 不需要为了看全内容把视口缩到看不清。
+// 纸面只是视觉背板，不裁剪、不拦截事件，所以「自由」的拖拽语义不变。
 function renderCanvas() {
+  const pad = tokenPx("--ui-canvas-pad", 48);
+  // 「全部项目」视图左侧有行首标签，额外留出一段避免标签骑在纸面边上
+  const labelPad = isAllScope() ? tokenPx("--ui-canvas-label-pad", 176) : pad;
+  let rect = null;
+  let ratioText = "";
   if (S.canvas && S.canvas.width > 0) {
+    rect = { x: 0, y: 0, w: S.canvas.width, h: S.canvas.height };
+    ratioText = S.canvas.ratio || "custom";
+    // 固定比例画布同样要「随内容延长」：设计稿超出边界时纸面跟着长，
+    // 而不是把内容留在纸外（看起来像「画布太短、内容被切掉」）。
+    const b = contentBounds();
+    if (b) {
+      const x0 = Math.min(0, b.x - pad), y0 = Math.min(0, b.y - pad);
+      const x1 = Math.max(S.canvas.width, b.x + b.w + pad);
+      const y1 = Math.max(S.canvas.height, b.y + b.h + pad);
+      if (x0 < -1 || y0 < -1 || x1 > S.canvas.width + 1 || y1 > S.canvas.height + 1) {
+        rect = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+        ratioText = (S.canvas.ratio || "custom") + " · 随内容延长";
+      }
+    }
+  } else {
+    const b = contentBounds();
+    if (b) {
+      rect = {
+        x: b.x - labelPad, y: b.y - pad,
+        w: b.w + labelPad + pad, h: b.h + pad * 2,
+      };
+      ratioText = "随内容";
+    }
+  }
+  if (rect) {
     paperEl.classList.remove("hidden");
-    paperEl.style.width = S.canvas.width + "px";
-    paperEl.style.height = S.canvas.height + "px";
-    paperEl.querySelector(".cv-size").textContent = S.canvas.width + " × " + S.canvas.height;
-    paperEl.querySelector(".cv-ratio").textContent = S.canvas.ratio || "custom";
+    paperEl.style.left = Math.round(rect.x) + "px";
+    paperEl.style.top = Math.round(rect.y) + "px";
+    paperEl.style.width = Math.round(rect.w) + "px";
+    paperEl.style.height = Math.round(rect.h) + "px";
+    paperEl.querySelector(".cv-size").textContent = Math.round(rect.w) + " × " + Math.round(rect.h);
+    paperEl.querySelector(".cv-ratio").textContent = ratioText;
   } else {
     paperEl.classList.add("hidden");
   }
@@ -92,7 +174,7 @@ function renderCanvas() {
   const scopeTip = isAllScope()
     ? "画布：全部项目 · 点击选择画布"
     : "画布：" + (p ? p.name : "未选择") + " · " +
-      (S.canvas ? S.canvas.width + "×" + S.canvas.height + "（" + (S.canvas.ratio || "custom") + "）" : "自由画布") +
+      (S.canvas ? S.canvas.width + "×" + S.canvas.height + "（" + (S.canvas.ratio || "custom") + "）" : "随内容自适应") +
       " · 点击选择";
   setTip("cv-select", scopeTip);
 
@@ -100,7 +182,7 @@ function renderCanvas() {
     ? "先选择一个画布（项目），再设置比例"
     : S.canvas
       ? "画布比例：" + (S.canvas.ratio || "自定义") + "（" + S.canvas.width + "×" + S.canvas.height + "） · 点击修改"
-      : "画布比例：自由画布 · 点击修改";
+      : "画布比例：随内容自适应（自由画布） · 点击修改";
   setTip("cv-ratio", ratioTip);
   const ratioBtn = $("cv-ratio");
   if (ratioBtn) {
@@ -145,7 +227,7 @@ function renderRatioMenu() {
   box.innerHTML =
     `<div class="tb-menu__head">画布比例</div>` +
     `<button data-ratio="free" class="${cur === "free" ? "is-active" : ""}">` +
-    `${icon("grid", 14)}<span>自由画布</span><span class="tb-menu__meta">无边界</span></button>` +
+    `${icon("grid", 14)}<span>随内容自适应</span><span class="tb-menu__meta">无边界 · 跟随内容</span></button>` +
     rows +
     `<div class="tb-menu__sep"></div>` +
     `<button data-ratio="custom" class="${cur === "custom" ? "is-active" : ""}">${icon("settings", 14)}<span>自定义宽高…</span></button>`;
@@ -229,19 +311,19 @@ async function setCanvasConfig(payload, okText) {
 function canvasBounds() {
   const solo = S.solo && S.nodes.get(S.solo);
   if (solo) return { x: solo.x, y: solo.y, w: solo.width, h: solo.height, kind: "node" };
+  const content = contentBounds();
   if (S.canvas && S.canvas.width > 0) {
-    return { x: 0, y: 0, w: S.canvas.width, h: S.canvas.height, kind: "canvas" };
+    if (!content) return { x: 0, y: 0, w: S.canvas.width, h: S.canvas.height, kind: "canvas" };
+    // 固定比例画布也把溢出内容算进适配范围：居中/适配后能看到全部稿子，
+    // 而不是只看到纸面、把边界外的设计稿留在视野外。
+    const x = Math.min(0, content.x);
+    const y = Math.min(0, content.y);
+    const right = Math.max(S.canvas.width, content.x + content.w);
+    const bottom = Math.max(S.canvas.height, content.y + content.h);
+    return { x, y, w: right - x, h: bottom - y, kind: "canvas" };
   }
-  const nodes = [...S.nodes.values()].filter((n) => n.kind !== "frame");
-  if (!nodes.length) return null;
-  let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
-  for (const n of nodes) {
-    minX = Math.min(minX, n.x);
-    minY = Math.min(minY, n.y);
-    maxX = Math.max(maxX, n.x + n.width);
-    maxY = Math.max(maxY, n.y + n.height);
-  }
-  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY, kind: "nodes" };
+  if (!content) return null;
+  return { x: content.x, y: content.y, w: content.w, h: content.h, kind: "nodes" };
 }
 
 // 可视区：扣掉左侧浮窗、右侧检查器、顶部工具条（聚焦时还有一条返回条）。
@@ -290,7 +372,8 @@ function centerView(fit) {
 }
 
 export {
-  applyTransform, zoomAt, fitView, currentProject, canvasCaption, syncCanvasFromScope,
+  applyTransform, zoomAt, fitView, fitRect, fitNode, focusContent, currentProject, canvasCaption,
+  syncCanvasFromScope, contentBounds,
   renderCanvas, renderCanvasMenu, renderRatioMenu, closeCanvasMenus, toggleCanvasMenu,
   loadCanvasPresets, applyProjectPatch, setCanvasConfig, canvasBounds, leftDockWidth,
   visibleRect, centerView,

@@ -5,7 +5,7 @@ import { S, $, edgeSvg, relLayer } from "./state.js";
 import { icon } from "./icons-bridge.js";
 import { esc, toast } from "./ui.js";
 import { api } from "./net.js";
-import { applyTransform, centerView, fitView, syncCanvasFromScope } from "./view.js";
+import { applyTransform, fitView, fitNode, focusContent, syncCanvasFromScope } from "./view.js";
 import { scheduleEdges } from "./edges.js";
 import { scheduleLabels, renderProjectRows, closeTreeMenu, isProjectModalOpen } from "./panels.js";
 import { closeCanvasMenus } from "./view.js";
@@ -93,13 +93,9 @@ async function focusNode(projectID, nodeID) {
   const n = S.nodes.get(nodeID);
   if (!n) return;
   selectNode(nodeID);
-  const scale = Math.min(1, Math.max(0.12, S.scale));
-  S.scale = scale;
-  S.tx = innerWidth / 2 - (n.x + n.width / 2) * scale;
-  S.ty = innerHeight / 2 - (n.y + n.height / 2) * scale;
-  applyTransform();
-  scheduleEdges("*");
-  scheduleLabels();
+  // 定位 = 把这整张稿放进视野（不是「按当前缩放居中」）：按当前 45% 居中时
+  // 1280×800 的稿子在窄窗口里会有一半在视口外，看起来像「没展示完全」。
+  fitNode(nodeID);
 }
 
 // ---------------- 单画布聚焦 ----------------
@@ -207,9 +203,9 @@ async function switchProject(id) {
   if (isAllScope()) await ensureGroupLayout();
   if (S.nodes.size === 0) showEmptyHint();
   else hideEmptyHint();
-  // 有版式就居中版式（而不是把所有节点塞进视野）；自由画布仍按内容适配
-  if (S.canvas) centerView(true);
-  else fitView();
+  // 切项目 = 换一块画布：用可读视角对准内容（画布随内容延长），
+  // 不再把所有节点缩进视野变成缩略图。
+  focusContent();
 }
 
 // 「全部」视图里，各项目原本都从 (80,80) 起排，卡片会完全重叠。
@@ -235,9 +231,11 @@ async function ensureGroupLayout() {
   }
   if (!overlap) return;
   try {
-    await api("/api/arrange", {
+    // 只把整组错开、保留组内排版：整块重排（/api/arrange）会把 1440 宽的卡片
+    // 硬折成一列，长画布虽然不重叠，但设计内容被拆散，反而更难读。
+    await api("/api/projects/separate", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ group_by: "project" }),
+      body: JSON.stringify({}),
     });
     await pollNodes();
   } catch (_) { /* 排列失败不阻塞浏览 */ }

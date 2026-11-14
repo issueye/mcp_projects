@@ -37,6 +37,14 @@ html,body{height:100%;overflow:hidden}
 body{font-family:var(--ui-font);background:var(--ui-canvas);color:var(--ui-ink);
   font-size:var(--ui-text-md);line-height:var(--ui-lh-base)}
 
+/* ---------- 文本选择 ---------- */
+/* 画布是「物件」而不是文档：点卡片、拖画布、扫过浮窗都不该留下蓝色文本选区，
+   否则下一步操作会像截图里那样被选区压住、看着像卡住。输入类控件保留原生选择。 */
+#viewport,#toolbar,#left-dock,#inspector,#solo-bar,#canvas-paper,#group-labels,
+.empty-hint,#toast{user-select:none;-webkit-user-select:none}
+#left-dock input,#proj-name,#proj-note,#ask-input,.ask-field textarea{
+  user-select:text;-webkit-user-select:text}
+
 /* ---------- 图标（画布侧；与预览文档的 .ds-icon 同源生成） ---------- */
 .ds-icon{width:1em;height:1em;display:inline-block;vertical-align:-.125em;flex:none;
   fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -97,6 +105,11 @@ body.is-dragging .node{transition:none}
   align-items:center;justify-content:center;border:none;border-radius:var(--ui-radius-md);
   background:transparent;color:var(--ui-ink-3);cursor:pointer;transition:var(--ui-transition)}
 .node__del:hover{background:var(--ui-danger-ink);color:var(--ui-on-brand)}
+/* 「看全这张稿」：常驻在标题栏右侧（hover 才出现会让「内容看不全」时找不到出口） */
+.node__zoom{width:var(--ui-space-10);height:var(--ui-space-10);display:inline-flex;
+  align-items:center;justify-content:center;border:none;border-radius:var(--ui-radius-md);
+  background:transparent;color:var(--ui-ink-3);cursor:pointer;transition:var(--ui-transition)}
+.node__zoom:hover{background:var(--ui-subtle);color:var(--ui-ink)}
 .node__body{flex:1;position:relative;overflow:hidden;
   border-radius:0 0 var(--ui-node-radius) var(--ui-node-radius)}
 /* 默认不吞事件：卡片是「画布物件」，点哪都能选中/拖动。
@@ -128,7 +141,8 @@ body.is-dragging .node__body iframe{pointer-events:none}
 body.is-dragging #toolbar,
 body.is-dragging .dock-panel,
 body.is-dragging #inspector{backdrop-filter:none;background:var(--ui-surface)}
-.tb-brand{display:flex;align-items:center;gap:var(--ui-space-4);
+.tb-brand{display:flex;align-items:center;gap:var(--ui-space-4);min-width:0;
+  white-space:nowrap;
   font-weight:var(--ui-weight-bold);font-size:var(--ui-text-md);padding-right:var(--ui-space-3)}
 .tb-logo{display:inline-flex;width:var(--ui-space-10);height:var(--ui-space-10);
   border-radius:var(--ui-radius-md);background:var(--ui-brand);color:var(--ui-on-brand);
@@ -232,9 +246,10 @@ body.is-dragging #inspector{backdrop-filter:none;background:var(--ui-surface)}
 body.mode-solo #canvas-paper{display:none}
 
 /* 窄屏：工具条已全部图标化，只需收掉品牌文字，保证不越界。
+   断点取 1120：1024–1100 这类小窗口里品牌名会挤成两行、把工具条顶高。
    浮窗宽度不随断点变化 —— --ui-dock-w 同时是 JS 的布局度量来源，
    在这里改宽度会让 fitView/centerView 的可见区与实况脱节。 */
-@media (max-width:980px){
+@media (max-width:1120px){
   .tb-brand{display:none}
 }
 

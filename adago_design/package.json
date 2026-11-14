@@ -1,0 +1,6 @@
+{
+  "name": "adago-design",
+  "private": true,
+  "type": "module",
+  "description": "画布前端 ES 模块的 Node 解析上下文：internal/canvas/testdata 的 node --test 依赖 type=module 才能 import static/js/*.js"
+}

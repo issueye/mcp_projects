@@ -233,6 +233,7 @@ var geometryTokens = []string{
 	"--ui-control-xl", "--ui-zoom-min-w", "--ui-field-min-w", "--ui-textarea-min-h",
 	"--ui-edge-label-stroke", "--ui-focus-offset",
 	"--ui-inspect-border-w", "--ui-inspect-label-max-w", "--ui-note-min-h",
+	"--ui-canvas-pad", "--ui-canvas-label-pad",
 }
 
 func TestUITokenGeometryComplete(t *testing.T) {

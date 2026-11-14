@@ -10,7 +10,24 @@ import { isAllScope, projectName, enterSolo, exitSolo, reloadProjects } from "./
 import { openProjectModal, scheduleLabels } from "./panels.js";
 import { togglePanel } from "./dock.js";
 import { scheduleEdges } from "./edges.js";
-import { applyTransform, zoomAt } from "./view.js";
+import { applyTransform, zoomAt, renderCanvas } from "./view.js";
+// 画布操作前清掉遗留的文本选区：选区不参与拖拽，但会压住卡片、看起来像状态异常。
+function clearTextSelection() {
+  try {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount) sel.removeAllRanges();
+  } catch (_) { /* 无选区权限时忽略 */ }
+}
+
+// 在画布 / 浮窗 / 工具条上落指针时，浏览器可能保留上一次选区（尤其跨区域拖选后）。
+// 捕获阶段清理，早于控件自身的 pointerdown。
+window.addEventListener("pointerdown", (e) => {
+  if (e.button !== 0 || !e.target || !e.target.closest) return;
+  if (e.target.closest("#viewport,#toolbar,#left-dock,#inspector,#solo-bar,#canvas-paper")) {
+    clearTextSelection();
+  }
+}, true);
+
 // ---------------- 节点渲染 ----------------
 // 位置用 transform 而不是 left/top：位移交给合成器，避免每帧 layout
 // 与 iframe 表面的重新光栅化。
@@ -35,9 +52,18 @@ function nodeEl(n) {
   const sys = n.system ? `<span class="node__tag">${esc(n.system)}</span>` : "";
   const ab = n.artboard ? `<span class="node__tag node__tag--ab" title="画板（尺寸规范）">${esc(n.artboard)}</span>` : "";
   head.innerHTML = `<span class="node__title">${esc(n.title || n.id)}</span>${proj}${ab}${sys}` +
+    `<button class="node__zoom" title="单独看这张稿（整张可见，Esc 返回）" aria-label="单独看这张稿">${icon("fit", 14)}</button>` +
     `<button class="node__del" title="删除节点">${icon("close", 14)}</button>`;
   head.addEventListener("pointerdown", (e) => startNodeDrag(e, n.id));
   el.appendChild(head);
+  // 「单独看这张稿」：卡片比视口大时（1280×800 稿在窄窗口里很常见）一键切到
+  // 单画布聚焦 —— 只留这一张、按整张适配，比在 19% 缩略图里找内容直接得多。
+  const zoomBtn = head.querySelector(".node__zoom");
+  zoomBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
+  zoomBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    enterSolo(n.id, n.project_id);
+  });
 
   if (!isFrame) {
     const body = document.createElement("div");
@@ -56,7 +82,7 @@ function nodeEl(n) {
   el.addEventListener("pointerdown", () => { if (!S.spacePan) selectNode(n.id); });
   el.addEventListener("dblclick", (e) => {
     if (S.spacePan) return;                                      // 空格平移模式不触发聚焦
-    if (e.target.closest(".node__del")) return;
+    if (e.target.closest(".node__del") || e.target.closest(".node__zoom")) return;
     e.stopPropagation();
     enterSolo(n.id, n.project_id);
   });
@@ -68,19 +94,36 @@ function onFrameLoad(id, iframe) {
   emit(EVT_FRAME_LOAD, { id: id, iframe: iframe });
 }
 
-// 内容高度自适应：if defined auto_height 且是组件预览，实测 .ds-page 高度回写。
-// 量 .ds-page 而不是 scrollHeight：文档本身有 min-height:100vh，
-// scrollHeight 会被视口撑满，量不到真实内容高度。
+// 内容高度自适应：auto_height 节点的卡片高度跟正文走，避免卡片内滚动条把
+// 设计内容裁掉，让「打开画布就能看见整块稿子」。
+//   · 组件预览量 .ds-page 的实测高度（可增可减，初始高度只是估值）；
+//   · 其余节点（便签 / 整页稿）看文档是否溢出：只向上扩、不收缩。
+//     body 常有 min-height:100vh，收缩会触发「量小 → 变矮 → 再量」的追高振荡。
 let autoFitBusy = new Set();
 async function autoFitHeight(id, iframe) {
   if (S.drag || autoFitBusy.has(id)) return;
   const n = S.nodes.get(id);
-  if (!n || !n.auto_height || n.kind !== "component") return;
+  if (!n || !n.auto_height || n.kind === "frame") return;
   const doc = iframe.contentDocument;
-  const page = doc && doc.querySelector(".ds-page");
-  if (!page) return;
-  const h = Math.ceil(page.getBoundingClientRect().height) + 2;
+  if (!doc) return;
+
+  let h = 0;
+  const page = doc.querySelector(".ds-page");
+  if (page) {
+    const pageH = Math.ceil(page.getBoundingClientRect().height) + 2;
+    if (n.kind === "component") h = pageH;
+    else if (pageH > n.height + 4) h = pageH;
+  }
+  if (!h) {
+    const de = doc.documentElement, body = doc.body;
+    const scrollH = Math.max(de ? de.scrollHeight : 0, body ? body.scrollHeight : 0);
+    const viewH = de ? de.clientHeight : (iframe.clientHeight || 0);
+    if (!scrollH || scrollH <= viewH + 4) return;   // 没有溢出，不动卡片
+    h = n.height + (scrollH - viewH) + 2;
+  }
   if (!h || h < 120 || Math.abs(h - n.height) <= 4) return;
+  if (n.kind !== "component" && h <= n.height) return;
+
   autoFitBusy.add(id);
   try {
     const { node } = await api("/api/nodes/" + id, {
@@ -91,6 +134,7 @@ async function autoFitHeight(id, iframe) {
     const el = S.els.get(id);
     if (el) applyNodeGeom(el, node);
     scheduleEdges("*");
+    renderCanvas();          // 卡片长高后纸面同步变长（随内容模式）
   } catch (_) { /* 测高失败不影响主流程 */ }
   finally { autoFitBusy.delete(id); }
 }
@@ -102,6 +146,7 @@ function addNodeEl(n) {
   world.appendChild(el);
   hideEmptyHint();
   scheduleLabels();
+  renderCanvas();
 }
 
 function updateNodeEl(n, prev) {
@@ -125,6 +170,7 @@ function removeNodeEl(id) {
   S.els.delete(id);
   S.nodes.delete(id);
   scheduleLabels();
+  renderCanvas();
   if (S.selected === id) { S.selected = null; $("inspector").classList.add("hidden"); }
   if (S.nodes.size === 0) showEmptyHint();
 }
@@ -216,7 +262,7 @@ async function removeNode(id) {
 function startNodeDrag(e, id) {
   if (e.button !== 0) return;
   if (S.spacePan || S.panning) return;                            // 空格 = 临时平移模式，不拖卡片
-  if (e.target.closest(".node__del")) return;                    // 删除按钮不触发拖动
+  if (e.target.closest(".node__del") || e.target.closest(".node__zoom")) return; // 卡片按钮不触发拖动
   if (document.body.classList.contains("mode-inspect")) return; // 检查模式下拖拽让位给元素拾取
   selectNode(id);
   e.preventDefault();
@@ -263,6 +309,7 @@ function onDragEnd(e) {
   const n = S.nodes.get(d.id);
   if (!n) return;
   n.x = d.nx; n.y = d.ny;
+  renderCanvas();   // 纸面随内容包围盒移动
   savePosition(d.id, d.nx, d.ny, d.ox, d.oy, d.el);
 }
 
@@ -276,6 +323,7 @@ async function savePosition(id, x, y, ox, oy, el) {
     S.nodes.set(id, node);
     if (el) applyNodeGeom(el, node);
     scheduleEdges(id);
+    renderCanvas();
   } catch (e) {
     const n = S.nodes.get(id);
     if (n) { n.x = ox; n.y = oy; }

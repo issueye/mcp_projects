@@ -83,3 +83,118 @@ func (s *Store) ArrangeByProject() (int, error) {
 	}
 	return moved, nil
 }
+
+// SeparateProjectGroups 让「全部」视图里的项目分组不再互相遮挡。
+//
+// 与 ArrangeByProject 的区别：这里**不重排**组内卡片，只把整组沿 y 方向错开，
+// 于是 Agent/用户摆好的列宽、间距、阅读顺序全部保留 —— 之前的分行排版会把
+// 1440 宽的卡片硬折成一列，长画布虽然不重叠，但内容全被拆散、更难读。
+// 只在包围盒真的相交时移动，因此幂等（没有重叠就返回 0）。
+func (s *Store) SeparateProjectGroups() (int, error) {
+	const gap = float64(arrangeRowGap)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	type group struct {
+		id  string
+		x0  float64
+		y0  float64
+		x1  float64
+		y1  float64
+		set []*Node
+	}
+	index := map[string]*group{}
+	for _, n := range s.nodes {
+		g := index[n.ProjectID]
+		if g == nil {
+			g = &group{id: n.ProjectID, x0: n.X, y0: n.Y, x1: n.X + float64(n.Width), y1: n.Y + float64(n.Height)}
+			index[n.ProjectID] = g
+		}
+		if n.X < g.x0 {
+			g.x0 = n.X
+		}
+		if n.Y < g.y0 {
+			g.y0 = n.Y
+		}
+		if r := n.X + float64(n.Width); r > g.x1 {
+			g.x1 = r
+		}
+		if b := n.Y + float64(n.Height); b > g.y1 {
+			g.y1 = b
+		}
+		g.set = append(g.set, n)
+	}
+	groups := make([]*group, 0, len(index))
+	for _, g := range index {
+		groups = append(groups, g)
+	}
+	sort.Slice(groups, func(i, j int) bool {
+		if groups[i].y0 != groups[j].y0 {
+			return groups[i].y0 < groups[j].y0
+		}
+		return groups[i].id < groups[j].id
+	})
+
+	// 先判重叠：完全没重叠时不动任何坐标（幂等 + 不打扰手工排版）
+	overlap := false
+	for i := 0; i < len(groups) && !overlap; i++ {
+		for j := i + 1; j < len(groups); j++ {
+			a, b := groups[i], groups[j]
+			if a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1 {
+				overlap = true
+				break
+			}
+		}
+	}
+	if !overlap {
+		return 0, nil
+	}
+
+	now := time.Now()
+	moved := 0
+	cursor := groups[0].y0
+	type shift struct {
+		n    *Node
+		from float64
+		to   float64
+	}
+	var shifts []shift
+	for _, g := range groups {
+		dy := 0.0
+		if g.y0 < cursor {
+			dy = cursor - g.y0
+		}
+		if dy > 0 {
+			for _, n := range g.set {
+				shifts = append(shifts, shift{n: n, from: n.Y, to: n.Y + dy})
+				n.Y += dy
+				n.UpdatedAt = now
+				moved++
+			}
+			g.y0 += dy
+			g.y1 += dy
+		}
+		if g.y1+gap > cursor {
+			cursor = g.y1 + gap
+		}
+	}
+	if moved == 0 {
+		return 0, nil
+	}
+	// 一次整体可撤销：挪分组是可逆的批量操作，不该把历史栈塞满
+	s.pushUndoLocked(undoEntry{
+		desc: "分开重叠的项目分组",
+		undo: func() {
+			for _, sh := range shifts {
+				sh.n.Y = sh.from
+			}
+		},
+		redo: func() {
+			for _, sh := range shifts {
+				sh.n.Y = sh.to
+			}
+		},
+	})
+	s.persistLocked()
+	return moved, nil
+}

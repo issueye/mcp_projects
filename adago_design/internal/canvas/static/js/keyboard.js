@@ -9,7 +9,16 @@ import { S, $, setSpacePan } from "./state.js";
 import { api } from "./net.js";
 import { isAskOpen } from "./ui.js";
 import { removeNode } from "./nodes.js";
-import { fitView, centerView, zoomAt } from "./view.js";
+import { fitView, fitNode, centerView, zoomAt } from "./view.js";
+import { pollNodes, refreshProjectsQuietly } from "./sync.js";
+
+// 撤销/重做会改画布内容，也可能连带改项目（撤销导入 = 删项目）：
+// 除了 SSE 推送的节点刷新，项目列表与画布版式也要立刻同步一次。
+function history(act) {
+  api("/api/" + act, { method: "POST" })
+    .then(() => Promise.all([refreshProjectsQuietly(), pollNodes()]))
+    .catch(() => { /* 状态条已处理 */ });
+}
 
 // 空格键：按住 = 平移模式。以下情形不抢（空格保持它原本的语义）：
 //   · 输入框/文本域/可编辑区里打字；
@@ -51,7 +60,11 @@ window.addEventListener("keydown", (e) => {
     if (document.body.classList.contains("mode-inspect")) return;
     if (S.selected) { e.preventDefault(); removeNode(S.selected); }
   }
-  else if (e.key === "f" || e.key === "F") fitView();
+  else if (e.key === "f" || e.key === "F") {
+    // 有选中就「看全这张稿」，否则适配当前作用域的全部内容 —— 两种诉求都不裁切。
+    if (S.selected) fitNode(S.selected);
+    else fitView();
+  }
   else if (e.key === "0") centerView(true);
   else if (e.key === "Escape") {
     if (S.selected) { const el = S.els.get(S.selected); if (el) el.classList.remove("selected"); S.selected = null; $("inspector").classList.add("hidden"); }
@@ -63,12 +76,11 @@ window.addEventListener("keydown", (e) => {
     // 焦点在输入框时已提前 return，不与文本编辑的原生撤销冲突
     if (e.key === "z" || e.key === "Z") {
       e.preventDefault();
-      if (e.shiftKey) api("/api/redo", { method: "POST" }).catch(() => {});
-      else api("/api/undo", { method: "POST" }).catch(() => {});
+      history(e.shiftKey ? "redo" : "undo");
     }
     else if (e.key === "y" || e.key === "Y") {
       e.preventDefault();
-      api("/api/redo", { method: "POST" }).catch(() => {});
+      history("redo");
     }
   }
 });

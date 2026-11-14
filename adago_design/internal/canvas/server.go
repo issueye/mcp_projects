@@ -93,6 +93,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("PUT /api/projects/{id}", s.handleUpdateProject)
 	mux.HandleFunc("DELETE /api/projects/{id}", s.handleDeleteProject)
 	mux.HandleFunc("PUT /api/projects/{id}/canvas", s.handleSetProjectCanvas)
+	mux.HandleFunc("GET /api/projects/{id}/export", s.handleExportProject)
+	mux.HandleFunc("POST /api/import", s.handleImportProjects)
+	mux.HandleFunc("GET /api/export", s.handleExportWorkspace)
 	mux.HandleFunc("POST /api/artboards/resync", s.handleResyncArtboards)
 	mux.HandleFunc("GET /api/canvas/presets", s.handleCanvasPresets)
 	mux.HandleFunc("GET /api/nodes", s.handleListNodes)
@@ -102,6 +105,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("DELETE /api/nodes/{id}", s.handleDeleteNode)
 	mux.HandleFunc("POST /api/nodes/clear", s.handleClearNodes)
 	mux.HandleFunc("POST /api/arrange", s.handleArrange)
+	mux.HandleFunc("POST /api/projects/separate", s.handleSeparateGroups)
 	mux.HandleFunc("POST /api/undo", s.handleUndo)
 	mux.HandleFunc("POST /api/redo", s.handleRedo)
 	mux.HandleFunc("GET /api/events", s.handleEvents)
@@ -651,6 +655,17 @@ func (s *Server) handleArrange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	moved, err := s.store.ArrangeByProject()
+	if err != nil {
+		writeErr(w, http.StatusInternalServerError, APIError("internal", err.Error(), ""))
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"moved": moved})
+}
+
+// handleSeparateGroups 只在项目分组相互遮挡时把它们沿 y 错开，保留组内排版。
+// 「全部」视图首屏调用它：不同项目的卡片本来就都从原点铺开，重叠会让内容互相盖住。
+func (s *Server) handleSeparateGroups(w http.ResponseWriter, _ *http.Request) {
+	moved, err := s.store.SeparateProjectGroups()
 	if err != nil {
 		writeErr(w, http.StatusInternalServerError, APIError("internal", err.Error(), ""))
 		return

@@ -121,6 +121,8 @@
   --ui-icon-24: 24px;
   --ui-grid-cell: 40px;       /* 画布网点间距 / 纸张网格 */
   --ui-grid-bleed: 2px;       /* 网格层外扩，遮住视口边缘 */
+  --ui-canvas-pad: 48px;      /* 「随内容」纸面相对内容包围盒的外扩 */
+  --ui-canvas-label-pad: 176px; /* 「全部项目」视图纸面左侧为行首标签留的宽度 */
   --ui-menu-min-w: 156px;
   --ui-tb-menu-min-w: 268px;
   --ui-tb-menu-max-w: 360px;

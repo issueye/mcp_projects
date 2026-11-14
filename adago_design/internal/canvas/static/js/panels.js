@@ -119,6 +119,7 @@ function renderProjectRows() {
         </div>
         <div class="proj-row__acts">
           ${cur ? "" : '<button data-act="switch">切换</button>'}
+          <button data-act="export">导出</button>
           <button data-act="rename">重命名</button>
           <button data-act="remove" class="danger">删除</button>
         </div>

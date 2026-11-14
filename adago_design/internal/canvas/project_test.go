@@ -259,6 +259,62 @@ func TestV2MigrationPersistsV4(t *testing.T) {
 	}
 }
 
+// 全部视图：项目分组互相遮挡时只沿 y 错开，组内排版（列宽/间距）必须原样保留。
+func TestSeparateProjectGroups(t *testing.T) {
+	s, _ := OpenStore("")
+	p1, _ := s.AddProject("项目一", "")
+	p2, _ := s.AddProject("项目二", "")
+
+	// 两个项目各自摆成两列，且整体落在同一区域（真实数据就是这样：都从原点起排）
+	a := addNode(t, s, p1.ID, newTestNode("a1"))
+	b := addNode(t, s, p1.ID, newTestNode("a2"))
+	c := addNode(t, s, p2.ID, newTestNode("b1"))
+	d := addNode(t, s, p2.ID, newTestNode("b2"))
+	place := func(id string, x, y float64) {
+		if _, err := s.Update(id, func(n *Node) { n.X, n.Y = x, y }); err != nil {
+			t.Fatalf("Update %s: %v", id, err)
+		}
+	}
+	place(a.ID, 0, 0)
+	place(b.ID, 460, 0)
+	place(c.ID, 0, 0)
+	place(d.ID, 460, 0)
+
+	moved, err := s.SeparateProjectGroups()
+	if err != nil {
+		t.Fatalf("SeparateProjectGroups: %v", err)
+	}
+	if moved != 2 {
+		t.Fatalf("moved = %d，期望 2（只有第二个项目整体下移）", moved)
+	}
+
+	got := map[string]Node{}
+	for _, n := range s.List() {
+		got[n.Title] = n
+	}
+	// 组内相对关系不变：同一行、列间距 460
+	if got["a1"].Y != got["a2"].Y || got["a2"].X-got["a1"].X != 460 {
+		t.Fatalf("组内排版被破坏: a1=%+v a2=%+v", got["a1"], got["a2"])
+	}
+	// 两组不再重叠
+	if got["b1"].Y <= got["a1"].Y+float64(got["a1"].Height) {
+		t.Fatalf("第二组应排到第一组下方: a1.y=%v h=%d b1.y=%v", got["a1"].Y, got["a1"].Height, got["b1"].Y)
+	}
+	// 幂等：没有重叠就不再移动
+	if again, _ := s.SeparateProjectGroups(); again != 0 {
+		t.Fatalf("二次调用 moved = %d，期望 0", again)
+	}
+	// 可整体撤销
+	if _, ok := s.Undo(); !ok {
+		t.Fatal("分组错开应可撤销")
+	}
+	for _, n := range s.List() {
+		if n.Title == "b1" && n.Y != 0 {
+			t.Fatalf("撤销后 b1.y = %v，期望回到 0", n.Y)
+		}
+	}
+}
+
 // 全部视图：不同项目的节点不能重叠，按项目分行后行首留白、行内横排。
 func TestArrangeByProject(t *testing.T) {
 	s, _ := OpenStore("")

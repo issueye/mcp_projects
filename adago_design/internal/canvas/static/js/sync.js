@@ -3,11 +3,12 @@
 
 import { S } from "./state.js";
 import { api } from "./net.js";
+import { toast } from "./ui.js";
 import { addNodeEl, updateNodeEl, removeNodeEl } from "./nodes.js";
 import { scheduleEdges } from "./edges.js";
 import { scheduleLabels, renderProjectRows, isProjectModalOpen } from "./panels.js";
 import { renderProjectTree } from "./projects.js";
-import { syncCanvasFromScope } from "./view.js";
+import { syncCanvasFromScope, renderCanvas } from "./view.js";
 // ---------------- 同步轮询 ----------------
 // 节点每 2s 增量合并；项目/画布版式低频刷新（约 30s）：
 // Agent 侧 project_create / project_canvas 不会触发 UI 事件，只能靠轮询兜底。
@@ -72,8 +73,31 @@ async function pollNodes(opts) {
     for (const e of ed.edges || []) S.edges.set(e.id, e);
     scheduleEdges("*");
     scheduleLabels();
+    renderCanvas();   // 节点增删 / 尺寸变化后，纸面尺寸跟随内容包围盒
     if (++pollTicks % 15 === 0) await refreshProjectsQuietly();
-  } catch (_) { /* 状态条已处理 */ }
+  } catch (e) {
+    // 作用域指向的项目被撤销/删除（典型：Ctrl+Z 撤销导入、别处删项目）时，
+    // 服务端按项目过滤会回 404 unknown_project。不回落的话画布会停在一个
+    // 不存在的项目上、继续显示已删除的卡片，看起来像「操作没生效」。
+    if (e && e.code === "unknown_project") await fallbackToAllScope();
+  }
+}
+
+// fallbackToAllScope 把作用域收回「全部项目」，并清掉已失效的卡片。
+async function fallbackToAllScope() {
+  if (!S.project) return;
+  S.project = "";
+  try { localStorage.setItem("adago.scope", "all"); } catch (_) { /* 隐私模式忽略 */ }
+  for (const id of [...S.nodes.keys()]) removeNodeEl(id);
+  S.edges.clear();
+  scheduleEdges("*");
+  syncCanvasFromScope();
+  // 项目列表也变了（撤销导入就是删项目）：先刷新列表再重画树，
+  // 否则树上还留着已经不存在的项目行。
+  await refreshProjectsQuietly();
+  renderProjectTree();
+  toast("当前项目已不存在，已回到「全部项目」");
+  await pollNodes({ full: true });
 }
 
 // 项目 / 画布版式的低频刷新：只有内容真变了才重建树，避免每轮刷新打断滚动与展开状态。
@@ -85,10 +109,16 @@ async function refreshProjectsQuietly() {
     if (sig === projectsSig) return;
     projectsSig = sig;
     S.projects = next;
+    // 当前作用域的项目没了（别处删项目 / 撤销导入）：交给统一回落逻辑，
+    // 不留在「指向不存在项目」的半坏状态里。
+    if (S.project && !next.some((p) => p.id === S.project)) {
+      await fallbackToAllScope();
+      return;
+    }
     syncCanvasFromScope();
     renderProjectTree();
     if (isProjectModalOpen()) renderProjectRows();
   } catch (_) { /* 网络异常时保持现状 */ }
 }
 
-export { pollNodes, refreshProjectsQuietly, projectsSignature };
+export { pollNodes, refreshProjectsQuietly, projectsSignature, fallbackToAllScope };

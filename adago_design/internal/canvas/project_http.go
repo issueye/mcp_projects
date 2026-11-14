@@ -44,6 +44,10 @@ func projectErr(err error, id string) *Error {
 	case errors.Is(err, ErrArtboardResolver):
 		return APIError("artboard_unavailable", "当前进程没有画板解析器",
 			"这是装配层未注入导致的环境问题（正常 serve/mcp 启动不会出现）")
+	case errors.Is(err, ErrBundleFormat), errors.Is(err, ErrBundleVersion),
+		errors.Is(err, ErrBundleInvalid), errors.Is(err, ErrBundleEmpty):
+		return APIError("bad_bundle", err.Error(),
+			"导入文件应由 adago-design 的「导出项目 / 导出全部项目」生成，且版本不超过当前支持版本")
 	}
 	return APIError("internal", err.Error(), "")
 }
@@ -55,7 +59,11 @@ func statusForProjectErr(err error) int {
 		errors.Is(err, ErrProjectNameEmpty),
 		errors.Is(err, ErrEdgeCrossProject),
 		errors.Is(err, ErrUnknownCanvasRatio),
-		errors.Is(err, ErrCanvasSizeInvalid):
+		errors.Is(err, ErrCanvasSizeInvalid),
+		errors.Is(err, ErrBundleFormat),
+		errors.Is(err, ErrBundleVersion),
+		errors.Is(err, ErrBundleInvalid),
+		errors.Is(err, ErrBundleEmpty):
 		return http.StatusBadRequest
 	case errors.Is(err, ErrUnknownProject), errors.Is(err, ErrProjectNotFound):
 		return http.StatusNotFound
