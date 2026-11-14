@@ -1,0 +1,147 @@
+<div class="stage spec-stage">
+  <div class="win spec">
+    <header class="sp-h">
+      <div class="sp-hl">
+        <div class="sp-mark"><svg class="ic"><use href="#i-cube"/></svg></div>
+        <div>
+          <div class="sp-kicker">browser-use · 视觉规范 v1</div>
+          <div class="sp-title">纸页 Inkwell</div>
+        </div>
+      </div>
+      <div class="sp-meta">
+        <span>1280 × 860</span><span class="dot"></span><span>标题栏 46</span><span class="dot"></span>
+        <span>工具栏 46</span><span class="dot"></span><span>状态条 26</span><span class="dot"></span><span>栅格 4</span>
+      </div>
+      <div class="sp-note">
+        <b>一句话</b>
+        把浏览器当成一台仪器：纸面承载内容，发丝线分栏，等宽数字读数；青铜是「代理在场」的唯一颜色。
+      </div>
+    </header>
+
+    <div class="sp-row">
+      <!-- 色彩 + 用色纪律 -->
+      <section class="sp-col c1">
+        <h3>01 · 色彩 <span>纸面 / 墨 / 青铜 / 状态</span></h3>
+        <div class="sw">
+          <div class="sw-item"><i style="background:#F7F5F0"></i><b>paper</b><code>#F7F5F0</code><s>窗口底</s></div>
+          <div class="sw-item"><i style="background:#FBFAF7"></i><b>paper-2</b><code>#FBFAF7</code><s>当前页纸面</s></div>
+          <div class="sw-item"><i style="background:#F1EEE7"></i><b>paper-3</b><code>#F1EEE7</code><s>次级填充</s></div>
+          <div class="sw-item"><i style="background:#FFFFFF"></i><b>surface</b><code>#FFFFFF</code><s>浮层纸面</s></div>
+          <div class="sw-item"><i style="background:#E3DED4"></i><b>line</b><code>#E3DED4</code><s>发丝分隔</s></div>
+          <div class="sw-item"><i style="background:#CFC8BB"></i><b>line-2</b><code>#CFC8BB</code><s>强调描边</s></div>
+          <div class="sw-item"><i style="background:#1B1917"></i><b>ink</b><code>#1B1917</code><s>16.1:1</s></div>
+          <div class="sw-item"><i style="background:#5A534B"></i><b>ink-2</b><code>#5A534B</code><s>6.9:1</s></div>
+          <div class="sw-item"><i style="background:#6F675E"></i><b>ink-3</b><code>#6F675E</code><s>5.1:1</s></div>
+          <div class="sw-item"><i style="background:#9A9287"></i><b>ink-4</b><code>#9A9287</code><s>占位 / 禁用</s></div>
+          <div class="sw-item agent"><i style="background:#9C4A22"></i><b>bronze</b><code>#9C4A22</code><s>5.6:1</s></div>
+          <div class="sw-item agent"><i style="background:#F6EBE3"></i><b>bronze-bg</b><code>#F6EBE3</code><s>代理浅底</s></div>
+          <div class="sw-item"><i style="background:#33556F"></i><b>info</b><code>#33556F</code><s>安全连接</s></div>
+          <div class="sw-item"><i style="background:#1F6B4E"></i><b>success</b><code>#1F6B4E</code><s>调用完成</s></div>
+          <div class="sw-item"><i style="background:#8A5D0B"></i><b>warning</b><code>#8A5D0B</code><s>你已接管</s></div>
+          <div class="sw-item"><i style="background:#A33A2B"></i><b>danger</b><code>#A33A2B</code><s>调用失败</s></div>
+          <div class="sw-item dark"><i style="background:#1F1C18"></i><b>dark paper</b><code>#1F1C18</code><s>暖炭</s></div>
+          <div class="sw-item dark"><i style="background:#E0895C"></i><b>dark bronze</b><code>#E0895C</code><s>6.4:1</s></div>
+        </div>
+        <div class="rule">
+          <b>用色纪律</b>
+          青铜只标「代理在场」：代理胶囊、当前页下划线、接管按钮、蒙版描边、代理相关徽标。安全连接用仪器蓝，成功/警告/失败只出现在调用结果上；纸面与墨色只负责承载内容。
+        </div>
+        <div class="rule">
+          <b>留白与描边</b>
+          窗口内水平内边距 12 / 14，控件间距 8，标签条与工具栏之间不留空隙（折叠关系）；页面视口左右各 8，顶部 8，底部 0，1px 发丝线收口于状态条。
+        </div>
+      </section>
+
+      <!-- 字型 -->
+      <section class="sp-col c2">
+        <h3>02 · 字型 <span>Inter + Noto Sans SC / JetBrains Mono</span></h3>
+        <div class="type">
+          <div class="tr"><div class="tname">display</div><div class="tspec" style="font-size:28px;font-weight:650;letter-spacing:-.4px">还没有打开任何页面</div><code>28 / 650</code></div>
+          <div class="tr"><div class="tname">title-2</div><div class="tspec" style="font-size:16px;font-weight:650">代理正在操作</div><code>16 / 650</code></div>
+          <div class="tr"><div class="tname">title-3</div><div class="tspec" style="font-size:14px;font-weight:600">接管与锁定</div><code>14 / 600</code></div>
+          <div class="tr"><div class="tname">body</div><div class="tspec" style="font-size:13px">页面输入已锁定，代理正在读取单证预填区域。</div><code>13 / 400</code></div>
+          <div class="tr"><div class="tname">body-sm</div><div class="tspec" style="font-size:12px;color:#5A534B">Harbor · 上海至鹿特丹运单</div><code>12 / 400</code></div>
+          <div class="tr"><div class="tname">caption</div><div class="tspec" style="font-size:11px;color:#6F675E">点击「接管」后即可操作页面</div><code>11 / 500</code></div>
+          <div class="tr"><div class="tname">micro</div><div class="tspec mono" style="font-size:10px;font-weight:600;letter-spacing:.2px;color:#6F675E">:59866 &nbsp; 428ms &nbsp; t1 &nbsp; e14-e26</div><code>10 / 600</code></div>
+        </div>
+        <div class="type2">
+          <div class="t2"><b>Aa</b><div><div class="t2n">Inter + Noto Sans SC</div><div class="t2d">界面文字：拉丁 Inter，中文回退 Noto Sans SC；字重只用 400 / 500 / 600 / 650。</div></div></div>
+          <div class="t2"><b class="mono">01</b><div><div class="t2n">JetBrains Mono</div><div class="t2d">机器信息：端口、耗时、标签引用、URL 片段、工具名；中文正文不使用等宽。</div></div></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="sp-row">
+      <!-- 结构 -->
+      <section class="sp-col c1">
+        <h3>03 · 结构 <span>窗口的纵向节奏</span></h3>
+        <div class="anat">
+          <div class="an an1"><span class="anl">46</span><b>标题栏</b><s>traffic lights · 品牌 · 标签折页 · 窗口控制</s></div>
+          <div class="an an2"><span class="anl">46</span><b>工具栏</b><s>导航 3 键 · 地址栏 · 命令 · 代理胶囊</s></div>
+          <div class="an an3"><span class="anl">24</span><b>页眉元信息</b><s>标签 · 文档树 · 站点策略 · 连接安全</s></div>
+          <div class="an an4"><span class="anl">flex</span><b>页面视口</b><s>网页内容区，抽屉打开时自动让位</s></div>
+          <div class="an an5"><span class="anl">26</span><b>状态条</b><s>标签数 · 代理态 · 端口 · 耗时 · URL · 活动入口</s></div>
+        </div>
+      </section>
+
+      <!-- 组件 -->
+      <section class="sp-col c2">
+        <h3>04 · 组件 <span>标签页 / 地址栏 / 代理态</span></h3>
+        <div class="cmp">
+          <div class="cmp-row">
+            <div class="cmp-label">标签页</div>
+            <div class="tab on" style="width:208px"><span class="fav" style="background:#1B5E6B">H</span><span class="tt">Harbor · 上海至鹿特丹运单</span><span class="spin"></span><span class="x"><svg class="ic"><use href="#i-close"/></svg></span><span class="bar"></span></div>
+            <div class="tab off" style="width:180px"><span class="fav" style="background:#5A534B"><svg class="ic xs"><use href="#i-terminal"/></svg></span><span class="tt">Fixture Home</span><span class="x"><svg class="ic"><use href="#i-close"/></svg></span></div>
+          </div>
+          <div class="cmp-note">当前页压住下方发丝线并带 2px 青铜下划线；未选中页只留灰字与 favicon，hover 才浮出关闭键。</div>
+          <div class="cmp-row">
+            <div class="cmp-label">地址栏</div>
+            <div class="addr" style="flex:1">
+              <span class="site"><svg class="ic"><use href="#i-lock"/></svg><span class="host">harbor.example</span></span>
+              <span class="sep">/</span><span class="path">shipments/8842?tab=documents</span>
+              <span class="kbd">⌘L</span><span class="go"><svg class="ic"><use href="#i-arrow-right"/></svg></span>
+            </div>
+          </div>
+          <div class="cmp-note">锁与域名一段（可读、加粗），路径一段（等宽、可省略），右侧常驻前往键；聚焦时青铜 3px 光环。</div>
+          <div class="cmp-row">
+            <div class="cmp-label">代理态</div>
+            <div class="chip agent"><span class="dot"></span>代理工作中</div>
+            <div class="chip agent idle"><span class="dot"></span>代理空闲</div>
+            <div class="tagx warn">你已接管</div>
+            <div class="tagx bronze">页面锁定</div>
+          </div>
+          <div class="cmp-note">工作中：青铜浅底 + 实心点；空闲：纸面 + 灰点；接管：警告色文字标签。三种态不共用颜色。</div>
+          <div class="cmp-row">
+            <div class="cmp-label">审计条目</div>
+            <div class="dem">
+              <span class="dcol"><i></i></span>
+              <div class="body">
+                <div class="l1"><span class="tool">snapshot</span><span class="tabref">t1</span><span class="ms">128ms</span></div>
+                <div class="l2">harbor.example/shipments/8842</div>
+              </div>
+            </div>
+            <div class="dem bad">
+              <span class="dcol"><i></i></span>
+              <div class="body">
+                <div class="l1"><span class="tool">wait_for_url</span><span class="tabref">t1</span><span class="ms">30.0s</span></div>
+                <div class="l2">timeout: navigation 30s</div>
+              </div>
+            </div>
+          </div>
+          <div class="cmp-note">状态点 6px、工具名等宽 11.5/600、耗时右对齐；失败条目只用 danger 色描述，不整行染色。</div>
+        </div>
+      </section>
+    </div>
+    <footer class="sp-f">
+      <div class="does">
+        <b>做</b>
+        <span>发丝线分栏</span><span>青铜只给代理</span><span>机器信息等宽</span><span>当前页压线</span>
+      </div>
+      <div class="donts">
+        <b>不做</b>
+        <span>大面积青铜</span><span>16px 以上圆角</span><span>卡片堆阴影</span><span>高饱和装饰色</span>
+      </div>
+      <div class="sp-end mono">AA · 正文 ≥ 12 · 说明色 ≥ ink-3</div>
+    </footer>
+  </div>
+</div>

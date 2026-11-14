@@ -1,0 +1,205 @@
+<div class="stage">
+  <div class="win">
+
+    <!-- title bar -->
+    <div class="tb">
+      <div class="tb-left">
+        <div class="lights"><i class="l1"></i><i class="l2"></i><i class="l3"></i></div>
+        <div class="brand">
+          <span class="mark"><svg class="ic"><use href="#i-cube"/></svg></span>
+          <span class="bname">browser-use</span>
+          <span class="bsub">agent</span>
+        </div>
+      </div>
+
+      <div class="tabstrip">
+        <div class="tab on">
+          <span class="fav" style="background:#1B5E6B">H</span>
+          <span class="tt">Harbor · 上海至鹿特丹运单</span>
+          <span class="tag">T1</span>
+          <span class="x"><svg class="ic"><use href="#i-close"/></svg></span>
+          <span class="bar"></span>
+        </div>
+        <div class="tab off">
+          <span class="fav" style="background:#5A534B"><svg class="ic xs"><use href="#i-terminal"/></svg></span>
+          <span class="tt">Fixture Home — 本地测试页</span>
+          <span class="lock"><svg class="ic xs"><use href="#i-lock"/></svg></span>
+          <span class="x"><svg class="ic"><use href="#i-close"/></svg></span>
+        </div>
+        <div class="tab off">
+          <span class="fav" style="background:#9A9287">?</span>
+          <span class="tt">新标签页</span>
+          <span class="x"><svg class="ic"><use href="#i-close"/></svg></span>
+        </div>
+        <div class="tab-new"><svg class="ic sm"><use href="#i-plus"/></svg></div>
+      </div>
+
+      <div class="tb-right">
+        <div class="wctl">
+          <span class="wbtn"><svg class="ic"><use href="#i-minus"/></svg></span>
+          <span class="wbtn"><svg class="ic"><use href="#i-square"/></svg></span>
+          <span class="wbtn close"><svg class="ic"><use href="#i-close"/></svg></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- toolbar -->
+    <div class="tb2">
+      <div class="navgroup">
+        <span class="nbtn"><svg class="ic"><use href="#i-back"/></svg></span>
+        <span class="nbtn dim"><svg class="ic"><use href="#i-forward"/></svg></span>
+        <span class="nbtn"><svg class="ic"><use href="#i-reload"/></svg></span>
+      </div>
+      <span class="nsep"></span>
+
+      <div class="addr">
+        <span class="site"><svg class="ic"><use href="#i-lock"/></svg><span class="host">harbor.example</span></span>
+        <span class="sep">/</span>
+        <span class="path">shipments/8842?tab=documents&amp;draft=3</span>
+        <span class="kbd">⌘L</span>
+        <span class="go"><svg class="ic"><use href="#i-arrow-right"/></svg></span>
+      </div>
+
+      <div class="chip"><svg class="ic"><use href="#i-command"/></svg>命令<span class="kbd">⌘K</span></div>
+      <div class="chip agent"><span class="dot"></span>代理工作中</div>
+    </div>
+
+    <!-- content -->
+    <div class="content">
+      <div class="vp-wrap">
+        <div class="vp-meta">
+          <span class="m"><svg class="ic"><use href="#i-tab"/></svg>t1 · 主标签</span>
+          <span class="m"><svg class="ic"><use href="#i-layers"/></svg>文档树 12 节点</span>
+          <span class="grow"></span>
+          <span class="m live"><svg class="ic"><use href="#i-lock"/></svg>HTTPS · 受信任</span>
+        </div>
+        <div class="vp">
+          <!--SITE-->
+        </div>
+      </div>
+
+      <!-- 活动审计抽屉 -->
+      <div class="drawer">
+        <div class="dh">
+          <span class="t">活动</span>
+          <span class="n">12</span>
+          <span class="grow"></span>
+          <span class="icbtn"><svg class="ic sm"><use href="#i-settings"/></svg></span>
+          <span class="icbtn"><svg class="ic sm"><use href="#i-close"/></svg></span>
+        </div>
+
+        <div class="dsearch">
+          <svg class="ic"><use href="#i-search"/></svg>
+          按工具或 URL 过滤
+          <span class="kbd">⌘F</span>
+        </div>
+
+        <div class="dchips">
+          <span class="dchip on">全部 <b>12</b></span>
+          <span class="dchip">失败 <b>1</b></span>
+          <span class="dchip">慢调用 <b>2</b></span>
+          <span class="dchip">本标签 <b>8</b></span>
+        </div>
+
+        <div class="dlist">
+          <div class="dgroup">刚刚<span class="ln"></span></div>
+
+          <div class="de" style="padding:6px 6px">
+            <span class="dcol"><i></i></span>
+            <div class="body">
+              <div class="l1"><span class="tool">snapshot</span><span class="tabref">t1</span><span class="ms">128ms</span></div>
+              <div class="l2">harbor.example/shipments/8842</div>
+              <div class="l3"><span class="pill">HTTP 200</span><span class="pill">12 rows</span></div>
+            </div>
+          </div>
+
+          <div class="de" style="padding:6px 6px">
+            <span class="dcol"><i></i></span>
+            <div class="body">
+              <div class="l1"><span class="tool">click</span><span class="tabref">t1</span><span class="ms">96ms</span></div>
+              <div class="l2">提交草稿 按钮 ref e18</div>
+              <div class="l3"><span class="pill">ref e18</span><span class="pill">btn primary</span></div>
+            </div>
+          </div>
+
+          <div class="de" style="padding:6px 6px">
+            <span class="dcol"><i></i></span>
+            <div class="body">
+              <div class="l1"><span class="tool">read</span><span class="tabref">t1</span><span class="ms">210ms</span></div>
+              <div class="l2">单证预填表格 12 行</div>
+              <div class="l3"><span class="pill">12 rows</span><span class="pill">ref e14-e26</span></div>
+            </div>
+          </div>
+
+          <div class="de" style="padding:6px 6px">
+            <span class="dcol"><i></i></span>
+            <div class="body">
+              <div class="l1"><span class="tool">type</span><span class="tabref">t1</span><span class="ms">184ms</span></div>
+              <div class="l2">收货人 荷兰鹿特丹货代</div>
+              <div class="l3"><span class="pill">ref e22</span></div>
+            </div>
+          </div>
+
+          <div class="dgroup" style="padding-top:10px">2 分钟前<span class="ln"></span></div>
+
+          <div class="de bad" style="padding:6px 6px">
+            <span class="dcol"><i></i></span>
+            <div class="body">
+              <div class="l1"><span class="tool">wait_for_url</span><span class="tabref">t1</span><span class="ms" style="color:var(--danger)">30.0s</span></div>
+              <div class="l2">timeout: navigation 30s</div>
+              <div class="l3"><span class="pill">retry 0</span><span class="pill">exit 124</span></div>
+            </div>
+          </div>
+
+          <div class="de warn" style="padding:6px 6px">
+            <span class="dcol"><i></i></span>
+            <div class="body">
+              <div class="l1"><span class="tool">read</span><span class="tabref">t1</span><span class="ms" style="color:var(--warn)">940ms</span></div>
+              <div class="l2">运输条款 4 段 全文扫描</div>
+              <div class="l3"><span class="pill">HTTP 200</span><span class="pill">slow</span></div>
+            </div>
+          </div>
+
+          <div class="de warn" style="padding:6px 6px">
+            <span class="dcol"><i></i></span>
+            <div class="body">
+              <div class="l1"><span class="tool">screenshot</span><span class="tabref">t1</span><span class="ms" style="color:var(--warn)">1.18s</span></div>
+              <div class="l2">视口 944 × 710 已留档</div>
+              <div class="l3"><span class="pill">png 284 KB</span><span class="pill">slow</span></div>
+            </div>
+          </div>
+
+          <div class="de" style="padding:6px 6px">
+            <span class="dcol"><i></i></span>
+            <div class="body">
+              <div class="l1"><span class="tool">click</span><span class="tabref">t1</span><span class="ms">88ms</span></div>
+              <div class="l2">运输 标签页 ref e04</div>
+              <div class="l3"><span class="pill">ref e04</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="df" style="padding:8px;gap:6px">
+          <span style="font-size:9px;white-space:nowrap">12 次调用 · 成功 11 · 失败 1 · p95 420ms</span>
+          <span class="grow"></span>
+          <span class="btn" style="height:22px;font-size:10.5px;padding:0 7px;gap:4px;flex:none;white-space:nowrap"><svg class="ic" style="width:12px;height:12px"><use href="#i-pause"/></svg>暂停代理</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- status bar -->
+    <div class="sb">
+      <span class="g"><svg class="ic"><use href="#i-tab"/></svg><span class="mono">3</span>个标签页</span>
+      <span class="sep"></span>
+      <span class="g"><span class="dot bronze"></span>代理工作中</span>
+      <span class="g mono">:59866</span>
+      <span class="sep"></span>
+      <span class="g"><span class="dot ok"></span><span class="mono">428ms</span></span>
+      <span class="url">harbor.example/shipments/8842?tab=documents&amp;draft=3</span>
+      <span class="grow"></span>
+      <span class="g mut4"><svg class="ic"><use href="#i-camera"/></svg>截图可标注</span>
+      <span class="btn on"><svg class="ic"><use href="#i-activity"/></svg>活动<span class="mono" style="color:var(--paper-2);opacity:.62">12</span></span>
+    </div>
+
+  </div>
+</div>

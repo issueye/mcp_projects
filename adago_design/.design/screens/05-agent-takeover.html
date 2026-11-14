@@ -1,0 +1,151 @@
+<div class="stage">
+  <div class="win">
+
+    <!-- title bar -->
+    <div class="tb">
+      <div class="tb-left">
+        <div class="lights"><i class="l1"></i><i class="l2"></i><i class="l3"></i></div>
+        <div class="brand">
+          <span class="mark"><svg class="ic"><use href="#i-cube"/></svg></span>
+          <span class="bname">browser-use</span>
+          <span class="bsub">agent</span>
+        </div>
+      </div>
+
+      <div class="tabstrip">
+        <div class="tab on">
+          <span class="fav" style="background:#1B5E6B">H</span>
+          <span class="tt">Harbor · 上海至鹿特丹运单</span>
+          <span class="tag">T1</span>
+          <span class="x"><svg class="ic"><use href="#i-close"/></svg></span>
+          <span class="bar"></span>
+        </div>
+        <div class="tab off">
+          <span class="fav" style="background:#5A534B"><svg class="ic xs"><use href="#i-terminal"/></svg></span>
+          <span class="tt">Fixture Home — 本地测试页</span>
+          <span class="lock"><svg class="ic xs"><use href="#i-lock"/></svg></span>
+          <span class="x"><svg class="ic"><use href="#i-close"/></svg></span>
+        </div>
+        <div class="tab off">
+          <span class="fav" style="background:#9A9287">?</span>
+          <span class="tt">新标签页</span>
+          <span class="x"><svg class="ic"><use href="#i-close"/></svg></span>
+        </div>
+        <div class="tab-new"><svg class="ic sm"><use href="#i-plus"/></svg></div>
+      </div>
+
+      <div class="tb-right">
+        <div class="wctl">
+          <span class="wbtn"><svg class="ic"><use href="#i-minus"/></svg></span>
+          <span class="wbtn"><svg class="ic"><use href="#i-square"/></svg></span>
+          <span class="wbtn close"><svg class="ic"><use href="#i-close"/></svg></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- toolbar -->
+    <div class="tb2">
+      <div class="navgroup">
+        <span class="nbtn dim"><svg class="ic"><use href="#i-back"/></svg></span>
+        <span class="nbtn dim"><svg class="ic"><use href="#i-forward"/></svg></span>
+        <span class="nbtn"><svg class="ic"><use href="#i-reload"/></svg></span>
+      </div>
+      <span class="nsep"></span>
+
+      <!-- 锁定态地址栏：禁用填充、更淡边框、文案降到 ink-4 -->
+      <div class="addr" style="background:var(--paper-3);border-color:var(--paper-3);box-shadow:none;opacity:1">
+        <span class="site" style="color:var(--ink-4)"><svg class="ic"><use href="#i-lock"/></svg><span class="host" style="color:var(--ink-4)">harbor.example</span></span>
+        <span class="sep" style="color:var(--ink-4)">/</span>
+        <span class="path" style="color:var(--ink-4)">shipments/8842?tab=documents&amp;draft=3</span>
+        <span class="tagx mute" style="height:17px;background:var(--surface)"><svg class="ic xs"><use href="#i-lock"/></svg>输入锁定</span>
+      </div>
+
+      <div class="chip"><svg class="ic"><use href="#i-command"/></svg>命令<span class="kbd">⌘K</span></div>
+
+      <!-- 代理工作中：青铜强调 + 脉冲光圈 -->
+      <div class="chip agent"><span class="dot" style="box-shadow:0 0 0 3px var(--bronze-bg),0 0 0 4px var(--bronze-line)"></span>代理工作中</div>
+    </div>
+
+    <!-- content -->
+    <div class="content">
+      <div class="vp-wrap">
+        <div class="vp-meta">
+          <span class="m"><svg class="ic"><use href="#i-tab"/></svg>t1 · 主标签</span>
+          <span class="m"><svg class="ic"><use href="#i-layers"/></svg>文档树 12 节点</span>
+          <span class="m"><svg class="ic"><use href="#i-shield"/></svg>站点策略 · 已授权</span>
+          <span class="grow"></span>
+          <span class="m live"><svg class="ic"><use href="#i-lock"/></svg>HTTPS · 受信任</span>
+        </div>
+
+        <div class="vp">
+          <!--SITE-->
+
+          <!-- 墨色蒙版：压暗网页但保持可辨认，1px 青铜描边 -->
+          <div style="position:absolute;inset:0;z-index:6;background:rgba(27,25,23,.2);border:1px solid var(--bronze-line);border-radius:8px 8px 0 0;overflow:hidden">
+
+            <!-- 代理操作卡 -->
+            <div style="position:absolute;left:50%;top:14px;transform:translateX(-50%);width:548px;display:flex;align-items:center;gap:12px;padding:11px 13px 11px 12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--sh-float)">
+              <span style="width:32px;height:32px;border-radius:50%;background:var(--bronze);color:var(--surface);display:grid;place-items:center;flex:none">
+                <svg class="ic"><use href="#i-shield"/></svg>
+              </span>
+              <div style="min-width:0;display:flex;flex-direction:column;gap:4px">
+                <div style="font-size:13px;font-weight:600;color:var(--ink);letter-spacing:-.01em">代理正在操作</div>
+                <div style="font-size:11px;color:var(--ink-3);white-space:nowrap">页面输入已锁定 正在读取单证预填区域，12 个字段</div>
+              </div>
+              <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex:none">
+                <span style="display:flex;align-items:center;gap:6px;font:600 9px/1 var(--mono);color:var(--ink-4);letter-spacing:.04em">
+                  <span>T1</span>
+                  <span style="width:1px;height:8px;background:var(--line-2)"></span>
+                  <span>00:42</span>
+                </span>
+                <span style="display:flex;align-items:center;gap:6px">
+                  <span class="btn lg bronze"><svg class="ic"><use href="#i-user"/></svg>接管</span>
+                  <span class="btn lg ghost" style="color:var(--ink-2)"><svg class="ic"><use href="#i-pause"/></svg>暂停</span>
+                </span>
+              </div>
+            </div>
+
+            <!-- 底部胶囊提示 -->
+            <div style="position:absolute;left:50%;bottom:14px;transform:translateX(-50%);height:30px;display:flex;align-items:center;gap:7px;padding:0 14px;border-radius:100px;background:var(--paper-2);border:1px solid var(--line);color:var(--ink-3);font-size:11px;box-shadow:var(--sh-card);white-space:nowrap">
+              <svg class="ic xs" style="color:var(--ink-3)"><use href="#i-lock"/></svg>
+              点击「接管」后即可操作页面
+            </div>
+
+            <!-- 右下角操作流水 -->
+            <div style="position:absolute;right:14px;bottom:14px;width:216px;background:var(--paper-2);border:1px solid var(--line);border-radius:8px;padding:9px 10px 8px;box-shadow:var(--sh-card)">
+              <div style="display:flex;align-items:center;gap:5px;font:600 9px/1 var(--mono);letter-spacing:.09em;color:var(--ink-4);text-transform:uppercase;padding-bottom:7px;margin-bottom:3px;border-bottom:1px solid var(--line)">
+                <svg class="ic xs" style="color:var(--bronze)"><use href="#i-activity"/></svg>操作流水
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 0;font:500 9.5px/1 var(--mono);color:var(--ink-4)">
+                <span style="color:var(--ink);font-weight:600">snapshot</span><span>t1</span><span style="margin-left:auto">128ms</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 0;font:500 9.5px/1 var(--mono);color:var(--ink-4)">
+                <span style="color:var(--ink);font-weight:600">click</span><span>e18</span><span style="margin-left:auto">96ms</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 0;font:500 9.5px/1 var(--mono);color:var(--ink-4)">
+                <span style="color:var(--bronze);font-weight:600">read</span><span>e14-e26</span><span style="margin-left:auto">210ms</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- status bar -->
+    <div class="sb">
+      <span class="g"><svg class="ic"><use href="#i-tab"/></svg><span class="mono">3</span>个标签页</span>
+      <span class="sep"></span>
+      <span class="g"><span class="dot bronze"></span>代理工作中</span>
+      <span class="tagx bronze" style="height:17px"><svg class="ic xs"><use href="#i-lock"/></svg>页面锁定</span>
+      <span class="g mono">:59866</span>
+      <span class="sep"></span>
+      <span class="g"><span class="dot ok"></span><span class="mono">96ms</span></span>
+      <span class="url">harbor.example/shipments/8842?tab=documents&amp;draft=3</span>
+      <span class="grow"></span>
+      <span class="g mut4"><svg class="ic"><use href="#i-camera"/></svg>截图可标注</span>
+      <span class="btn"><svg class="ic"><use href="#i-activity"/></svg>活动<span class="mono" style="color:var(--ink-4)">12</span></span>
+    </div>
+
+  </div>
+</div>

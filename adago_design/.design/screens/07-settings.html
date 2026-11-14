@@ -1,0 +1,335 @@
+<div class="stage">
+  <style>
+      /* ---- settings shell ---- */
+      .set-body{flex:1;display:flex;min-height:0;background:var(--paper)}
+
+      .set-nav{width:200px;flex:none;display:flex;flex-direction:column;padding:14px 12px 12px;
+        background:var(--paper);border-right:1px solid var(--line)}
+      .ngroup{margin-bottom:15px}
+      .ngt{display:flex;align-items:center;gap:6px;padding:0 8px 7px;font:600 9.5px/1 var(--mono);
+        letter-spacing:.1em;color:var(--ink-4);text-transform:uppercase}
+      .ngt .ln{flex:1;height:1px;background:var(--line)}
+      .ni{height:30px;display:flex;align-items:center;gap:9px;padding:0 8px;border-radius:var(--r-m);
+        font-size:12px;color:var(--ink-2);letter-spacing:-.005em}
+      .ni .ic{width:14px;height:14px;color:var(--ink-3)}
+      .ni .meta{margin-left:auto;font:600 9px/1 var(--mono);color:var(--ink-4)}
+      .ni.on{background:var(--bronze-bg);color:var(--bronze);font-weight:650;
+        box-shadow:inset 2px 0 0 var(--bronze)}
+      .ni.on .ic{color:var(--bronze)}
+      .ni.on .meta{color:var(--bronze);opacity:.85}
+      .nsep2{height:1px;background:var(--line);margin:4px 8px 10px}
+      .nfoot{margin-top:auto;display:flex;align-items:center;gap:7px;padding:10px 8px 0;
+        border-top:1px solid var(--line);font:500 9.5px/1.4 var(--mono);color:var(--ink-4);letter-spacing:.02em}
+      .nfoot .dot{width:5px;height:5px;border-radius:50%;background:var(--success);flex:none}
+
+      /* ---- toolbar title ---- */
+      .tbtitle{font-size:13px;font-weight:650;color:var(--ink);letter-spacing:-.01em}
+      .tbsub{font-size:13px;color:var(--ink-3);letter-spacing:-.01em}
+
+      /* ---- main column ---- */
+      .set-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px;padding:14px 24px 12px;overflow:hidden}
+      .set-head{display:flex;align-items:center;gap:12px;flex:none;padding:0 2px 2px}
+      .set-head h1{font-size:15px;font-weight:650;letter-spacing:-.015em;color:var(--ink)}
+      .set-head p{font-size:11.5px;color:var(--ink-3);margin-top:3px}
+      .set-head .right{margin-left:auto;display:flex;align-items:center;gap:8px}
+
+      /* ---- cards ---- */
+      .card{flex:none;display:flex;flex-direction:column;overflow:hidden;background:var(--surface);
+        border:1px solid var(--line);border-radius:16px;box-shadow:var(--sh-card)}
+      .ch{display:flex;align-items:center;gap:11px;padding:12px 18px 11px}
+      .ch .ci{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;flex:none;
+        background:var(--paper-3);border:1px solid var(--line);color:var(--ink-2)}
+      .ch .ci .ic{width:15px;height:15px}
+      .ch .ct{font-size:13px;font-weight:650;color:var(--ink);letter-spacing:-.01em}
+      .ch .cd{font-size:11.5px;color:var(--ink-3);margin-top:2px;line-height:1.4}
+      .ch .cmeta{margin-left:auto;font:600 9px/1 var(--mono);color:var(--ink-4);letter-spacing:.05em;
+        border:1px solid var(--line);border-radius:4px;padding:3px 5px;background:var(--paper-2)}
+
+      .rows{border-top:1px solid var(--line)}
+      .row{display:flex;align-items:center;gap:18px;padding:11px 18px}
+      .row + .row{border-top:1px solid var(--line)}
+      .row .rl{flex:1;min-width:0}
+      .row .rt{font-size:12.5px;font-weight:500;color:var(--ink);letter-spacing:-.005em;line-height:1.3}
+      .row .rh{font-size:11px;color:var(--ink-3);margin-top:2px;line-height:1.45}
+      .row .rv{flex:none;display:flex;align-items:center;gap:10px}
+
+      /* ---- switch ---- */
+      .sw{width:34px;height:20px;flex:none;border-radius:100px;background:var(--line-2);position:relative}
+      .sw i{position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;
+        background:var(--paper-2);box-shadow:var(--sh-card)}
+      .sw.on{background:var(--bronze)}
+      .sw.on i{left:17px}
+
+      /* ---- select ---- */
+      .sel{height:28px;min-width:108px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+        padding:0 8px 0 10px;border:1px solid var(--line);border-radius:var(--r-m);background:var(--surface);
+        font-size:12px;color:var(--ink)}
+      .sel .ic{width:11px;height:11px;color:var(--ink-4);transform:rotate(90deg)}
+
+      /* ---- slider ---- */
+      .sl{display:flex;align-items:center;gap:10px}
+      .track{width:132px;height:4px;border-radius:100px;background:var(--paper-3);position:relative;
+        box-shadow:inset 0 0 0 1px var(--line)}
+      .track .fill{position:absolute;left:0;top:0;bottom:0;width:20%;border-radius:100px;background:var(--bronze)}
+      .track .knob{position:absolute;top:50%;left:20%;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;
+        border-radius:50%;background:var(--surface);border:1.5px solid var(--bronze);box-shadow:var(--sh-card)}
+      .num{min-width:42px;text-align:center;font:600 10px/1 var(--mono);color:var(--ink-2);
+        border:1px solid var(--line);border-radius:var(--r-s);padding:4px 6px;background:var(--paper-2)}
+
+      /* ---- segmented ---- */
+      .seg{display:flex;gap:2px;padding:2px;border:1px solid var(--line);border-radius:var(--r-m);background:var(--paper-3)}
+      .seg span{height:24px;display:flex;align-items:center;padding:0 11px;border-radius:var(--r-s);
+        font:600 11.5px/1 var(--mono);color:var(--ink-3)}
+      .seg span.on{background:var(--surface);color:var(--ink);box-shadow:var(--sh-card)}
+
+      /* ---- screenshot thumb ---- */
+      .split{display:flex;align-items:center;gap:18px;border-top:1px solid var(--line);padding-right:18px}
+      .split .rows{flex:1;min-width:0;border-top:none}
+      .shot{width:200px;height:112px;flex:none;align-self:center;margin:10px 0;display:flex;flex-direction:column;
+        border:1px solid var(--line);border-radius:8px;background:var(--paper-3);overflow:hidden}
+      .shotbar{height:18px;flex:none;display:flex;align-items:center;gap:3px;padding:0 7px;
+        border-bottom:1px solid var(--line);background:var(--paper-2)}
+      .shotbar i{width:3px;height:3px;border-radius:50%;background:var(--line-2);display:block}
+      .shotbar .u{margin-left:5px;font:500 7px/1 var(--mono);color:var(--ink-4);letter-spacing:.02em}
+      .shotbody{flex:1;position:relative;padding:9px 10px;display:flex;flex-direction:column;gap:6px}
+      .shotbody .l{display:block;height:3px;border-radius:2px;background:var(--line-2)}
+      .shotbody .w70{width:70%}
+      .shotbody .w42{width:42%}
+      .shotbody .target{position:absolute;left:10px;bottom:10px;width:110px;height:32px;
+        border:1px dashed var(--bronze);border-radius:4px;background:var(--bronze-bg)}
+      .shotbody .ref{position:absolute;right:3px;top:3px;font:600 8px/1 var(--mono);color:var(--bronze);
+        background:var(--surface);border:1px solid var(--bronze-line);border-radius:3px;padding:2px 4px}
+
+      /* ---- port table ---- */
+      .prow{display:grid;grid-template-columns:128px 1fr auto;align-items:center;gap:14px;padding:10px 18px;
+        border-top:1px solid var(--line)}
+      .pk{font-size:12px;color:var(--ink-3)}
+      .pv{font:600 12px/1 var(--mono);color:var(--ink);letter-spacing:-.01em;white-space:nowrap;
+        overflow:hidden;text-overflow:ellipsis}
+      .pv.dim{font-weight:500;font-size:11.5px;color:var(--ink-2)}
+      .mini{height:24px;padding:0 8px;font-size:11px;font-weight:600;gap:5px}
+      .mini .ic{width:11px;height:11px}
+      .pnote{display:flex;align-items:center;gap:7px;padding:8px 18px 11px;border-top:1px solid var(--line);
+        font-size:11px;color:var(--ink-3);line-height:1.45}
+      .pnote .ic{width:11px;height:11px;color:var(--ink-4)}
+
+      .set-foot{flex:none;margin-top:auto;display:flex;align-items:center;gap:8px;padding:0 4px;
+        font:500 9.5px/1 var(--mono);color:var(--ink-4);letter-spacing:.02em}
+      .set-foot .ln{width:1px;height:9px;background:var(--line-2)}
+    </style>
+
+  <div class="win">
+
+    <!-- title bar -->
+    <div class="tb">
+      <div class="tb-left">
+        <div class="lights"><i class="l1"></i><i class="l2"></i><i class="l3"></i></div>
+        <div class="brand">
+          <span class="mark"><svg class="ic"><use href="#i-cube"/></svg></span>
+          <span class="bname">browser-use</span>
+          <span class="bsub">agent</span>
+        </div>
+      </div>
+
+      <div class="tabstrip">
+        <div class="tab on">
+          <span class="fav" style="background:var(--bronze-bg);color:var(--bronze)"><svg class="ic xs"><use href="#i-settings"/></svg></span>
+          <span class="tt">代理设置</span>
+          <span class="x"><svg class="ic"><use href="#i-close"/></svg></span>
+          <span class="bar"></span>
+        </div>
+        <div class="tab-new"><svg class="ic sm"><use href="#i-plus"/></svg></div>
+      </div>
+
+      <div class="tb-right">
+        <div class="wctl">
+          <span class="wbtn"><svg class="ic"><use href="#i-minus"/></svg></span>
+          <span class="wbtn"><svg class="ic"><use href="#i-square"/></svg></span>
+          <span class="wbtn close"><svg class="ic"><use href="#i-close"/></svg></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- toolbar -->
+    <div class="tb2">
+      <div class="navgroup">
+        <span class="nbtn"><svg class="ic"><use href="#i-back"/></svg></span>
+      </div>
+      <span class="nsep"></span>
+      <span class="tbtitle">设置</span>
+      <span style="width:1px;height:12px;background:var(--line)"></span>
+      <span class="tbsub">代理控制</span>
+      <span style="flex:1"></span>
+      <div class="chip"><svg class="ic"><use href="#i-lock"/></svg>本地配置</div>
+    </div>
+
+    <!-- body -->
+    <div class="set-body">
+
+      <div class="set-nav">
+        <div class="ngroup">
+          <div class="ngt">代理<span class="ln"></span></div>
+          <div class="ni on"><svg class="ic"><use href="#i-shield"/></svg>代理控制</div>
+          <div class="ni"><svg class="ic"><use href="#i-activity"/></svg>会话与审计<span class="meta">12</span></div>
+        </div>
+        <div class="ngroup">
+          <div class="ngt">页面<span class="ln"></span></div>
+          <div class="ni"><svg class="ic"><use href="#i-layers"/></svg>外观与密度</div>
+          <div class="ni"><svg class="ic"><use href="#i-command"/></svg>快捷键</div>
+        </div>
+        <div class="ngroup">
+          <div class="ngt">隐私<span class="ln"></span></div>
+          <div class="ni"><svg class="ic"><use href="#i-file"/></svg>数据留存</div>
+          <div class="ni"><svg class="ic"><use href="#i-lock"/></svg>站点策略</div>
+        </div>
+        <div class="ngroup">
+          <div class="ngt">脚本<span class="ln"></span></div>
+          <div class="ni"><svg class="ic"><use href="#i-terminal"/></svg>注入脚本</div>
+          <div class="ni"><svg class="ic"><use href="#i-clock"/></svg>运行日志</div>
+        </div>
+        <div class="nsep2"></div>
+        <div class="ni" style="color:var(--ink-3);font-size:11.5px"><svg class="ic"><use href="#i-reload"/></svg>恢复默认设置</div>
+        <div class="nfoot"><span class="dot"></span>MCP 就绪<span style="margin-left:auto">:59866</span></div>
+      </div>
+
+      <div class="set-main">
+
+        <div class="set-head">
+          <div>
+            <h1>代理控制</h1>
+            <p>决定代理如何在页面上操作、截图，以及如何对外暴露接口。</p>
+          </div>
+          <div class="right">
+            <span class="btn"><svg class="ic"><use href="#i-reload"/></svg>恢复默认</span>
+          </div>
+        </div>
+
+        <!-- a) 接管与锁定 -->
+        <div class="card">
+          <div class="ch">
+            <span class="ci"><svg class="ic"><use href="#i-shield"/></svg></span>
+            <div>
+              <div class="ct">接管与锁定</div>
+              <div class="cd">代理与你在同一页面上交替操作时，谁掌握输入优先权。</div>
+            </div>
+            <span class="cmeta">TAKEOVER</span>
+          </div>
+          <div class="rows">
+            <div class="row">
+              <div class="rl">
+                <div class="rt">代理操作时锁定页面输入</div>
+                <div class="rh">代理接管期间屏蔽鼠标与键盘，避免两边同时改动同一字段。</div>
+              </div>
+              <div class="rv"><span class="sw on"><i></i></span></div>
+            </div>
+            <div class="row">
+              <div class="rl">
+                <div class="rt">空闲超时自动交还控制权</div>
+                <div class="rh">代理连续无操作达到该时长后，页面控制权回到你手上。</div>
+              </div>
+              <div class="rv">
+                <span class="sel">2 分钟<svg class="ic"><use href="#i-forward"/></svg></span>
+              </div>
+            </div>
+            <div class="row">
+              <div class="rl">
+                <div class="rt">蒙版不透明度</div>
+                <div class="rh">控制权被代理持有时，页面遮罩的浓度。</div>
+              </div>
+              <div class="rv">
+                <span class="sl">
+                  <span class="track"><span class="fill"></span><span class="knob"></span></span>
+                  <span class="num">20%</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- b) 截图与标注 -->
+        <div class="card">
+          <div class="ch">
+            <span class="ci"><svg class="ic"><use href="#i-camera"/></svg></span>
+            <div>
+              <div class="ct">截图与标注</div>
+              <div class="cd">每次代理动作都会留一张带元素引用的截图。</div>
+            </div>
+            <span class="cmeta">CAPTURE</span>
+          </div>
+          <div class="split">
+            <div class="rows">
+              <div class="row">
+                <div class="rl">
+                  <div class="rt">截图格式</div>
+                  <div class="rh">写入审计记录时的默认编码。</div>
+                </div>
+                <div class="rv">
+                  <span class="seg"><span class="on">PNG</span><span>JPEG</span></span>
+                </div>
+              </div>
+              <div class="row">
+                <div class="rl">
+                  <div class="rt">标注元素引用</div>
+                  <div class="rh">在截图上叠加 ref 编号，回看时能直接对上页面元素。</div>
+                </div>
+                <div class="rv"><span class="sw on"><i></i></span></div>
+              </div>
+            </div>
+            <div class="shot">
+              <div class="shotbar"><i></i><i></i><i></i><span class="u">harbor.example/8842</span></div>
+              <div class="shotbody">
+                <span class="l w70"></span>
+                <span class="l w42"></span>
+                <span class="target"><span class="ref">ref e18</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- c) 服务与端口 -->
+        <div class="card">
+          <div class="ch">
+            <span class="ci"><svg class="ic"><use href="#i-terminal"/></svg></span>
+            <div>
+              <div class="ct">服务与端口</div>
+              <div class="cd">本机代理服务对外暴露的地址，供 MCP 客户端连接。</div>
+            </div>
+            <span class="cmeta">SERVICE</span>
+          </div>
+          <div class="prow">
+            <span class="pk">控制端口</span>
+            <span class="pv">:59866</span>
+            <span class="btn mini"><svg class="ic"><use href="#i-copy"/></svg>复制</span>
+          </div>
+          <div class="prow">
+            <span class="pk">MCP 端点</span>
+            <span class="pv dim">http://127.0.0.1:59866/mcp</span>
+            <span class="tagx ok">已就绪</span>
+          </div>
+          <div class="pnote">
+            <svg class="ic"><use href="#i-alert"/></svg>
+            端口变更会重启本地服务，正在运行的代理会话会被中断。
+          </div>
+        </div>
+
+        <div class="set-foot">
+          配置保存在本机<span class="ln"></span>不随账号同步<span class="ln"></span>仅对当前用户生效
+        </div>
+
+      </div>
+    </div>
+
+    <!-- status bar -->
+    <div class="sb">
+      <span class="g"><span class="dot bronze"></span>有未保存的改动</span>
+      <span class="sep"></span>
+      <span class="g mono">:59866</span>
+      <span class="sep"></span>
+      <span class="g mut4"><span class="mono">2</span>项待应用</span>
+      <span class="grow"></span>
+      <span class="btn">放弃</span>
+      <span class="btn" style="background:var(--bronze);border-color:var(--bronze);color:var(--surface)">保存并重启</span>
+    </div>
+
+  </div>
+</div>

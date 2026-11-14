@@ -1,0 +1,3 @@
+# 设计工作台的生成产物（可由 build-node.ps1 / shot.ps1 重建）
+build/
+shots/

@@ -1,0 +1,151 @@
+<div class="stage">
+  <style>
+      .es-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:2px 24px 0}
+      .es{width:600px;background:var(--paper-2);border:1px solid var(--line);border-radius:12px;
+        box-shadow:var(--sh-card);padding:36px 44px 0;text-align:center}
+      .es .glyph{width:64px;height:64px;border-radius:16px;background:var(--bronze-bg);
+        border:1px solid var(--bronze-line);display:grid;place-items:center;color:var(--bronze);margin:0 auto 22px}
+      .es .glyph .ic{width:32px;height:32px;stroke-width:1.4}
+      .es h2{font-size:28px;line-height:1.2;font-weight:650;letter-spacing:-.025em;color:var(--ink)}
+      .es p{margin:12px auto 0;max-width:430px;font-size:12.5px;line-height:1.8;color:var(--ink-3)}
+      .es .acts{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:26px}
+      .es .acts .btn{height:32px;padding:0 16px;font-size:12.5px}
+      .es .foot{display:flex;align-items:center;justify-content:center;gap:9px;margin:28px -44px 0;
+        padding:13px 0 15px;border-top:1px solid var(--line);font:500 10px/1 var(--mono);
+        color:var(--ink-4);letter-spacing:.02em}
+      .es .foot .k{font:600 9.5px/1 var(--mono);color:var(--ink-3);background:var(--surface);
+        border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:3px 5px}
+
+      .es-recent{flex:none;padding:12px 24px 16px;background:var(--paper-2);border-top:1px solid var(--line)}
+      .es-rh{width:744px;margin:0 auto 10px;display:flex;align-items:center;gap:8px}
+      .es-rh .t{font-size:12px;font-weight:600;color:var(--ink-2)}
+      .es-rh .n{font:600 9.5px/1 var(--mono);color:var(--ink-3);background:var(--surface);
+        border:1px solid var(--line);border-radius:4px;padding:2px 5px}
+      .es-rh .hint{margin-left:auto;font-size:10.5px;color:var(--ink-4)}
+      .es-rl{width:744px;margin:0 auto;display:flex;gap:12px}
+      .es-card{width:240px;height:64px;position:relative;display:flex;align-items:center;gap:10px;
+        padding:0 12px;background:var(--surface);border:1px solid var(--line);border-radius:8px;
+        box-shadow:var(--sh-card)}
+      .es-fav{width:24px;height:24px; border-radius:6px;display:grid;place-items:center;flex:none;
+        font:700 10px/1 var(--sans);border:1px solid var(--line)}
+      .es-fav .ic{width:13px;height:13px}
+      .es-txt{min-width:0;flex:1;padding-right:10px}
+      .es-tt{display:block;font-size:12px;font-weight:600;color:var(--ink);letter-spacing:-.005em;
+        white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .es-dd{display:block;margin-top:4px;font:500 9.5px/1 var(--mono);color:var(--ink-4);
+        white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .es-x{position:absolute;top:7px;right:7px;width:14px;height:14px;display:grid;place-items:center;
+        color:var(--ink-4)}
+    </style>
+
+  <div class="win">
+
+    <!-- title bar -->
+    <div class="tb">
+      <div class="tb-left">
+        <div class="lights"><i class="l1"></i><i class="l2"></i><i class="l3"></i></div>
+        <div class="brand">
+          <span class="mark"><svg class="ic"><use href="#i-cube"/></svg></span>
+          <span class="bname">browser-use</span>
+          <span class="bsub">agent</span>
+        </div>
+      </div>
+
+      <div class="tabstrip">
+        <div class="tab-new" style="border-color:var(--line)"><svg class="ic sm"><use href="#i-plus"/></svg></div>
+      </div>
+
+      <div class="tb-right">
+        <div class="wctl">
+          <span class="wbtn"><svg class="ic"><use href="#i-minus"/></svg></span>
+          <span class="wbtn"><svg class="ic"><use href="#i-square"/></svg></span>
+          <span class="wbtn close"><svg class="ic"><use href="#i-close"/></svg></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- toolbar -->
+    <div class="tb2">
+      <div class="navgroup">
+        <span class="nbtn dim"><svg class="ic"><use href="#i-back"/></svg></span>
+        <span class="nbtn dim"><svg class="ic"><use href="#i-forward"/></svg></span>
+        <span class="nbtn dim"><svg class="ic"><use href="#i-reload"/></svg></span>
+      </div>
+      <span class="nsep"></span>
+
+      <div class="addr" style="background:var(--paper-3);border-style:dashed;border-color:var(--line-2);box-shadow:none">
+        <svg class="ic" style="width:14px;height:14px;color:var(--ink-4)"><use href="#i-search"/></svg>
+        <span style="flex:1 1 auto;min-width:0;font-size:13px;color:var(--ink-4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">输入网址或搜索…</span>
+        <span class="kbd">⌘L</span>
+      </div>
+
+      <div class="chip"><svg class="ic"><use href="#i-command"/></svg>命令<span class="kbd">⌘K</span></div>
+      <div class="chip agent idle"><span class="dot"></span>代理空闲</div>
+    </div>
+
+    <!-- content -->
+    <div class="content" style="flex-direction:column">
+
+      <div class="es-wrap">
+        <div class="es">
+          <div class="glyph"><svg class="ic"><use href="#i-globe"/></svg></div>
+          <h2>还没有打开任何页面</h2>
+          <p>打开一个网址，或把任务交给代理；<br>每个标签页都有独立的页面与审计记录。</p>
+          <div class="acts">
+            <span class="btn bronze"><svg class="ic"><use href="#i-plus"/></svg>新建标签页</span>
+            <span class="btn"><svg class="ic"><use href="#i-shield"/></svg>让代理开始</span>
+          </div>
+          <div class="foot"><span class="k">⌘T</span>新建标签页<span style="width:1px;height:9px;background:var(--line-2)"></span>把网址拖进窗口即可打开</div>
+        </div>
+      </div>
+
+      <div class="es-recent">
+        <div class="es-rh">
+          <span class="t">最近关闭</span>
+          <span class="n">3</span>
+          <span class="hint">恢复后保留原会话与审计记录</span>
+        </div>
+        <div class="es-rl">
+          <div class="es-card">
+            <span class="es-fav" style="background:var(--info-bg);color:var(--info)">H</span>
+            <span class="es-txt">
+              <span class="es-tt">Harbor 运单 8842</span>
+              <span class="es-dd">harbor.example</span>
+            </span>
+            <span class="es-x"><svg class="ic xs"><use href="#i-reload"/></svg></span>
+          </div>
+          <div class="es-card">
+            <span class="es-fav" style="background:var(--paper-3);color:var(--ink-2)"><svg class="ic"><use href="#i-terminal"/></svg></span>
+            <span class="es-txt">
+              <span class="es-tt">Fixture Home 测试页</span>
+              <span class="es-dd">127.0.0.1:8790</span>
+            </span>
+            <span class="es-x"><svg class="ic xs"><use href="#i-reload"/></svg></span>
+          </div>
+          <div class="es-card">
+            <span class="es-fav" style="background:var(--paper-3);color:var(--ink-3)"><svg class="ic"><use href="#i-search"/></svg></span>
+            <span class="es-txt">
+              <span class="es-tt">搜索 MCP 审计日志</span>
+              <span class="es-dd">duckduckgo.com</span>
+            </span>
+            <span class="es-x"><svg class="ic xs"><use href="#i-reload"/></svg></span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- status bar -->
+    <div class="sb">
+      <span class="g"><svg class="ic"><use href="#i-tab"/></svg><span class="mono">0</span>个标签页</span>
+      <span class="sep"></span>
+      <span class="g"><span class="dot"></span>代理空闲</span>
+      <span class="g mono">:59866</span>
+      <span class="sep"></span>
+      <span class="g mut4">等待打开页面</span>
+      <span class="grow"></span>
+      <span class="btn"><svg class="ic"><use href="#i-activity"/></svg>活动</span>
+    </div>
+
+  </div>
+</div>

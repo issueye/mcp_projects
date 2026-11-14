@@ -1,0 +1,74 @@
+<div class="stage">
+  <div class="win note">
+    <header class="nt-h">
+      <div class="nt-mark"><svg class="ic"><use href="#i-layers"/></svg></div>
+      <div>
+        <div class="nt-kicker">设计说明 · browser-use 界面重设计</div>
+        <div class="nt-title">把浏览器当成一台仪器</div>
+      </div>
+      <div class="nt-meta">
+        <span>对象 codes/go_projects/mcp_projects/browser_use</span>
+        <span class="dot"></span>
+        <span>1280 × 860 · 标题栏 46 · 最小 860 × 560</span>
+      </div>
+    </header>
+
+    <div class="nt-body">
+      <section class="nt-main">
+        <p class="nt-lead">
+          browser-use 不是给人「逛网页」的浏览器，而是让代理在里面干活、人随时能接管的控制台。旧界面把所有信息压成一条灰色工具栏，代理状态躲在角落（「Agent idle」），接管、活动、审计都像事后追加的功能。这次重做只回答一个问题：<b>现在谁在操作这个页面，它刚才做了什么？</b>
+        </p>
+
+        <div class="dec">
+          <div class="d"><span class="dn">01</span><div><b>标签页去彩色，读作折页</b><p>原来的彩色圆点换成站点 favicon 方块，颜色只留在「站点」这件事上；当前页纸面更亮、压住工具栏发丝线，并用 2px 青铜下划线收口，让「我在哪一页」不用靠颜色也能一眼看出。</p></div></div>
+          <div class="d"><span class="dn">02</span><div><b>代理态升为常驻仪表</b><p>工具栏胶囊（空闲 / 工作中 / 你已接管 / 已暂停）、状态条青铜点、网页上方页眉的「站点策略」三处同时回答「谁在操作」。青铜是代理的专属色，人接管时换成警告色，两种状态永不共用颜色。</p></div></div>
+          <div class="d"><span class="dn">03</span><div><b>地址栏拆成两段</b><p>锁与域名一段（可读、可复制），路径一段（等宽、可省略）；右侧常驻前往键，键盘 ⌘L 聚焦时给 3px 青铜光环。加载中不再转圈，而是显示百分比，与状态条的耗时读数同源。</p></div></div>
+          <div class="d"><span class="dn">04</span><div><b>审计从浮层补进布局</b><p>活动面板改为右侧 320 抽屉，网页让位而不是被遮挡；条目按时间分组，状态点区分成功 / 失败 / 慢调用，工具名与耗时等宽对右，失败只用 danger 色写描述、不整行染色。</p></div></div>
+        </div>
+
+        <div class="nt-rule">
+          <b>改写边界</b>
+          语义不变：标签、导航、地址、接管、暂停、活动、状态条一一对应现有 view.go 的部件，只改视觉与信息层级，不新增需要后端的交互。
+        </div>
+      </section>
+
+      <aside class="nt-side">
+        <div class="nt-box">
+          <div class="nt-bt">交付清单 <span>8 张稿</span></div>
+          <div class="nt-item"><b>01</b>主窗 · 浅色</div>
+          <div class="nt-item"><b>02</b>主窗 · 深色</div>
+          <div class="nt-item"><b>03</b>活动审计抽屉</div>
+          <div class="nt-item"><b>04</b>空状态</div>
+          <div class="nt-item"><b>05</b>代理接管蒙版</div>
+          <div class="nt-item"><b>06</b>命令面板 / 站点策略 / 轻提示</div>
+          <div class="nt-item"><b>07</b>设置 · 代理控制与截图</div>
+          <div class="nt-item"><b>08</b>视觉规范</div>
+        </div>
+
+        <div class="nt-box">
+          <div class="nt-bt">落地映射 <span>mygo 原生绘制</span></div>
+          <div class="nt-map"><code>kit.css --paper</code><span>ui.Theme.Background</span></div>
+          <div class="nt-map"><code>--line</code><span>Theme.Border · Divider</span></div>
+          <div class="nt-map"><code>--bronze</code><span>Theme.Accent（代理态）</span></div>
+          <div class="nt-map"><code>--ink-3</code><span>Theme.TextMuted</span></div>
+          <div class="nt-map"><code>--mono</code><span>Text.Font(monoFamily)</span></div>
+          <div class="nt-map"><code>折页下划线</code><span>tabItem 内 Absolute Row</span></div>
+          <div class="nt-map"><code>页眉元信息</code><span>viewportMeta 24px</span></div>
+          <div class="nt-map"><code>蒙版操作卡</code><span>mask() Absolute Row</span></div>
+        </div>
+
+        <div class="nt-box mono-box">
+          <div class="nt-bt">真实渲染校验</div>
+          <div class="nt-shot"><span>docs/ui-inkwell.png</span><s>1296 × 900</s></div>
+          <p>浅色主题在 Windows 上以 mygo 原生绘制截图复核：标题栏 46、工具栏 46、页眉 24、视口自适应、状态条 26；深色主题跟随系统外观切换。</p>
+        </div>
+      </aside>
+    </div>
+
+    <footer class="nt-f">
+      <span>设计体系 纸页 Inkwell · 暖纸 #F7F5F0 / 石墨 #1B1917 / 青铜 #9C4A22</span>
+      <span class="grow"></span>
+      <span class="mono">AA · 正文 ≥ 12 · 说明色 ≥ ink-3</span>
+    </footer>
+  </div>
+</div>

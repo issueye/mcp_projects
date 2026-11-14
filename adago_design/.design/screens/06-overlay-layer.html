@@ -1,0 +1,229 @@
+<div class="stage">
+  <div class="win">
+
+    <!-- title bar -->
+    <div class="tb">
+      <div class="tb-left">
+        <div class="lights"><i class="l1"></i><i class="l2"></i><i class="l3"></i></div>
+        <div class="brand">
+          <span class="mark"><svg class="ic"><use href="#i-cube"/></svg></span>
+          <span class="bname">browser-use</span>
+          <span class="bsub">agent</span>
+        </div>
+      </div>
+
+      <div class="tabstrip">
+        <div class="tab on">
+          <span class="fav" style="background:#1B5E6B">H</span>
+          <span class="tt">Harbor · 上海至鹿特丹运单</span>
+          <span class="tag">T1</span>
+          <span class="x"><svg class="ic"><use href="#i-close"/></svg></span>
+          <span class="bar"></span>
+        </div>
+        <div class="tab off">
+          <span class="fav" style="background:#5A534B"><svg class="ic xs"><use href="#i-terminal"/></svg></span>
+          <span class="tt">Fixture Home — 本地测试页</span>
+          <span class="lock"><svg class="ic xs"><use href="#i-lock"/></svg></span>
+          <span class="x"><svg class="ic"><use href="#i-close"/></svg></span>
+        </div>
+        <div class="tab off">
+          <span class="fav" style="background:#9A9287">?</span>
+          <span class="tt">新标签页</span>
+          <span class="x"><svg class="ic"><use href="#i-close"/></svg></span>
+        </div>
+        <div class="tab-new"><svg class="ic sm"><use href="#i-plus"/></svg></div>
+      </div>
+
+      <div class="tb-right">
+        <div class="wctl">
+          <span class="wbtn"><svg class="ic"><use href="#i-minus"/></svg></span>
+          <span class="wbtn"><svg class="ic"><use href="#i-square"/></svg></span>
+          <span class="wbtn close"><svg class="ic"><use href="#i-close"/></svg></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- toolbar -->
+    <div class="tb2">
+      <div class="navgroup">
+        <span class="nbtn"><svg class="ic"><use href="#i-back"/></svg></span>
+        <span class="nbtn dim"><svg class="ic"><use href="#i-forward"/></svg></span>
+        <span class="nbtn"><svg class="ic"><use href="#i-reload"/></svg></span>
+      </div>
+      <span class="nsep"></span>
+
+      <div class="addr">
+        <span class="site"><svg class="ic"><use href="#i-lock"/></svg><span class="host">harbor.example</span></span>
+        <span class="sep">/</span>
+        <span class="path">shipments/8842?tab=documents&amp;draft=3</span>
+        <span class="kbd">⌘L</span>
+        <span class="go"><svg class="ic"><use href="#i-arrow-right"/></svg></span>
+      </div>
+
+      <div class="chip"><svg class="ic"><use href="#i-command"/></svg>命令<span class="kbd">⌘K</span></div>
+      <div class="chip agent idle"><span class="dot"></span>代理已暂停</div>
+    </div>
+
+    <!-- content -->
+    <div class="content">
+      <div class="vp-wrap">
+        <div class="vp-meta">
+          <span class="m"><svg class="ic"><use href="#i-tab"/></svg>t1 · 主标签</span>
+          <span class="m"><svg class="ic"><use href="#i-user"/></svg>人工接管中</span>
+          <span class="m"><svg class="ic"><use href="#i-layers"/></svg>文档树 12 节点</span>
+          <span class="grow"></span>
+          <span class="m live"><svg class="ic"><use href="#i-lock"/></svg>HTTPS · 受信任</span>
+        </div>
+        <div class="vp">
+          <!--SITE-->
+          <!-- 页面轻微压暗：突出浮层层级 -->
+          <div style="position:absolute;inset:0;z-index:4;background:rgba(27,25,23,.08)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- status bar -->
+    <div class="sb">
+      <span class="g"><svg class="ic"><use href="#i-tab"/></svg><span class="mono">3</span>个标签页</span>
+      <span class="sep"></span>
+      <span class="g"><span class="dot"></span>代理已暂停</span>
+      <span class="g mono">:59866</span>
+      <span class="sep"></span>
+      <span class="g"><span class="dot ok"></span><span class="mono">42ms</span></span>
+      <span class="url">harbor.example/shipments/8842?tab=documents&amp;draft=3</span>
+      <span class="grow"></span>
+      <span class="g mut4"><svg class="ic"><use href="#i-camera"/></svg>截图可标注</span>
+      <span class="btn"><svg class="ic"><use href="#i-activity"/></svg>活动<span class="mono" style="color:var(--ink-4)">12</span></span>
+    </div>
+
+    <!-- ============ 浮层 1 · 站点策略（锚定地址栏下方） ============ -->
+    <div style="position:absolute;left:136px;top:98px;width:360px;z-index:12;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--sh-float)">
+      <span style="position:absolute;left:24px;top:-5px;width:9px;height:9px;background:var(--surface);border-left:1px solid var(--line);border-top:1px solid var(--line);transform:rotate(45deg)"></span>
+
+      <div style="display:flex;align-items:center;gap:9px;padding:12px 13px 10px">
+        <span style="width:24px;height:24px;border-radius:100px;background:var(--bronze-bg);color:var(--bronze);display:grid;place-items:center;flex:none">
+          <svg class="ic sm"><use href="#i-shield"/></svg>
+        </span>
+        <span style="min-width:0;flex:1">
+          <span style="display:block;font-size:12.5px;font-weight:650;color:var(--ink);letter-spacing:-.01em">harbor.example</span>
+          <span style="display:block;font:500 9px/1.5 var(--mono);color:var(--ink-4);margin-top:2px">站点策略 3 项已批准</span>
+        </span>
+        <span class="tagx ok" style="height:17px">受信任</span>
+      </div>
+
+      <div style="padding:0 13px">
+        <div style="display:flex;align-items:center;height:31px;border-top:1px solid var(--line)">
+          <span style="flex:1;font-size:12px;color:var(--ink-2)">HTTPS 证书有效</span>
+          <span style="font:500 9px/1 var(--mono);color:var(--ink-4);margin-right:9px">TLS 1.3</span>
+          <span style="width:28px;height:16px;border-radius:100px;background:var(--bronze);display:flex;align-items:center;justify-content:flex-end;padding:2px;flex:none">
+            <span style="width:12px;height:12px;border-radius:50%;background:var(--surface);display:block"></span>
+          </span>
+        </div>
+        <div style="display:flex;align-items:center;height:31px;border-top:1px solid var(--line)">
+          <span style="flex:1;font-size:12px;color:var(--ink-2)">允许剪贴板读取</span>
+          <span style="font:500 9px/1 var(--mono);color:var(--ink-4);margin-right:9px">仅本站</span>
+          <span style="width:28px;height:16px;border-radius:100px;background:var(--bronze);display:flex;align-items:center;justify-content:flex-end;padding:2px;flex:none">
+            <span style="width:12px;height:12px;border-radius:50%;background:var(--surface);display:block"></span>
+          </span>
+        </div>
+        <div style="display:flex;align-items:center;height:31px;border-top:1px solid var(--line)">
+          <span style="flex:1;font-size:12px;color:var(--ink-2)">自动批准下载</span>
+          <span style="font:500 9px/1 var(--mono);color:var(--ink-4);margin-right:9px">PDF CSV</span>
+          <span style="width:28px;height:16px;border-radius:100px;background:var(--bronze);display:flex;align-items:center;justify-content:flex-end;padding:2px;flex:none">
+            <span style="width:12px;height:12px;border-radius:50%;background:var(--surface);display:block"></span>
+          </span>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:6px;height:34px;margin-top:6px;padding:0 13px;border-top:1px solid var(--line);color:var(--bronze);font-size:11.5px;font-weight:600">
+        <svg class="ic xs"><use href="#i-settings"/></svg>
+        管理站点策略
+        <svg class="ic xs" style="margin-left:auto;color:var(--ink-4)"><use href="#i-external"/></svg>
+      </div>
+    </div>
+
+    <!-- ============ 浮层 2 · 命令面板 ============ -->
+    <div style="position:absolute;left:50%;top:336px;transform:translateX(-50%);width:520px;z-index:14;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--sh-float);overflow:hidden">
+
+      <div style="height:46px;display:flex;align-items:center;gap:10px;padding:0 14px;border-bottom:1px solid var(--line)">
+        <svg class="ic" style="color:var(--ink-3)"><use href="#i-command"/></svg>
+        <span style="flex:1;font-size:13px;color:var(--ink-4)">输入命令或网址</span>
+        <span style="font:600 9px/1 var(--mono);color:var(--ink-3);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:3px 6px;background:var(--paper-2)">ESC</span>
+      </div>
+
+      <div style="padding:6px 0 4px">
+        <div style="padding:3px 14px 2px;font:600 9px/1 var(--mono);letter-spacing:.09em;color:var(--ink-4)">代理</div>
+
+        <div style="height:28px;display:flex;align-items:center;gap:9px;margin:0 6px;padding:0 8px;border-radius:6px;background:var(--bronze-bg);color:var(--bronze)">
+          <svg class="ic sm"><use href="#i-user"/></svg>
+          <span style="font-size:12.5px;font-weight:600">交还页面控制</span>
+          <span style="margin-left:auto;font:600 9px/1 var(--mono);color:var(--bronze);border:1px solid var(--bronze-line);border-radius:4px;padding:3px 5px;background:var(--surface)">⌘⇧T</span>
+        </div>
+
+        <div style="height:28px;display:flex;align-items:center;gap:9px;margin:0 6px;padding:0 8px;border-radius:6px;color:var(--ink-2)">
+          <svg class="ic sm" style="color:var(--ink-3)"><use href="#i-play"/></svg>
+          <span style="font-size:12.5px">恢复代理</span>
+          <span style="margin-left:auto;font:600 9px/1 var(--mono);color:var(--ink-4);border:1px solid var(--line);border-radius:4px;padding:3px 5px">⌘⇧P</span>
+        </div>
+
+        <div style="height:28px;display:flex;align-items:center;gap:9px;margin:0 6px;padding:0 8px;border-radius:6px;color:var(--ink-2)">
+          <svg class="ic sm" style="color:var(--ink-3)"><use href="#i-activity"/></svg>
+          <span style="font-size:12.5px">打开活动审计</span>
+          <span style="margin-left:auto;font:600 9px/1 var(--mono);color:var(--ink-4);border:1px solid var(--line);border-radius:4px;padding:3px 5px">⌘⇧A</span>
+        </div>
+
+        <div style="padding:7px 14px 2px;font:600 9px/1 var(--mono);letter-spacing:.09em;color:var(--ink-4)">导航</div>
+
+        <div style="height:28px;display:flex;align-items:center;gap:9px;margin:0 6px;padding:0 8px;border-radius:6px;color:var(--ink-2)">
+          <svg class="ic sm" style="color:var(--ink-3)"><use href="#i-globe"/></svg>
+          <span style="font-size:12.5px">聚焦地址栏</span>
+          <span style="margin-left:auto;font:600 9px/1 var(--mono);color:var(--ink-4);border:1px solid var(--line);border-radius:4px;padding:3px 5px">⌘L</span>
+        </div>
+
+        <div style="height:28px;display:flex;align-items:center;gap:9px;margin:0 6px;padding:0 8px;border-radius:6px;color:var(--ink-2)">
+          <svg class="ic sm" style="color:var(--ink-3)"><use href="#i-back"/></svg>
+          <span style="font-size:12.5px">后退一页</span>
+          <span style="margin-left:auto;font:600 9px/1 var(--mono);color:var(--ink-4);border:1px solid var(--line);border-radius:4px;padding:3px 5px">⌘[</span>
+        </div>
+
+        <div style="height:28px;display:flex;align-items:center;gap:9px;margin:0 6px;padding:0 8px;border-radius:6px;color:var(--ink-2)">
+          <svg class="ic sm" style="color:var(--ink-3)"><use href="#i-reload"/></svg>
+          <span style="font-size:12.5px">重新加载</span>
+          <span style="margin-left:auto;font:600 9px/1 var(--mono);color:var(--ink-4);border:1px solid var(--line);border-radius:4px;padding:3px 5px">⌘R</span>
+        </div>
+
+        <div style="padding:7px 14px 2px;font:600 9px/1 var(--mono);letter-spacing:.09em;color:var(--ink-4)">视图</div>
+
+        <div style="height:28px;display:flex;align-items:center;gap:9px;margin:0 6px;padding:0 8px;border-radius:6px;color:var(--ink-2)">
+          <svg class="ic sm" style="color:var(--ink-3)"><use href="#i-camera"/></svg>
+          <span style="font-size:12.5px">截图并标注</span>
+          <span style="margin-left:auto;font:600 9px/1 var(--mono);color:var(--ink-4);border:1px solid var(--line);border-radius:4px;padding:3px 5px">⌘⇧S</span>
+        </div>
+
+        <div style="height:28px;display:flex;align-items:center;gap:9px;margin:0 6px;padding:0 8px;border-radius:6px;color:var(--ink-2)">
+          <svg class="ic sm" style="color:var(--ink-3)"><use href="#i-settings"/></svg>
+          <span style="font-size:12.5px">切换深浅主题</span>
+          <span style="margin-left:auto;font:600 9px/1 var(--mono);color:var(--ink-4);border:1px solid var(--line);border-radius:4px;padding:3px 5px">⌘⇧D</span>
+        </div>
+      </div>
+
+      <div style="height:32px;display:flex;align-items:center;gap:12px;padding:0 14px;border-top:1px solid var(--line);background:var(--paper-2);font:500 9px/1 var(--mono);color:var(--ink-4)">
+        <span>上下 选择</span><span>Enter 执行</span><span>ESC 关闭</span>
+        <span style="margin-left:auto">browser-use</span>
+      </div>
+    </div>
+
+    <!-- ============ 浮层 3 · 轻提示 ============ -->
+    <div style="position:absolute;right:14px;bottom:40px;z-index:16;height:46px;display:flex;align-items:center;gap:10px;padding:0 6px 0 12px;background:var(--ink);color:var(--paper-2);border-radius:12px;box-shadow:var(--sh-float)">
+      <span style="width:20px;height:20px;border-radius:50%;background:var(--bronze-bg);color:var(--bronze);display:grid;place-items:center;flex:none">
+        <svg class="ic xs"><use href="#i-check"/></svg>
+      </span>
+      <span style="font-size:12px;font-weight:500;white-space:nowrap">已接管页面控制，代理已暂停</span>
+      <span style="width:1px;height:16px;background:var(--line);opacity:.28;margin-left:2px"></span>
+      <span style="display:flex;align-items:center;gap:4px;height:26px;padding:0 8px;border-radius:6px;font-size:11.5px;font-weight:600;color:var(--bronze-bg)">
+        <svg class="ic xs"><use href="#i-undo"/></svg>撤销
+      </span>
+    </div>
+
+  </div>
+</div>

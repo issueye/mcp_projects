@@ -1,0 +1,132 @@
+{
+  "id": "inkwell",
+  "name": "纸页 Inkwell",
+  "vendor": "自定义 · browser-use",
+  "family": "cross",
+  "description": "为 AI 代理浏览器 browser-use 定制的桌面设计体系：暖纸底 + 石墨字 + 青铜强调，发丝线分栏、等宽数字标注仪表感；青铜只代表「代理在场」，安全连接另用仪器蓝。",
+  "style": {
+    "summary": "纸面质感 + 仪表精度：暖纸中性色、发丝 1px 分隔线、等宽数字承载机器信息，青铜色专属于「代理正在操作」。",
+    "keywords": ["暖纸", "石墨墨色", "青铜代理色", "发丝线", "等宽仪表", "标签页折页"],
+    "density": "紧凑但留呼吸",
+    "elevation": "几乎不用阴影：靠纸面明度差与 1px 发丝线分层；仅蒙版卡片、活动抽屉、轻提示允许一层柔和投影"
+  },
+  "themes": ["light", "dark"],
+  "light": {
+    "colors": {
+      "bg-1": { "value": "#F7F5F0", "usage": "窗口底色 / 工具栏纸面" },
+      "bg-2": { "value": "#FBFAF7", "usage": "当前标签页与卡片纸面" },
+      "bg-3": { "value": "#F1EEE7", "usage": "次级填充 / 未选中标签" },
+      "surface": { "value": "#FFFFFF", "usage": "浮层纸面（蒙版卡片、抽屉）" },
+      "border": { "value": "#E3DED4", "usage": "发丝分隔线与控件描边" },
+      "border-2": { "value": "#CFC8BB", "usage": "强调描边 / 聚焦环基底" },
+      "text-1": { "value": "#1B1917", "usage": "一级文字（石墨）" },
+      "text-2": { "value": "#5A534B", "usage": "二级文字" },
+      "text-3": { "value": "#6F675E", "usage": "三级文字 / 说明（AA 4.5+）" },
+      "text-4": { "value": "#9A9287", "usage": "占位 / 禁用" },
+      "primary": { "value": "#9C4A22", "usage": "代理强调色（青铜）：图标、下划线、文字" },
+      "primary-hover": { "value": "#873E1C", "usage": "悬停" },
+      "primary-active": { "value": "#703216", "usage": "按下" },
+      "primary-bg": { "value": "#F6EBE3", "usage": "青铜浅底" },
+      "primary-line": { "value": "#E7CDBC", "usage": "青铜浅描边" },
+      "on-primary": { "value": "#FFFFFF", "usage": "青铜实底上的文字" },
+      "success": { "value": "#1F6B4E", "usage": "成功 / 调用完成" },
+      "success-bg": { "value": "#E6F1EA", "usage": "成功浅底" },
+      "warning": { "value": "#8A5D0B", "usage": "警告 / 你已接管" },
+      "warning-bg": { "value": "#F7EEDC", "usage": "警告浅底" },
+      "danger": { "value": "#A33A2B", "usage": "失败 / 危险" },
+      "danger-bg": { "value": "#F8E7E3", "usage": "失败浅底" },
+      "info": { "value": "#33556F", "usage": "安全连接 / 信息（仪器蓝）" },
+      "info-bg": { "value": "#E8EEF3", "usage": "信息浅底" }
+    },
+    "type": {
+      "family": "Inter, 'Noto Sans SC', system-ui, sans-serif",
+      "levels": {
+        "display": { "size": 28, "weight": 650, "lineHeight": 1.2, "letterSpacing": -0.4, "usage": "空状态主标题" },
+        "title-1": { "size": 20, "weight": 650, "lineHeight": 1.25, "letterSpacing": -0.2, "usage": "面板标题" },
+        "title-2": { "size": 16, "weight": 650, "lineHeight": 1.3, "usage": "卡片标题" },
+        "title-3": { "size": 14, "weight": 600, "lineHeight": 1.35, "usage": "分组标题" },
+        "body": { "size": 13, "weight": 400, "lineHeight": 1.45, "usage": "正文 / 地址栏" },
+        "body-sm": { "size": 12, "weight": 400, "lineHeight": 1.4, "usage": "标签页标题 / 列表次要文字" },
+        "caption": { "size": 11, "weight": 500, "lineHeight": 1.35, "usage": "状态条 / 徽标" },
+        "micro": { "size": 12, "weight": 600, "lineHeight": 1.3, "letterSpacing": 0.1, "usage": "等宽元数据 / 端口 / 耗时（12px 可读下限）" }
+      }
+    },
+    "spacing": { "xxs": 2, "xs": 4, "sm": 8, "md": 12, "lg": 16, "xl": 24, "xxl": 32 },
+    "radius": { "small": 4, "medium": 6, "large": 8, "xlarge": 12, "pill": 100 },
+    "shadows": {
+      "none": "none",
+      "card": "0 2px 6px rgba(27, 25, 23, 0.06)",
+      "floating": "0 12px 32px rgba(27, 25, 23, 0.16), 0 1px 0 rgba(27, 25, 23, 0.04)",
+      "drawer": "-8px 0 24px rgba(27, 25, 23, 0.08)"
+    },
+    "motion": {
+      "fast": "120ms cubic-bezier(0.3, 0.7, 0.3, 1)",
+      "standard": "200ms cubic-bezier(0.3, 0.7, 0.3, 1)",
+      "slow": "320ms cubic-bezier(0.32, 0.72, 0, 1)"
+    },
+    "grid": 4
+  },
+  "dark": {
+    "colors": {
+      "bg-1": { "value": "#1F1C18", "usage": "窗口底色（暖炭）" },
+      "bg-2": { "value": "#29251F", "usage": "当前标签页与卡片纸面" },
+      "bg-3": { "value": "#181512", "usage": "次级填充 / 未选中标签" },
+      "surface": { "value": "#2E2A23", "usage": "浮层纸面" },
+      "border": { "value": "#3B3630", "usage": "发丝分隔线" },
+      "border-2": { "value": "#514A40", "usage": "强调描边" },
+      "text-1": { "value": "#EDEAE3", "usage": "一级文字" },
+      "text-2": { "value": "#C4BCAE", "usage": "二级文字" },
+      "text-3": { "value": "#A79E92", "usage": "三级文字" },
+      "text-4": { "value": "#7C746A", "usage": "占位 / 禁用" },
+      "primary": { "value": "#E0895C", "usage": "代理强调色（夜色青铜）" },
+      "primary-hover": { "value": "#EAA078", "usage": "悬停" },
+      "primary-active": { "value": "#C9754B", "usage": "按下" },
+      "primary-bg": { "value": "#33251C", "usage": "青铜浅底" },
+      "primary-line": { "value": "#4E382A", "usage": "青铜浅描边" },
+      "on-primary": { "value": "#1F1C18", "usage": "青铜实底上的文字" },
+      "success": { "value": "#6FBF95", "usage": "成功" },
+      "success-bg": { "value": "#1B2D25", "usage": "成功浅底" },
+      "warning": { "value": "#DFB164", "usage": "警告" },
+      "warning-bg": { "value": "#332B1A", "usage": "警告浅底" },
+      "danger": { "value": "#E08A78", "usage": "失败" },
+      "danger-bg": { "value": "#3A221D", "usage": "失败浅底" },
+      "info": { "value": "#8FB3CB", "usage": "安全连接 / 信息" },
+      "info-bg": { "value": "#1D2830", "usage": "信息浅底" }
+    },
+    "type": {
+      "family": "Inter, 'Noto Sans SC', system-ui, sans-serif",
+      "levels": {
+        "display": { "size": 28, "weight": 650, "lineHeight": 1.2, "letterSpacing": -0.4, "usage": "空状态主标题" },
+        "title-1": { "size": 20, "weight": 650, "lineHeight": 1.25, "letterSpacing": -0.2, "usage": "面板标题" },
+        "title-2": { "size": 16, "weight": 650, "lineHeight": 1.3, "usage": "卡片标题" },
+        "title-3": { "size": 14, "weight": 600, "lineHeight": 1.35, "usage": "分组标题" },
+        "body": { "size": 13, "weight": 400, "lineHeight": 1.45, "usage": "正文 / 地址栏" },
+        "body-sm": { "size": 12, "weight": 400, "lineHeight": 1.4, "usage": "标签页标题 / 列表次要文字" },
+        "caption": { "size": 11, "weight": 500, "lineHeight": 1.35, "usage": "状态条 / 徽标" },
+        "micro": { "size": 12, "weight": 600, "lineHeight": 1.3, "letterSpacing": 0.1, "usage": "等宽元数据（12px 可读下限）" }
+      }
+    },
+    "spacing": { "xxs": 2, "xs": 4, "sm": 8, "md": 12, "lg": 16, "xl": 24, "xxl": 32 },
+    "radius": { "small": 4, "medium": 6, "large": 8, "xlarge": 12, "pill": 100 },
+    "shadows": {
+      "none": "none",
+      "card": "0 2px 6px rgba(0, 0, 0, 0.28)",
+      "floating": "0 14px 36px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255, 255, 255, 0.04)",
+      "drawer": "-8px 0 24px rgba(0, 0, 0, 0.32)"
+    },
+    "motion": {
+      "fast": "120ms cubic-bezier(0.3, 0.7, 0.3, 1)",
+      "standard": "200ms cubic-bezier(0.3, 0.7, 0.3, 1)",
+      "slow": "320ms cubic-bezier(0.32, 0.72, 0, 1)"
+    },
+    "grid": 4
+  },
+  "guideline": [
+    "青铜 #9C4A22 是「代理在场」的专属色：只在代理状态、代理动作、接管提示上出现，界面其它强调一律用石墨或仪器蓝。",
+    "发丝线优先于阴影：分隔用 1px border，只有浮层（蒙版卡片 / 活动抽屉 / 轻提示）允许一层柔和投影。",
+    "机器信息（标签 ID、端口、耗时、工具名、URL 片段）一律等宽字体，便于纵向比对。",
+    "标签页读作折页：当前页纸面最亮并压住工具栏发丝线，未选中页下沉到 bg-3；颜色面积不超过 12%。",
+    "圆角克制：控件 6、标签页 8、浮层 12、胶囊 100；不要出现 16 以上的圆角。",
+    "文字最小 10px（仅等宽元数据），说明文字不低于 12px 且字色 ≥ text-3 以满足 AA。"
+  ]
+}
