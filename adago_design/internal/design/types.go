@@ -64,6 +64,10 @@ type System struct {
 	Light       Tokens     `json:"light"`
 	Dark        *Tokens    `json:"dark,omitempty"`
 	Guideline   []string   `json:"guideline,omitempty"`
+
+	// Builtin 标记内置体系（data/*.json 装载）。内置体系可停用、可改显示信息，
+	// 但不可删除；自定义体系（custom-systems/*.json）相反。不写进 JSON。
+	Builtin bool `json:"-"`
 }
 
 // Component 描述一个可渲染组件。
@@ -93,9 +97,17 @@ const (
 var (
 	registryMu sync.RWMutex
 	registry   = map[string]*System{}
+	// disabled 是被停用的体系 ID（运行期状态，持久化在 system-settings.json）。
+	// 读者一律经 registryMu：Systems() 过滤它，GetSystem() 对停用体系返回 false。
+	disabled = map[string]bool{}
+	// builtinOriginals 保存内置体系的原始副本（未套用 overrides），
+	// 编辑/恢复默认时以它为基准重建，避免「在已覆盖的副本上再覆盖」。
+	builtinOriginals = map[string]*System{}
+	// overridden 记录显示信息被改过的内置体系（编辑/恢复默认用）。
+	overridden = map[string]bool{}
 )
 
-// Register 注册一个设计体系（init 中调用）。
+// Register 注册一个设计体系（init 中调用内置体系）。
 func Register(s *System) {
 	if s.ID == "" {
 		panic("design: system id is empty")
@@ -105,11 +117,30 @@ func Register(s *System) {
 	if _, dup := registry[s.ID]; dup {
 		panic(fmt.Sprintf("design: duplicate system id %q", s.ID))
 	}
+	s.Builtin = true
 	registry[s.ID] = s
+	builtinOriginals[s.ID] = s
 }
 
-// Systems 返回全部体系（按 ID 排序）。
+// Systems 返回全部**已启用**体系（按 ID 排序）。
+//
+// 目录、搜索、MCP design_systems 与预览生成都用它；停用的体系只出现在
+// 管理层（AllSystems）里，避免停用后仍被 Agent 选中。
 func Systems() []*System {
+	registryMu.RLock()
+	out := make([]*System, 0, len(registry))
+	for id, s := range registry {
+		if !disabled[id] {
+			out = append(out, s)
+		}
+	}
+	registryMu.RUnlock()
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out
+}
+
+// AllSystems 返回全部体系（含停用，管理层用；按 ID 排序）。
+func AllSystems() []*System {
 	registryMu.RLock()
 	out := make([]*System, 0, len(registry))
 	for _, s := range registry {
@@ -120,12 +151,31 @@ func Systems() []*System {
 	return out
 }
 
-// GetSystem 按 ID 查找体系。
+// GetSystem 按 ID 查找**已启用**体系；停用等同于不存在。
 func GetSystem(id string) (*System, bool) {
 	registryMu.RLock()
 	defer registryMu.RUnlock()
 	s, ok := registry[id]
+	if !ok || disabled[id] {
+		return nil, false
+	}
+	return s, true
+}
+
+// getSystemAny 按 ID 查找体系（含停用），供管理与删除路径使用。
+func getSystemAny(id string) (*System, bool) {
+	registryMu.RLock()
+	defer registryMu.RUnlock()
+	s, ok := registry[id]
 	return s, ok
+}
+
+// IsSystemEnabled 判断体系是否已启用（未知 ID 返回 false）。
+func IsSystemEnabled(id string) bool {
+	registryMu.RLock()
+	defer registryMu.RUnlock()
+	_, ok := registry[id]
+	return ok && !disabled[id]
 }
 
 // unregisterSystem 从注册表移除一个体系（删除路径与测试清理共用）。
@@ -134,6 +184,9 @@ func unregisterSystem(id string) {
 	registryMu.Lock()
 	defer registryMu.Unlock()
 	delete(registry, id)
+	delete(builtinOriginals, id)
+	delete(disabled, id)
+	delete(overridden, id)
 }
 
 // Components 返回某体系的组件清单（按 ID 排序）。目录是全局共享的，

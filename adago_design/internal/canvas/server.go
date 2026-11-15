@@ -47,12 +47,49 @@ type CatalogSource interface {
 	ComposePreview(systemID string, components []string, theme, title, artboard string) (html string, width, height int, artboardID string, err error)
 }
 
+// SystemInput 是设计体系管理接口的入参（新增 / 编辑）。
+type SystemInput struct {
+	ID          string `json:"id,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Vendor      string `json:"vendor,omitempty"`
+	Family      string `json:"family,omitempty"`
+	Description string `json:"description,omitempty"`
+	Summary     string `json:"summary,omitempty"`
+	Base        string `json:"base,omitempty"`
+	Primary     string `json:"primary,omitempty"`
+	// JSON 非空表示「整体替换自定义体系」，此时忽略上面除 ID 外的字段。
+	JSON string `json:"json,omitempty"`
+}
+
+// SystemAdmin 是设计体系管理的可选能力：目录只读接口不依赖它，
+// 管理端点（新增/编辑/停用/移除/重置）在未注入时返回 501。
+type SystemAdmin interface {
+	SystemSummariesAll() any
+	SystemJSON(id string) (string, error)
+	CreateSystem(in SystemInput) (any, error)
+	UpdateSystem(id string, in SystemInput) (any, error)
+	SetSystemDisabled(id string, disabled bool) (any, error)
+	ResetSystem(id string) (any, error)
+	RemoveSystem(id string) error
+}
+
+// AdminError 是管理端点的稳定错误（code 供前端/Agent 分支）。
+type AdminError struct {
+	Code    string
+	Message string
+	Hint    string
+}
+
+func (e *AdminError) Error() string { return e.Code + ": " + e.Message }
+
 // Server 是画布 HTTP 服务。
 type Server struct {
 	store   *Store
 	tasks   *TaskQueue
 	origin  string // 允许的 Origin（http://127.0.0.1:port）
 	Catalog CatalogSource
+	// Admin 可选：设计体系管理（停用/新增/编辑/移除）。为 nil 时管理端点 501。
+	Admin SystemAdmin
 	// Theme 是界面缺省主题（light|dark），来自 -theme；用户手动切换的
 	// localStorage 覆盖在页面 bootstrap 里完成（见 static/index.html）。
 	Theme string
@@ -118,6 +155,12 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("DELETE /api/edges/{id}", s.handleDeleteEdge)
 	mux.HandleFunc("GET /api/catalog/systems", s.handleCatalogSystems)
 	mux.HandleFunc("GET /api/catalog/systems/{id}", s.handleCatalogSystem)
+	mux.HandleFunc("GET /api/catalog/systems/{id}/json", s.handleCatalogSystemJSON)
+	mux.HandleFunc("POST /api/catalog/systems", s.handleCreateSystem)
+	mux.HandleFunc("PUT /api/catalog/systems/{id}", s.handleUpdateSystem)
+	mux.HandleFunc("POST /api/catalog/systems/{id}/state", s.handleSystemState)
+	mux.HandleFunc("POST /api/catalog/systems/{id}/reset", s.handleSystemReset)
+	mux.HandleFunc("DELETE /api/catalog/systems/{id}", s.handleDeleteSystem)
 	mux.HandleFunc("POST /api/catalog/preview", s.handleCatalogPreview)
 	// HTTP MCP（Streamable HTTP）：可选挂载，未注入时 /mcp 落回静态兜底（404）。
 	// 必须按方法逐个注册：不带方法的 "/mcp" 会与下面 "GET /" 的兜底路由冲突
@@ -739,12 +782,135 @@ func (s *Server) handleDeleteEdge(w http.ResponseWriter, r *http.Request) {
 
 // ---------------- catalog ----------------
 
-func (s *Server) handleCatalogSystems(w http.ResponseWriter, _ *http.Request) {
+func (s *Server) handleCatalogSystems(w http.ResponseWriter, r *http.Request) {
 	if s.Catalog == nil {
 		writeErr(w, http.StatusNotImplemented, APIError("no_catalog", "设计目录未装配", ""))
 		return
 	}
+	if r.URL.Query().Get("all") == "1" {
+		if s.Admin == nil {
+			writeErr(w, http.StatusNotImplemented, APIError("no_admin", "设计体系管理未装配", ""))
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"systems": s.Admin.SystemSummariesAll(), "all": true})
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"systems": s.Catalog.SystemSummaries()})
+}
+
+// writeAdminErr 把管理端点的稳定错误码翻译成 HTTP 状态。
+func writeAdminErr(w http.ResponseWriter, err error) {
+	var ae *AdminError
+	if errors.As(err, &ae) {
+		status := http.StatusInternalServerError
+		switch ae.Code {
+		case "unknown_system":
+			status = http.StatusNotFound
+		case "system_duplicate", "system_builtin_protected":
+			status = http.StatusConflict
+		case "invalid_system", "bad_request":
+			status = http.StatusBadRequest
+		}
+		writeErr(w, status, APIError(ae.Code, ae.Message, ae.Hint))
+		return
+	}
+	writeErr(w, http.StatusInternalServerError, APIError("internal", err.Error(), ""))
+}
+
+func (s *Server) handleCatalogSystemJSON(w http.ResponseWriter, r *http.Request) {
+	if s.Admin == nil {
+		writeErr(w, http.StatusNotImplemented, APIError("no_admin", "设计体系管理未装配", ""))
+		return
+	}
+	id := r.PathValue("id")
+	raw, err := s.Admin.SystemJSON(id)
+	if err != nil {
+		writeAdminErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"id": id, "json": raw})
+}
+
+func (s *Server) handleCreateSystem(w http.ResponseWriter, r *http.Request) {
+	if s.Admin == nil {
+		writeErr(w, http.StatusNotImplemented, APIError("no_admin", "设计体系管理未装配", ""))
+		return
+	}
+	var in SystemInput
+	if !decodeBody(w, r, &in) {
+		return
+	}
+	out, err := s.Admin.CreateSystem(in)
+	if err != nil {
+		writeAdminErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, map[string]any{"system": out})
+}
+
+func (s *Server) handleUpdateSystem(w http.ResponseWriter, r *http.Request) {
+	if s.Admin == nil {
+		writeErr(w, http.StatusNotImplemented, APIError("no_admin", "设计体系管理未装配", ""))
+		return
+	}
+	var in SystemInput
+	if !decodeBody(w, r, &in) {
+		return
+	}
+	out, err := s.Admin.UpdateSystem(r.PathValue("id"), in)
+	if err != nil {
+		writeAdminErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"system": out})
+}
+
+func (s *Server) handleSystemState(w http.ResponseWriter, r *http.Request) {
+	if s.Admin == nil {
+		writeErr(w, http.StatusNotImplemented, APIError("no_admin", "设计体系管理未装配", ""))
+		return
+	}
+	var in struct {
+		Disabled *bool `json:"disabled"`
+	}
+	if !decodeBody(w, r, &in) {
+		return
+	}
+	if in.Disabled == nil {
+		writeErr(w, http.StatusBadRequest, APIError("bad_request", "disabled 必填", ""))
+		return
+	}
+	out, err := s.Admin.SetSystemDisabled(r.PathValue("id"), *in.Disabled)
+	if err != nil {
+		writeAdminErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"system": out, "disabled": *in.Disabled})
+}
+
+func (s *Server) handleSystemReset(w http.ResponseWriter, r *http.Request) {
+	if s.Admin == nil {
+		writeErr(w, http.StatusNotImplemented, APIError("no_admin", "设计体系管理未装配", ""))
+		return
+	}
+	out, err := s.Admin.ResetSystem(r.PathValue("id"))
+	if err != nil {
+		writeAdminErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"system": out})
+}
+
+func (s *Server) handleDeleteSystem(w http.ResponseWriter, r *http.Request) {
+	if s.Admin == nil {
+		writeErr(w, http.StatusNotImplemented, APIError("no_admin", "设计体系管理未装配", ""))
+		return
+	}
+	if err := s.Admin.RemoveSystem(r.PathValue("id")); err != nil {
+		writeAdminErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"removed": r.PathValue("id")})
 }
 
 func (s *Server) handleCatalogSystem(w http.ResponseWriter, r *http.Request) {

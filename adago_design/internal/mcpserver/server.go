@@ -53,6 +53,7 @@ func NewServer(d Deps) *mcp.Server {
 				"④ design_preview（组件组合，需带 artboard）或 design_screen（login/settings/feed/profile 整页）摆上画布 → " +
 				"⑤ design_audit 走查（体系级：字体授权、图标一致性、尺寸规范；传 node_id 可走查单个已生成节点的外链/图标/尺寸契约）→ canvas_arrange 排版 → " +
 				"canvas_screenshot 回看 → canvas_export 导出独立 HTML。" +
+				"体系本身可管理（停用/新增/编辑/移除）用 design_system_manage；停用后目录与预览不再出现它。" +
 				"硬规则：设计稿必须归属于已存在的项目 —— 任何新增设计稿的工具（design_preview / design_screen / " +
 				"canvas_add / design_audit / design_derive / design_compare）都必须传 project；没有项目就先 project_create，" +
 				"否则会返回 project_required。" +
@@ -171,6 +172,13 @@ func registerTools(server *mcp.Server, d Deps) {
 		Name:        "design_register",
 		Description: "注册自定义设计体系：传入 Token JSON（结构缺省字段从基底体系兜底），持久化并注册。",
 	}, registerTool(d))
+
+	mcp.AddTool(server, &mcp.Tool{
+		Name: "design_system_manage",
+		Description: "设计体系管理：list / create / update / disable / enable / remove / reset。" +
+			"停用只影响目录、搜索与预览（已上画布的稿不回收）；内置体系可停用/改显示信息，不可删除；" +
+			"自定义体系可整体编辑 JSON 或移除。新增走品牌派生（base + primary）。",
+	}, systemManageTool(d))
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "design_audit",

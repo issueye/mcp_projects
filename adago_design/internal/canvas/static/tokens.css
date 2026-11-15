@@ -129,6 +129,7 @@
   --ui-tb-menu-max-h: 440px;
   --ui-tip-max-w: 240px;
   --ui-modal-w: 580px;
+  --ui-modal-w-wide: 760px; /* 管理类弹层（设计体系管理） */
   --ui-ask-w: 420px;
   --ui-toast-max-w: 560px;
   --ui-empty-max-w: 440px;

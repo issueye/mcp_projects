@@ -83,6 +83,10 @@ func Start(ctx context.Context, cfg *config.Config, opts ...Option) (*Server, er
 	} else if n > 0 {
 		log.Printf("已加载 %d 个自定义设计体系", n)
 	}
+	// 停用列表与内置体系显示信息覆盖（system-settings.json）
+	if err := design.LoadSystemSettings(cfg.DataDir); err != nil {
+		log.Printf("设计体系设置加载失败: %v", err)
+	}
 	store, err := canvas.OpenStore(cfg.DataDir)
 	if err != nil {
 		return nil, fmt.Errorf("open store: %w", err)
@@ -94,7 +98,8 @@ func Start(ctx context.Context, cfg *config.Config, opts ...Option) (*Server, er
 	srv := &Server{store: store, tasks: tasks}
 
 	canvasSrv := canvas.NewServer(store, tasks, "")
-	canvasSrv.Catalog = Catalog{}
+	canvasSrv.Catalog = Catalog{DataDir: cfg.DataDir}
+	canvasSrv.Admin = Catalog{DataDir: cfg.DataDir}
 	canvasSrv.Theme = canvas.NormalizeTheme(cfg.Theme)
 	canvasSrv.DataDir = cfg.DataDir
 	var ln net.Listener
@@ -155,23 +160,35 @@ func ArtboardSizeResolver(artboardID, kind string) (int, int, bool) {
 }
 
 // Catalog 实现 canvas.CatalogSource，桥接 design 包。
-type Catalog struct{}
+// Catalog 实现 canvas.CatalogSource / canvas.SystemAdmin，桥接 design 包。
+type Catalog struct{ DataDir string }
 
-// SystemSummaries 返回全部体系摘要。
+// systemSummary 生成管理界面与目录共用的一份体系摘要。
+func systemSummary(sys *design.System) map[string]any {
+	builtin, off, over, _ := design.SystemState(sys.ID)
+	return map[string]any{
+		"id":               sys.ID,
+		"name":             sys.Name,
+		"vendor":           sys.Vendor,
+		"family":           sys.Family,
+		"description":      sys.Description,
+		"summary":          sys.Style.Summary,
+		"keywords":         sys.Style.Keywords,
+		"themes":           sys.Themes,
+		"component_count":  lenDesignComponents(),
+		"default_artboard": design.DefaultArtboardFor(sys.Family).ID,
+		"builtin":          builtin,
+		"disabled":         off,
+		"overridden":       over,
+		"primary":          design.PrimaryColor(sys),
+	}
+}
+
+// SystemSummaries 返回全部**已启用**体系摘要。
 func (Catalog) SystemSummaries() any {
 	out := make([]map[string]any, 0)
 	for _, sys := range design.Systems() {
-		out = append(out, map[string]any{
-			"id":               sys.ID,
-			"name":             sys.Name,
-			"vendor":           sys.Vendor,
-			"family":           sys.Family,
-			"summary":          sys.Style.Summary,
-			"keywords":         sys.Style.Keywords,
-			"themes":           sys.Themes,
-			"component_count":  lenDesignComponents(),
-			"default_artboard": design.DefaultArtboardFor(sys.Family).ID,
-		})
+		out = append(out, systemSummary(sys))
 	}
 	return out
 }
@@ -191,12 +208,17 @@ func (Catalog) SystemDetail(id string) (any, bool) {
 		})
 	}
 	light, _ := sys.TokensFor(design.ThemeLight)
+	builtin, off, over, _ := design.SystemState(sys.ID)
 	detail := map[string]any{
 		"id": sys.ID, "name": sys.Name, "vendor": sys.Vendor, "family": sys.Family,
 		"description": sys.Description, "style": sys.Style, "themes": sys.Themes,
 		"light": light, "guideline": sys.Guideline, "components": compList,
 		"default_artboard": design.DefaultArtboardFor(sys.Family).ID,
 		"font_license":     design.StackLicenseLabel(light.Type.Family),
+		"builtin":          builtin,
+		"disabled":         off,
+		"overridden":       over,
+		"primary":          design.PrimaryColor(sys),
 	}
 	if sys.Dark != nil {
 		detail["dark"] = *sys.Dark

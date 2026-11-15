@@ -75,7 +75,9 @@
   实例并唤起窗口；命中「无窗口实例」时，原生窗口进入故障卡（05/06 稿），
   不抢服务、不写数据；不同数据目录可共存。
 - 数据目录：`%APPDATA%\adago-design\`（`--data`/`ADAGO_DESIGN_DATA` 覆盖），
-  画布状态持久化为 `canvas.json`（原子写入 + `.bak`/`.bak2` 备份轮换，见 §4.1）。
+  画布状态持久化为 `canvas.json`（原子写入 + `.bak`/`.bak2` 备份轮换，见 §4.1）；
+  自定义体系在 `custom-systems/<id>.json`，体系停用/显示信息覆盖在
+  `system-settings.json`（见 §3.5）。
 
 ## 3. 设计体系数据模型（internal/design）
 
@@ -139,6 +141,27 @@ ds-progress、ds-navbar、ds-tabbar、ds-list、ds-dialog、ds-toast
 - `design.ComponentHTML(sys, compID, variant...) string`：渲染单个组件 HTML 片段。
 - `design.Compose(sys, ids, opts)`：把若干组件拼成一张预览页
   （完整 HTML 文档，内嵌 StyleSheet + 局部排版样式），即画布节点内容。
+
+### 3.5 体系管理（运行期可写）
+
+内置体系来自 `go:embed`，但「用哪些体系」是用户态：画布浮窗「设计体系 · 管理」
+与 MCP `design_system_manage` 共用同一套 `design` 管理函数。
+
+| 能力 | 行为 | 落点 |
+|---|---|---|
+| 停用 / 启用 | 只影响**选择面**：目录/搜索/预览/MCP 工具不再出现；已上画布的稿不回收 | `system-settings.json` 的 `disabled` |
+| 编辑（内置） | 只改显示信息（name/vendor/description/style.summary），Token 不变；空字段保留现值，「恢复默认」清除覆盖 | `system-settings.json` 的 `overrides` |
+| 编辑（自定义） | 改显示信息，或整体替换 JSON（校验 colors/type/radius 边界） | `custom-systems/<id>.json` |
+| 新增 | 品牌派生：名称/厂商/结构基底/落地类型/主色/可选 ID → 10 阶色板重着色，其余 Token 继承基底 | `custom-systems/<id>.json` |
+| 移除 | 仅自定义体系；内置体系返回 `system_builtin_protected`（请改为停用） | 删除文件 + 注册表 |
+| 恢复默认 | 仅内置体系：清空 override 并重新启用 | 清 settings 条目 |
+
+- `Builtin bool json:"-"` 标记来源；`SaveCustomSystem` 拒绝覆盖内置 ID，
+  `LoadCustomSystems` 跳过与内置同 ID 的脏文件。
+- `GetSystem` 对停用体系返回 false（预览/Token/组件等入口自然拒绝）；
+  `Systems()` 只返回启用体系，`AllSystems()` 供管理面使用。
+- 启动顺序：`LoadCustomSystems(dir)` → `LoadSystemSettings(dir)`（先注册再套用状态）。
+- 设置写入用 tmp→rename；读失败/坏 JSON 回落空设置，不影响启动。
 
 ## 4. 无限画布（internal/canvas + static/）
 
@@ -227,6 +250,15 @@ type Node struct {
 | `GET /api/tasks` | UI 长轮询领取任务（10s 内返回或超时空列表） |
 | `POST /api/tasks/{id}/result` | UI 回传 PNG（base64 dataURL） |
 | `GET /api/capture/{id}` | tool 取结果（长轮询，8s 超时 → 409 提示打开画布） |
+| `GET /api/catalog/systems` | 已启用体系摘要（目录侧栏）；`?all=1` 返回含停用（管理面，需装配 Admin） |
+| `GET /api/catalog/systems/{id}` | 体系详情（Token + 组件 + 守则 + builtin/disabled/overridden/primary） |
+| `GET /api/catalog/systems/{id}/json` | 自定义体系完整 JSON（管理面高级编辑） |
+| `POST /api/catalog/systems` | 新增（品牌派生）：`{name,vendor,family,base,primary,id?,description?}` |
+| `PUT /api/catalog/systems/{id}` | 编辑：显示信息 `{name,vendor,description,summary}` 或自定义整体 `{json}` |
+| `POST /api/catalog/systems/{id}/state` | `{disabled:true|false}` 停用/启用 |
+| `POST /api/catalog/systems/{id}/reset` | 内置体系恢复默认显示信息并启用 |
+| `DELETE /api/catalog/systems/{id}` | 移除自定义体系；内置 409 `system_builtin_protected` |
+| `POST /api/catalog/preview` | 生成组件预览节点 `{project,system,components[],theme,title?,artboard?}` |
 
 ### 4.3 截图链路（无 CDP 方案）
 
@@ -491,6 +523,7 @@ SDK：`github.com/modelcontextprotocol/go-sdk v1.8.0`（与 mem-go 一致）。
 | `canvas_url` | — | 画布访问地址与打开方式 |
 | `design_derive` | `primary`(#RRGGBB), `name`, `base_system`, `addToCanvas?=true` | 10 阶品牌色板 + 派生体系（持久化注册）+ 色板节点 |
 | `design_register` | `name`, `tokens_json`, `dark_json?`, `base_system?` | 自定义体系注册（结构兜底 + 持久化） |
+| `design_system_manage` | `action`(list/create/update/disable/enable/remove/reset), `id?`, `name?`, `vendor?`, `family?`, `base?`, `primary?`, `description?`, `summary?`, `json?` | 体系管理：停用只影响选择面；内置可停用/改显示信息不可删；自定义可整体改 JSON/移除 |
 | `design_audit` | `system`（体系走查）, `theme?`, `addToCanvas?=true`；或 `nodeID`（节点级走查，优先） | 体系级：WCAG 对比度/字号/阶梯走查评分 + 报告节点；节点级：外链资源 / 图标与符号 / 尺寸契约 / 字体授权（`AuditNodeHTML`） |
 | `canvas_connect` | `from`, `to`, `label?` | 节点间贝塞尔连线（SVG，持久化） |
 | `canvas_group` | `title`, `node_ids[]`, `padding?` | 分组框（垫底虚线框，自动包住成员） |
@@ -633,7 +666,16 @@ stdio JSON-RPC 走继承管道不受影响）。日志写 `<data>/adago-design.l
   `window.json` 归一化与 round trip、`/api/health` 解析、端口标签、年龄文案、
   MCP 配置片段。窗口本身靠真机冒烟（见下）。
 - `internal/canvas`：`embed_test.go` 锁住页面契约（embed bootstrap 先于样式、
-  两条隐藏规则、`js/native.js` dataset 字段、`main.js` 接线）。
+  两条隐藏规则、`js/native.js` dataset 字段、`main.js` 接线）；
+  `admin_route_test.go` 锁管理端点路由/状态码/错误码映射（fake Admin）。
+- `internal/design`：`manage_test.go` 覆盖停用持久化与过滤、内置显示信息覆盖
+  与恢复默认、内置保护（删除/覆盖均拒绝）、自定义新增/改名/整体 JSON/移除、
+  非法主色与非法 Token JSON。
+- `internal/app`：`systems_test.go` 走 Catalog 管理集成（摘要/停用/新增/编辑/
+  JSON/移除/错误码）。
+- `internal/mcpserver`：`systems_test.go` 走 `design_system_manage` 契约
+  （list/create/disable→design_systems 隐藏/design_tokens 拒绝/enable/
+  内置保护/remove）。
 - 前端：`go generate` 同步 icons.js；用无头 Chromium 做真实输入事件回归
   （拖动跨越 iframe 区域不丢事件、检查模式 A↔B 跨卡片配对、截图链路出图）。
 - 门禁：`GOWORK=off go test ./... && go vet ./...`。

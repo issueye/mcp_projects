@@ -470,3 +470,47 @@ GOWORK=off go test ./...    # ok（canvas 3.8s / design 0.4s / mcpserver 18.6s�
 `js/native.js` 每秒回写 `data-scope` / `data-scope-count` / `data-project-count` /
 `data-node-count` 与 `document.title`；`canvas.css` 只多两条 `display:none` 规则。
 机器门禁：`internal/canvas/embed_test.go`。
+---
+
+## 13. 设计体系管理弹层（2026-11-15）
+
+左侧「设计体系」浮窗标题条新增 **管理**（`.sys-manage`），打开 760px 宽弹层
+（`--ui-modal-w-wide`，新增令牌）。视觉沿用本文件令牌：`--ui-surface/elevated/
+line/ink/brand`，未新增任何颜色；唯一的彩色是每行主色色点（数据色，inline
+background，来自服务端 `primary`）。
+
+### 13.1 结构
+
+```
+┌ 设计体系管理 ───────────────────────────────────── ⌄× ┐
+│ 新增体系 [品牌派生]                                    │
+│  名称*     厂商/来源       结构基底      落地类型        │
+│  品牌主色* 体系 ID（可选） 描述（可选，通栏）            │
+│  [＋ 新增体系]  颜色从主色派生…（说明）                  │
+│ 全部体系 9                                             │
+│ ┌ 行卡：名称 + 内置/自定义/已停用/已改信息 chips         │
+│ │      vendor · family · id · ● primary                │
+│ │      [停用|启用] [编辑] [恢复默认|移除]               │
+│ └───────────────────────────────────────────────────────│
+│ 编辑区（点「编辑」展开，含自定义 JSON 文本域）            │
+│ 内置可停用/改显示信息不可删；停用只影响选择面…（foot）    │
+└───────────────────────────────────────────────────────┘
+```
+
+### 13.2 组件与规格
+
+| 部件 | 规格 |
+|---|---|
+| 弹层 | `radius-2xl`、`elevated` 底、`shadow-3`、宽 `min(--ui-modal-w-wide, 94vw)`、`max-height 76vh` |
+| 新增/编辑表单 | 2 列 grid（`--ui-space-4/6`），字段标签 11px `ink-3`，输入复用 `.proj-input` / `.field` |
+| 列表行 `.sys-row` | `elevated` 底 + 1px `line`、`radius-xl`、`space-4/5` 内距；停用行 `opacity .62` + 「已停用」chip |
+| 动作 | 复用 `.btn` / `.btn--danger`；内置行显示「恢复默认」（无覆盖且启用时 disabled），自定义行显示「移除」 |
+| 主色色点 `.sys-dot` | 6px 圆点 + 1px `line` 描边，等宽色值随行 |
+| JSON 文本域 | 等宽 11px、`subtle` 底、`radius-lg`、min-height `--ui-textarea-min-h` |
+| 强制规则 | 移除用 `uiConfirm`（危险按钮）；Esc / 点外关闭、Tab 陷阱、关闭后焦点回「管理」 |
+
+### 13.3 行为
+
+- 任何变更成功后：重拉 `?all=1` 列表 + `loadCatalog()` 刷新左侧目录 + 收起体系详情（避免详情停留在已停用/已删体系上）。
+- 内置编辑只写 `system-settings.json` 的 `overrides`（Token 不变）；自定义编辑/JSON 写 `custom-systems/<id>.json`。
+- 停用只隐藏「选择面」：目录、搜索、预览、MCP 工具；画布上已有节点不回收。

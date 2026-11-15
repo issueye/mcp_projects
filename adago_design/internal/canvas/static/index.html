@@ -144,6 +144,7 @@
           设计体系
         </span>
         <span class="dock-hint">Token · 组件</span>
+        <button id="sys-manage" class="sys-manage" title="管理设计体系（停用/新增/编辑/移除）" aria-haspopup="dialog">管理</button>
         <button id="sys-collapse" class="dock-toggle" title="收起设计体系面板" aria-label="收起设计体系面板" aria-expanded="true">
           <svg class="ds-icon ds-icon--14" aria-hidden="true"><use href="#ds-ic-chevron-up"/></svg>
         </button>
@@ -223,6 +224,32 @@
         <button id="ask-cancel" class="btn">取消</button>
         <button id="ask-ok" class="btn btn--primary">确定</button>
       </div>
+    </div>
+  </div>
+
+  <!-- 设计体系管理：停用 / 新增 / 编辑 / 移除。
+       内置体系可停用与改显示信息，不可删除；自定义体系可编辑 JSON 与移除。 -->
+  <div id="sys-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="sys-modal-title">
+    <div class="modal__mask" data-sys-close></div>
+    <div class="modal__box modal__box--wide">
+      <header class="modal__head">
+        <span id="sys-modal-title">设计体系管理</span>
+        <button id="sys-modal-close" class="modal__x" data-sys-close title="关闭" aria-label="关闭设计体系管理">
+          <svg class="ds-icon ds-icon--14" aria-hidden="true"><use href="#ds-ic-close"/></svg>
+        </button>
+      </header>
+      <div class="modal__body">
+        <div id="sys-create" class="sys-form"></div>
+        <div class="proj-list-title">
+          全部体系 <span id="sys-count" class="proj-count">0</span>
+        </div>
+        <div id="sys-rows" class="proj-rows"></div>
+        <div id="sys-edit" class="sys-form hidden"></div>
+      </div>
+      <footer class="modal__foot">
+        内置体系可停用、可改显示信息，但不可删除；自定义体系可整体编辑 JSON 与移除。
+        停用后不再出现在目录、搜索与 MCP 工具里（画布上已生成的稿不回收）。
+      </footer>
     </div>
   </div>
 

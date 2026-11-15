@@ -253,15 +253,23 @@ func claimID(name, primary string) string {
 // 自定义体系持久化
 // ---------------------------------------------------------------------------
 
-// RegisterOrReplace 注册或覆盖一个体系（自定义体系用；内置 Register 仍禁重复）。
+// RegisterOrReplace 注册或覆盖一个体系（自定义体系用；内置体系保留 Builtin 标记）。
 func RegisterOrReplace(s *System) {
 	registryMu.Lock()
 	defer registryMu.Unlock()
+	if old, ok := registry[s.ID]; ok && old.Builtin {
+		s.Builtin = true
+	}
 	registry[s.ID] = s
 }
 
 // SaveCustomSystem 把自定义体系写入 <dir>/custom-systems/<id>.json 并注册。
+// 内置体系 ID 受保护，不允许被自定义体系覆盖。
 func SaveCustomSystem(sys *System, dir string) error {
+	if old, ok := getSystemAny(sys.ID); ok && old.Builtin {
+		return fmt.Errorf("%w: %s", ErrSystemBuiltin, sys.ID)
+	}
+	sys.Builtin = false
 	if dir == "" {
 		RegisterOrReplace(sys)
 		return nil
@@ -308,6 +316,11 @@ func LoadCustomSystems(dir string) (int, error) {
 		if err := json.Unmarshal(raw, &sys); err != nil || sys.ID == "" {
 			continue
 		}
+		// 与内置体系同 ID 的脏文件不再覆盖内置体系。
+		if old, ok := getSystemAny(sys.ID); ok && old.Builtin {
+			continue
+		}
+		sys.Builtin = false
 		RegisterOrReplace(&sys)
 		n++
 	}
@@ -315,22 +328,9 @@ func LoadCustomSystems(dir string) (int, error) {
 }
 
 // RemoveCustomSystem 注销并删除自定义体系的持久化文件；内置体系不可删。
+// 现在按 Builtin 标记判断来源，不再依赖厂商文案。
 func RemoveCustomSystem(id, dir string) error {
-	sys, ok := GetSystem(id)
-	if !ok {
-		return fmt.Errorf("unknown system %q", id)
-	}
-	if sys.Vendor != "自定义 · 品牌派生" {
-		return fmt.Errorf("system %q is builtin and cannot be removed", id)
-	}
-	unregisterSystem(id)
-	if dir != "" {
-		p := filepath.Join(dir, "custom-systems", id+".json")
-		if err := os.Remove(p); err != nil && !os.IsNotExist(err) {
-			return err
-		}
-	}
-	return nil
+	return RemoveSystem(id, dir)
 }
 
 // ValidateCustom 校验自定义体系的合法性（register 前调用）。

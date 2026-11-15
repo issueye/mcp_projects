@@ -80,6 +80,35 @@ project_create（或 project_list 选已有）
 图标库改动后跑一次 `GOWORK=off go generate ./internal/design`，
 会从 Go 侧路径表生成画布 UI 用的 `internal/canvas/static/icons.js`，两侧永不漂移。
 
+## 设计体系管理（动态）
+
+左侧「设计体系」浮窗标题条上的 **管理** 打开管理弹层（原生窗口/浏览器里都可）：
+
+| 能力 | 说明 |
+|---|---|
+| 新增 | 品牌派生：名称 + 结构基底 + 品牌主色（#RRGGBB），可填厂商/落地类型/ID/描述；颜色生成 10 阶色板，字型/间距/圆角/阴影/动效继承基底 |
+| 编辑 | **内置**：改显示信息（名称/厂商/描述/一句话风格），Token 不变；用「恢复默认」清除覆盖；**自定义**：同一表单 + 整体 JSON 编辑（校验 colors/type/radius） |
+| 停用 / 启用 | 只影响「选择面」：目录、搜索、`design_preview` 与 MCP 工具不再出现该体系；**画布上已生成的稿不回收** |
+| 恢复默认 | 仅内置体系：清掉显示信息覆盖并重新启用 |
+| 移除 | 仅自定义体系；内置体系受保护（提示改为停用），避免误删 8 套内置规范 |
+
+- 持久化：自定义体系在 `<data>/custom-systems/<id>.json`；停用列表与内置显示信息覆盖在 `<data>/system-settings.json`（tmp→rename 原子写）。启动顺序：先加载自定义体系，再套用设置。
+- 同一套能力也暴露给 Agent：MCP 工具 **`design_system_manage`**（`list / create / update / disable / enable / remove / reset`）。
+- 管理 API（全部回环 + 写操作同源校验）：
+
+| 方法/路径 | 说明 |
+|---|---|
+| `GET /api/catalog/systems` | 已启用体系摘要；`?all=1` 含停用（管理面） |
+| `GET /api/catalog/systems/{id}` | 体系详情 |
+| `GET /api/catalog/systems/{id}/json` | 自定义体系完整 JSON |
+| `POST /api/catalog/systems` | 新增 `{name,vendor?,family?,base,primary,id?,description?}` |
+| `PUT /api/catalog/systems/{id}` | 编辑显示信息，或自定义 `{json}` 整体替换 |
+| `POST /api/catalog/systems/{id}/state` | `{disabled: true\|false}` |
+| `POST /api/catalog/systems/{id}/reset` | 内置恢复默认 |
+| `DELETE /api/catalog/systems/{id}` | 移除自定义体系 |
+
+错误码：`unknown_system` / `system_duplicate` / `system_builtin_protected` / `invalid_system`。
+
 ## 画布界面（设计系统）
 
 画布工具蒙皮走**单色品牌 + 令牌单源**：纸面（浅色，缺省）× 墨纸（深色）两套主题，
@@ -209,6 +238,7 @@ mygo 单实例锁之后运行；命中「无窗口实例」时窗口进故障卡
 | `design_search` | 跨体系搜索体系/组件/Token |
 | `design_derive` | 从品牌主色派生自定义体系（10 阶色板 + 语义色，结构继承基底），持久化注册 |
 | `design_register` | 注册自定义体系（Token JSON，结构缺省从基底兜底） |
+| `design_system_manage` | 设计体系管理：`list/create/update/disable/enable/remove/reset`；停用只影响目录/搜索/预览，内置不可删 |
 | `design_audit` | 设计走查：体系级（WCAG 对比度/字号/阶梯/状态色 + 字体授权 + 图标一致性 + 尺寸规范，评分 + 报告节点）；传 `node_id` 改为**节点级走查**（外链资源 / 图标与符号 / 尺寸契约 / 字体授权，走查已生成节点的正文） |
 | `design_preview` | 用某体系把组件渲染成真实预览页（`artboard` 决定宽高、`project` 决定归属），默认自动摆上画布 |
 | `design_screen` | 按模板（login/settings/feed/profile）生成整页真实预览，高度取画板 body 高 |
@@ -457,7 +487,11 @@ nodes 捕获阶段接管 / CSS 光标规则）。
 - `internal/mcpserver`：内存 MCP 会话走 `tools/list` + `tools/call` 契约，
   含 `design_icons` / `design_fonts` / `design_artboard` 与画板透传、
   `design_audit` 节点级走查与 `design_tokens` brief（`enhance3_test.go`）、
-  `OpenCanvas` 注入点（`open_test.go`）。
+  `OpenCanvas` 注入点（`open_test.go`）、`design_system_manage` 契约
+  （`systems_test.go`：停用后 design_systems/design_tokens 拒绝、内置保护、自定义增删）。
+- 体系管理：`internal/design/manage_test.go`（停用持久化/内置覆盖与恢复/内置保护/
+  自定义增改删/非法 JSON）、`internal/app/systems_test.go`（Catalog 集成）、
+  `internal/canvas/admin_route_test.go`（管理端点路由与错误码）。
 
 设计细节见 [DESIGN.md](DESIGN.md)；六项历史问题的分析与改造记录见
 [IMPROVEMENTS.md](IMPROVEMENTS.md)。
