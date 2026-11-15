@@ -87,6 +87,15 @@ func Start(ctx context.Context, cfg *config.Config, opts ...Option) (*Server, er
 	if err := design.LoadSystemSettings(cfg.DataDir); err != nil {
 		log.Printf("设计体系设置加载失败: %v", err)
 	}
+	// 自定义 SVG 图标（custom-icons/*.json）与停用/覆盖（icon-settings.json）
+	if n, err := design.LoadCustomIcons(cfg.DataDir); err != nil {
+		log.Printf("自定义图标加载失败: %v", err)
+	} else if n > 0 {
+		log.Printf("已加载 %d 个自定义图标", n)
+	}
+	if err := design.LoadIconSettings(cfg.DataDir); err != nil {
+		log.Printf("图标设置加载失败: %v", err)
+	}
 	store, err := canvas.OpenStore(cfg.DataDir)
 	if err != nil {
 		return nil, fmt.Errorf("open store: %w", err)
@@ -100,6 +109,7 @@ func Start(ctx context.Context, cfg *config.Config, opts ...Option) (*Server, er
 	canvasSrv := canvas.NewServer(store, tasks, "")
 	canvasSrv.Catalog = Catalog{DataDir: cfg.DataDir}
 	canvasSrv.Admin = Catalog{DataDir: cfg.DataDir}
+	canvasSrv.Icons = Catalog{DataDir: cfg.DataDir}
 	canvasSrv.Theme = canvas.NormalizeTheme(cfg.Theme)
 	canvasSrv.DataDir = cfg.DataDir
 	var ln net.Listener

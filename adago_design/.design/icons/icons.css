@@ -1,0 +1,62 @@
+/* adago-design · SVG 图标管理弹层（设计源）
+ *
+ * 只补图标管理专用的部件；布局、纸墨、弹层壳、列表行/开关/表单等全部沿用
+ * .design/systems/kit.css 的 .sm / .sys-row / .sw / .det / .field 体系，
+ * 保证两个管理弹层是同一套语言，不另起一套令牌。
+ */
+
+/* 尺寸档：12/14/16/20/24 之外，详情页还要 28（hero）与 48（空态/预览） */
+.ic20 { width: 20px; height: 20px; }
+.ic24 { width: 24px; height: 24px; }
+.ic28 { width: 28px; height: 28px; }
+.ic40 { width: 40px; height: 40px; }
+.ic48 { width: 48px; height: 48px; }
+
+/* ---------------- 左栏列表：32 图标格 + 等宽名称 + 分组/别名 + 开关 ---------------- */
+.icm-list { padding: 4px 0; }
+.icm-list .sys-row { height: 56px; gap: 10px; padding: 8px 12px 8px 14px; }
+.icm-glyph { width: 32px; height: 32px; border-radius: 8px; flex: none; display: inline-flex; align-items: center; justify-content: center; background: var(--ui-subtle); border: 1px solid var(--ui-line); color: var(--ui-ink); }
+.icm-glyph .ic { width: 20px; height: 20px; }
+.icm-name { font-family: "JetBrains Mono", monospace; font-size: 12px; font-weight: 600; letter-spacing: -.01em; }
+.icm-row-off .icm-glyph { opacity: .45; }
+.icm-row-off .icm-name, .icm-row-off .sys-meta { opacity: .55; }
+.icm-tag { font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--ui-ink-3); }
+
+/* ---------------- 详情：hero、尺寸档、用法、源码 ---------------- */
+.icm-hero { width: 48px; height: 48px; border-radius: 12px; flex: none; display: inline-flex; align-items: center; justify-content: center; background: var(--ui-subtle); border: 1px solid var(--ui-line); color: var(--ui-ink); }
+.icm-hero .ic { width: 28px; height: 28px; }
+
+.icm-sizes { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.icm-size { height: 62px; border: 1px solid var(--ui-line); border-radius: 8px; background: var(--ui-surface); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: var(--ui-ink); }
+.icm-size b { font-family: "JetBrains Mono", monospace; font-size: 9px; font-weight: 500; color: var(--ui-ink-3); }
+
+.icm-uses { display: flex; flex-direction: column; gap: 6px; }
+.icm-use { display: flex; align-items: center; gap: 8px; min-width: 0; height: 34px; padding: 0 8px 0 10px; border: 1px solid var(--ui-line); border-radius: 7px; background: var(--ui-subtle); }
+.icm-use code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--ui-ink-2); }
+.icm-use .ic { color: var(--ui-ink-3); }
+
+.icm-src { height: 118px; overflow: hidden; padding: 10px 12px; border: 1px solid var(--ui-line); border-radius: 8px; background: var(--ui-subtle); font-family: "JetBrains Mono", monospace; font-size: 10px; line-height: 1.75; color: var(--ui-ink-2); white-space: pre; }
+.icm-src .tg { color: var(--ui-ink-3); }
+.icm-src .at { color: var(--ui-ink); }
+.icm-src .cm { color: var(--ui-ink-3); font-style: italic; }
+
+/* ---------------- 新增：粘贴 SVG + 实时预览 ---------------- */
+.icm-add-prev { height: 96px; border: 1px dashed var(--ui-line-strong); border-radius: 10px; background: var(--ui-surface); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: var(--ui-ink); }
+.icm-add-prev .ic40 { color: var(--ui-ink); }
+.icm-add-prev small { font-family: "JetBrains Mono", monospace; font-size: 9px; color: var(--ui-ink-3); }
+.icm-rule { display: flex; flex-direction: column; gap: 3px; font-size: 10px; line-height: 1.6; color: var(--ui-ink-3); }
+.icm-rule code { font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--ui-ink-2); }
+
+/* ---------------- 空态 / 提示 ---------------- */
+.icm-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--ui-ink-3); text-align: center; padding: 24px; }
+.icm-empty .ic { width: 28px; height: 28px; opacity: .5; }
+.icm-empty b { color: var(--ui-ink-2); font-size: 12px; font-weight: 600; }
+.icm-empty p { font-size: 11px; line-height: 1.7; margin: 0; max-width: 300px; }
+.icm-note { display: flex; gap: 8px; align-items: flex-start; padding: 9px 10px; border-radius: 8px; background: var(--ui-subtle); color: var(--ui-ink-2); font-size: 11px; line-height: 1.6; }
+.icm-note .ic { margin-top: 1px; color: var(--ui-ink-3); flex: none; }
+.icm-note.warn { background: var(--ui-warn-soft); color: var(--ui-warn-ink); }
+.icm-note.warn .ic { color: var(--ui-warn-ink); }
+.icm-note b { color: var(--ui-ink); }
+
+/* 规范页：4px 网格纸，只在视觉规范里示意 24 网格 */
+.icm-gridpaper { background-image: linear-gradient(to right, var(--ui-line) 1px, transparent 1px), linear-gradient(to bottom, var(--ui-line) 1px, transparent 1px); background-size: 4px 4px; }

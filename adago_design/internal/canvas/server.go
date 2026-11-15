@@ -74,6 +74,26 @@ type SystemAdmin interface {
 	RemoveSystem(id string) error
 }
 
+// IconInput 是图标管理接口的入参（新增 / 编辑）。
+type IconInput struct {
+	Name  string   `json:"name,omitempty"`
+	Group string   `json:"group,omitempty"`
+	Tags  []string `json:"tags,omitempty"`
+	// SVG 非空表示「替换 SVG 正文」（仅自定义图标；内置图标返回 409）。
+	SVG string `json:"svg,omitempty"`
+}
+
+// IconAdmin 是 SVG 图标管理的可选能力：未注入时管理端点返回 501。
+type IconAdmin interface {
+	IconSummariesAll() any
+	IconDetail(name string) (any, error)
+	CreateIcon(in IconInput) (any, error)
+	UpdateIcon(name string, in IconInput) (any, error)
+	SetIconDisabled(name string, disabled bool) (any, error)
+	ResetIcon(name string) (any, error)
+	RemoveIcon(name string) error
+}
+
 // AdminError 是管理端点的稳定错误（code 供前端/Agent 分支）。
 type AdminError struct {
 	Code    string
@@ -91,6 +111,8 @@ type Server struct {
 	Catalog CatalogSource
 	// Admin 可选：设计体系管理（停用/新增/编辑/移除）。为 nil 时管理端点 501。
 	Admin SystemAdmin
+	// Icons 可选：SVG 图标管理（停用/新增/编辑/移除）。为 nil 时管理端点 501。
+	Icons IconAdmin
 	// Theme 是界面缺省主题（light|dark），来自 -theme；用户手动切换的
 	// localStorage 覆盖在页面 bootstrap 里完成（见 static/index.html）。
 	Theme string
@@ -163,6 +185,13 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/catalog/systems/{id}/state", s.handleSystemState)
 	mux.HandleFunc("POST /api/catalog/systems/{id}/reset", s.handleSystemReset)
 	mux.HandleFunc("DELETE /api/catalog/systems/{id}", s.handleDeleteSystem)
+	mux.HandleFunc("GET /api/catalog/icons", s.handleCatalogIcons)
+	mux.HandleFunc("GET /api/catalog/icons/{name}", s.handleCatalogIcon)
+	mux.HandleFunc("POST /api/catalog/icons", s.handleCreateIcon)
+	mux.HandleFunc("PUT /api/catalog/icons/{name}", s.handleUpdateIcon)
+	mux.HandleFunc("POST /api/catalog/icons/{name}/state", s.handleIconState)
+	mux.HandleFunc("POST /api/catalog/icons/{name}/reset", s.handleIconReset)
+	mux.HandleFunc("DELETE /api/catalog/icons/{name}", s.handleDeleteIcon)
 	mux.HandleFunc("POST /api/catalog/preview", s.handleCatalogPreview)
 	// HTTP MCP（Streamable HTTP）：可选挂载，未注入时 /mcp 落回静态兜底（404）。
 	// 必须按方法逐个注册：不带方法的 "/mcp" 会与下面 "GET /" 的兜底路由冲突
@@ -806,11 +835,12 @@ func writeAdminErr(w http.ResponseWriter, err error) {
 	if errors.As(err, &ae) {
 		status := http.StatusInternalServerError
 		switch ae.Code {
-		case "unknown_system":
+		case "unknown_system", "unknown_icon":
 			status = http.StatusNotFound
-		case "system_duplicate", "system_builtin_protected":
+		case "system_duplicate", "system_builtin_protected",
+			"icon_duplicate", "icon_builtin_protected":
 			status = http.StatusConflict
-		case "invalid_system", "bad_request":
+		case "invalid_system", "invalid_icon", "bad_request":
 			status = http.StatusBadRequest
 		}
 		writeErr(w, status, APIError(ae.Code, ae.Message, ae.Hint))
@@ -926,6 +956,111 @@ func (s *Server) handleDeleteSystem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"removed": r.PathValue("id")})
+}
+
+// ---------------- catalog icons ----------------
+
+func (s *Server) handleCatalogIcons(w http.ResponseWriter, r *http.Request) {
+	if s.Icons == nil {
+		writeErr(w, http.StatusNotImplemented, APIError("no_admin", "图标管理未装配", ""))
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"icons": s.Icons.IconSummariesAll()})
+}
+
+func (s *Server) handleCatalogIcon(w http.ResponseWriter, r *http.Request) {
+	if s.Icons == nil {
+		writeErr(w, http.StatusNotImplemented, APIError("no_admin", "图标管理未装配", ""))
+		return
+	}
+	out, err := s.Icons.IconDetail(r.PathValue("name"))
+	if err != nil {
+		writeAdminErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"icon": out})
+}
+
+func (s *Server) handleCreateIcon(w http.ResponseWriter, r *http.Request) {
+	if s.Icons == nil {
+		writeErr(w, http.StatusNotImplemented, APIError("no_admin", "图标管理未装配", ""))
+		return
+	}
+	var in IconInput
+	if !decodeBody(w, r, &in) {
+		return
+	}
+	out, err := s.Icons.CreateIcon(in)
+	if err != nil {
+		writeAdminErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, map[string]any{"icon": out})
+}
+
+func (s *Server) handleUpdateIcon(w http.ResponseWriter, r *http.Request) {
+	if s.Icons == nil {
+		writeErr(w, http.StatusNotImplemented, APIError("no_admin", "图标管理未装配", ""))
+		return
+	}
+	var in IconInput
+	if !decodeBody(w, r, &in) {
+		return
+	}
+	out, err := s.Icons.UpdateIcon(r.PathValue("name"), in)
+	if err != nil {
+		writeAdminErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"icon": out})
+}
+
+func (s *Server) handleIconState(w http.ResponseWriter, r *http.Request) {
+	if s.Icons == nil {
+		writeErr(w, http.StatusNotImplemented, APIError("no_admin", "图标管理未装配", ""))
+		return
+	}
+	var in struct {
+		Disabled *bool `json:"disabled"`
+	}
+	if !decodeBody(w, r, &in) {
+		return
+	}
+	if in.Disabled == nil {
+		writeErr(w, http.StatusBadRequest, APIError("bad_request", "disabled 必填", ""))
+		return
+	}
+	out, err := s.Icons.SetIconDisabled(r.PathValue("name"), *in.Disabled)
+	if err != nil {
+		writeAdminErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"icon": out, "disabled": *in.Disabled})
+}
+
+func (s *Server) handleIconReset(w http.ResponseWriter, r *http.Request) {
+	if s.Icons == nil {
+		writeErr(w, http.StatusNotImplemented, APIError("no_admin", "图标管理未装配", ""))
+		return
+	}
+	out, err := s.Icons.ResetIcon(r.PathValue("name"))
+	if err != nil {
+		writeAdminErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"icon": out})
+}
+
+func (s *Server) handleDeleteIcon(w http.ResponseWriter, r *http.Request) {
+	if s.Icons == nil {
+		writeErr(w, http.StatusNotImplemented, APIError("no_admin", "图标管理未装配", ""))
+		return
+	}
+	if err := s.Icons.RemoveIcon(r.PathValue("name")); err != nil {
+		writeAdminErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"removed": r.PathValue("name")})
 }
 
 func (s *Server) handleCatalogSystem(w http.ResponseWriter, r *http.Request) {

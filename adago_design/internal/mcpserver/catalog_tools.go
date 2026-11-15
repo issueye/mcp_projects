@@ -16,7 +16,7 @@ import (
 func registerCatalogTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{
 		Name: "design_icons",
-		Description: "查询内置 SVG 图标库（24 网格线性图标）。生成界面时必须用它取图标，" +
+		Description: "查询 SVG 图标库（内置 + 自定义；已停用的不返回）。生成界面时必须用它取图标，" +
 			"不得使用 emoji 或 ▾ › ✕ ◉ 等字符当图标。",
 	}, iconsTool())
 

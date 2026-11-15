@@ -6,19 +6,25 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 // 图标库：24×24 网格、2px 视觉描边的线性图标，统一 currentColor 着色。
 //
-// 数据组织：一项 = 名字 + 分组 + 别名 + 路径片段。路径集中在 icon_paths.go，
-// 由 init 注册；本文件只负责注册表、检索与渲染。
+// 数据组织：一项 = 名字 + 分组 + 别名 + 路径片段。内置图标集中在 icon_paths.go，
+// 由 init 注册；自定义图标由 <data>/custom-icons/*.json 在启动时加载（见
+// icons_manage.go），并通过管理端点 / MCP 在运行期增删改。
 //
 // 渲染策略：每个预览文档在 <body> 首部注入一份 <symbol> 精灵（IconSprite），
 // 使用处写 <svg class="ds-icon"><use href="#ds-ic-<name>"/></svg>。
 // 之所以必须内联而非外链：预览是 iframe srcdoc 文档（相对路径无基准），
 // 截图走 SVG foreignObject 序列化 + <img> 光栅化（外链资源会 404 或污点化 canvas）。
 //
-// 画布 UI 侧的 icons.js 由同一份注册表生成，改图标后跑一次 go generate 即可同步。
+// 选择面与渲染面分开：Icons/SearchIcons/IconCatalog 只返回「已启用」图标，
+// 供目录、检索、MCP 使用；GetIcon/IconSprite/IconRef 返回全部已注册图标，
+// 避免停用某个图标后，已有模板里的 {{icon:close}} 渲染成空白。
+//
+// 画布 UI 侧的 icons.js 由同一份注册表生成，改内置图标后跑一次 go generate 即可同步。
 //
 //go:generate go run ./gen_icons -out ../canvas/static/icons.js
 const (
@@ -30,19 +36,36 @@ const (
 	IconGroupData   = "data"   // 列表 / 表格 / 数据
 )
 
+// IconDefaultViewBox 是内置图标的 24 网格；自定义图标可带自己的 viewBox。
+const IconDefaultViewBox = "0 0 24 24"
+
 // Icon 是图标库中的一项。
 type Icon struct {
-	Name   string   `json:"name"`             // 唯一名，kebab-case，如 "chevron-right"
-	Group  string   `json:"group"`            // arrow | action | status | nav | media | data
-	Tags   []string `json:"tags,omitempty"`   // 别名与检索词（含被替换掉的字符符号）
-	Body   string   `json:"-"`                // <path/> / <circle/> 片段，不含 <svg> 外壳
-	Filled bool     `json:"filled,omitempty"` // 实心态（用 fill 而非 stroke）
+	Name    string   `json:"name"`              // 唯一名，kebab-case，如 "chevron-right"
+	Group   string   `json:"group"`             // arrow | action | status | nav | media | data
+	Tags    []string `json:"tags,omitempty"`    // 别名与检索词（含被替换掉的字符符号）
+	Body    string   `json:"-"`                 // <path/> / <circle/> 片段，不含 <svg> 外壳
+	Filled  bool     `json:"filled,omitempty"`  // 实心态（用 fill 而非 stroke）
+	ViewBox string   `json:"viewBox,omitempty"` // 视口，默认 0 0 24 24
+	Builtin bool     `json:"builtin,omitempty"` // 内置（icon_paths.go）不可删除
 }
 
-var iconRegistry = map[string]Icon{}
+var (
+	iconRegistry = map[string]Icon{}
+	// iconMu 保护 iconRegistry 与管理态（disabled/overrides/originals，
+	// 见 icons_manage.go）。读多写少，用 RWMutex。
+	iconMu sync.RWMutex
+)
 
-// RegisterIcon 注册一个图标（init 中调用）；重名即 panic。
+// RegisterIcon 注册一个内置图标（init 中调用）；重名即 panic。
 func RegisterIcon(ic Icon) {
+	iconMu.Lock()
+	defer iconMu.Unlock()
+	registerIconLocked(ic, true)
+}
+
+// registerIconLocked 在持有 iconMu 写锁时注册；builtin=false 用于自定义图标。
+func registerIconLocked(ic Icon, builtin bool) {
 	if ic.Name == "" {
 		panic("design: icon name is empty")
 	}
@@ -55,37 +78,65 @@ func RegisterIcon(ic Icon) {
 	if ic.Group == "" {
 		ic.Group = IconGroupAction
 	}
+	if ic.ViewBox == "" {
+		ic.ViewBox = IconDefaultViewBox
+	}
+	ic.Builtin = builtin
 	iconRegistry[ic.Name] = ic
 }
 
-// Icons 返回全部图标（按分组 → 名字排序）。
-func Icons() []Icon {
+// sortIcons 按分组 → 名字排序（Icons / AllIcons 共用）。
+func sortIcons(list []Icon) {
+	sort.Slice(list, func(i, j int) bool {
+		if list[i].Group != list[j].Group {
+			return list[i].Group < list[j].Group
+		}
+		return list[i].Name < list[j].Name
+	})
+}
+
+// AllIcons 返回全部已注册图标（含停用），管理面用。
+func AllIcons() []Icon {
+	iconMu.RLock()
+	defer iconMu.RUnlock()
 	out := make([]Icon, 0, len(iconRegistry))
 	for _, ic := range iconRegistry {
 		out = append(out, ic)
 	}
-	sort.Slice(out, func(i, j int) bool {
-		if out[i].Group != out[j].Group {
-			return out[i].Group < out[j].Group
-		}
-		return out[i].Name < out[j].Name
-	})
+	sortIcons(out)
 	return out
 }
 
-// GetIcon 按名字查找图标。
+// Icons 返回全部**已启用**图标（按分组 → 名字排序）。
+func Icons() []Icon {
+	iconMu.RLock()
+	defer iconMu.RUnlock()
+	out := make([]Icon, 0, len(iconRegistry))
+	for name, ic := range iconRegistry {
+		if iconDisabled[name] {
+			continue
+		}
+		out = append(out, ic)
+	}
+	sortIcons(out)
+	return out
+}
+
+// GetIcon 按名字查找图标（含已停用：渲染/走查仍要能取到）。
 func GetIcon(name string) (Icon, bool) {
+	iconMu.RLock()
+	defer iconMu.RUnlock()
 	ic, ok := iconRegistry[strings.ToLower(strings.TrimSpace(name))]
 	return ic, ok
 }
 
-// HasIcon 判断图标是否存在。
+// HasIcon 判断图标是否存在（含已停用）。
 func HasIcon(name string) bool {
 	_, ok := GetIcon(name)
 	return ok
 }
 
-// SearchIcons 按名字/分组/别名模糊匹配；query 为空时返回全部。
+// SearchIcons 按名字/分组/别名模糊匹配；query 为空时返回全部已启用图标。
 func SearchIcons(query string) []Icon {
 	q := strings.ToLower(strings.TrimSpace(query))
 	if q == "" {
@@ -108,13 +159,14 @@ func SearchIcons(query string) []Icon {
 }
 
 // IconSprite 返回整份 <symbol> 精灵，注入每个预览文档的 <body> 首部。
+// 包含全部已注册图标（含停用）：停用只影响选择面，不让旧模板引用失效。
 // 只序列化一次路径数据，N 个图标不重复膨胀文档。
 func IconSprite() string {
 	var b strings.Builder
 	b.WriteString(`<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" `)
 	b.WriteString(`style="position:absolute;width:0;height:0;overflow:hidden">`)
-	for _, ic := range Icons() {
-		b.WriteString(`<symbol id="ds-ic-` + ic.Name + `" viewBox="0 0 24 24">` + ic.Body + `</symbol>`)
+	for _, ic := range AllIcons() {
+		b.WriteString(`<symbol id="ds-ic-` + ic.Name + `" viewBox="` + ic.ViewBox + `">` + ic.Body + `</symbol>`)
 	}
 	b.WriteString(`</svg>`)
 	return b.String()
@@ -146,9 +198,9 @@ func IconInline(name string, size int) string {
 		return ""
 	}
 	cls := "ds-icon ds-icon--" + strconv.Itoa(normIconSize(size))
-	attrs := `class="` + cls + `" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"`
+	attrs := `class="` + cls + `" viewBox="` + ic.ViewBox + `" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"`
 	if ic.Filled {
-		attrs = `class="` + cls + ` ds-icon--filled" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"`
+		attrs = `class="` + cls + ` ds-icon--filled" viewBox="` + ic.ViewBox + `" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"`
 	}
 	return `<svg ` + attrs + `>` + ic.Body + `</svg>`
 }
@@ -186,7 +238,7 @@ func IconTokenNames(s string) []string {
 	return out
 }
 
-// IconCatalog 返回给 MCP / UI 的图标清单（不含路径数据）。
+// IconCatalog 返回给 MCP / UI 的图标清单（不含路径数据，只含已启用图标）。
 func IconCatalog(group string) []map[string]any {
 	out := make([]map[string]any, 0, len(iconRegistry))
 	for _, ic := range Icons() {

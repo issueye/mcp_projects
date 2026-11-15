@@ -21,6 +21,7 @@ import { loadCatalog } from "./catalog.js";
 import { taskLoop } from "./capture.js";
 import { publishNativeState } from "./native.js";
 import { isSystemManagerOpen, closeSystemManager } from "./systems-admin.js";
+import { isIconManagerOpen, closeIconManager } from "./icons-admin.js";
 import "./keyboard.js"; // 副作用导入：全局快捷键（Del/F/0/Ctrl+Z）与空格临时平移模式
 import { INS } from "../inspect.js";
 
@@ -53,6 +54,7 @@ window.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
   if (isAskOpen()) { closeAsk(null); e.preventDefault(); e.stopPropagation(); return; }
   if (isSystemManagerOpen()) { closeSystemManager(); e.preventDefault(); e.stopImmediatePropagation(); return; }
+  if (isIconManagerOpen()) { closeIconManager(); e.preventDefault(); e.stopImmediatePropagation(); return; }
   if (isProjectModalOpen()) { closeProjectModal(); e.preventDefault(); e.stopPropagation(); return; }
   const cvMenu = $("cv-menu"), ratioMenu = $("ratio-menu");
   if ((cvMenu && !cvMenu.classList.contains("hidden")) || (ratioMenu && !ratioMenu.classList.contains("hidden"))) {

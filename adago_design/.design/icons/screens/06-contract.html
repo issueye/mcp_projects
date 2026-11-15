@@ -1,0 +1,118 @@
+<div class="doc">
+  <div class="doc-h">
+    <div class="doc-mark">D</div>
+    <div>
+      <div class="doc-kicker">adago-design · icons manager v1 · 实现契约</div>
+      <div class="doc-title">DOM · API · 存储 · 校验 · 验收</div>
+    </div>
+    <div class="doc-meta"><span>先设计后实现</span><span>与 systems v2 同构</span><span>MCP + HTTP</span></div>
+  </div>
+
+  <p class="doc-lede">
+    图标管理不是新开一套体系：它复用 <b>design 包的图标注册表</b>（icon_paths.go 内置 + custom-icons/*.json 自定义），
+    把「注册表增删改 + 停用集合 + 元信息覆盖」做成设计包函数，再由 <b>HTTP 管理端点</b>与 <b>MCP 工具</b>共同调用。
+    画布弹层只是这套能力的界面；不引入第二份图标清单，也不改画布自身的构建期 icons.js 精灵。
+  </p>
+
+  <div class="doc-row">
+    <section class="doc-col wide">
+      <div class="doc-sec-h"><b>01 · HTTP 管理端点</b><span>/api/catalog/icons</span></div>
+      <table class="spec">
+        <tr><th>方法 / 路径</th><th>入参</th><th>返回</th></tr>
+        <tr><td><code>GET /api/catalog/icons</code></td><td>—</td><td><code>{icons:[summary]}</code> 含停用；summary = name/group/tags/builtin/disabled/overridden/svg</td></tr>
+        <tr><td><code>GET /api/catalog/icons/{name}</code></td><td>—</td><td><code>{icon:{...summary, body, svg, usage, viewBox}}</code></td></tr>
+        <tr><td><code>POST /api/catalog/icons</code></td><td><code>{name, group, tags[], svg}</code></td><td><code>201 {icon}</code>；重名 409、非法 400</td></tr>
+        <tr><td><code>PUT /api/catalog/icons/{name}</code></td><td><code>{group?, tags?, svg?}</code></td><td><code>{icon}</code>；内置只接受 group/tags，svg 传了即 400</td></tr>
+        <tr><td><code>POST /api/catalog/icons/{name}/state</code></td><td><code>{disabled:bool}</code></td><td><code>{icon}</code></td></tr>
+        <tr><td><code>POST /api/catalog/icons/{name}/reset</code></td><td>—</td><td><code>{icon}</code>；仅内置：清覆盖 + 重新启用</td></tr>
+        <tr><td><code>DELETE /api/catalog/icons/{name}</code></td><td>—</td><td><code>204</code>；内置 409，自定义删文件</td></tr>
+      </table>
+      <p class="doc-p" style="margin-top:8px">
+        错误统一为 <code>{error:{code,message,hint?}}</code>，code：<code>unknown_icon</code> /
+        <code>icon_builtin_protected</code> / <code>icon_duplicate</code> / <code>invalid_icon</code>。
+      </p>
+    </section>
+
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>02 · MCP</b><span>design_icons + 管理</span></div>
+      <table class="spec">
+        <tr><th>工具</th><th>变化</th></tr>
+        <tr><td><code>design_icons</code></td><td>结果自动包含自定义图标；停用图标不出现在列表；<code>format=inline</code> 保留自定义 viewBox</td></tr>
+        <tr><td><code>design_icon_manage</code></td><td>新增：action=<code>list|create|update|disable|enable|remove|reset</code>，参数 <code>name/group/tags/svg/query</code></td></tr>
+      </table>
+      <p class="doc-p" style="margin-top:8px">
+        与 <code>design_system_manage</code> 同一套错误码与文本回执；create 后可直接用 design_icons 检索到。
+      </p>
+    </section>
+  </div>
+
+  <div class="doc-row">
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>03 · 存储</b><span>&lt;data&gt;/</span></div>
+      <table class="spec">
+        <tr><th>文件</th><th>内容</th></tr>
+        <tr><td><code>custom-icons/&lt;name&gt;.json</code></td><td><code>{name, group, tags[], svg, viewBox}</code>；单文件即一个自定义图标</td></tr>
+        <tr><td><code>icon-settings.json</code></td><td><code>{disabled:[name], overrides:{name:{group?,tags?}}}</code>；内置图标的停用与元信息覆盖</td></tr>
+      </table>
+      <p class="doc-p" style="margin-top:8px">
+        写入均走 <code>tmp</code> 临时文件再 <code>rename</code>；启动时 <code>LoadCustomIcons</code> + <code>LoadIconSettings</code>，
+        失败只记日志不阻塞。自定义图标名不可改（名称即 <code>#ds-ic-*</code> 引用 ID）。
+      </p>
+    </section>
+
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>04 · 校验</b><span>入库前</span></div>
+      <ul class="doc-p" style="padding-left:16px;display:flex;flex-direction:column;gap:5px">
+        <li>名称：<code>^[a-z0-9]+(-[a-z0-9]+)*$</code>，1–48 字符；内置/自定义同名即冲突。</li>
+        <li>分组：<code>arrow / action / status / nav / media / data</code>，留空默认 action。</li>
+        <li>SVG：可含 <code>&lt;svg viewBox&gt;</code> 外壳；只允许 path / circle / rect / line / polyline / polygon / ellipse / g / defs 渐变 / clipPath。</li>
+        <li>禁止 script / foreignObject / text / image / style / use / a；禁止外链 href 与 <code>url(http…)</code>、<code>on*</code> 事件、<code>&lt;!DOCTYPE</code>。</li>
+        <li>正文 &gt; 0 且 ≤ 64 KB；XML 必须可解析；未写明 viewBox 时默认 <code>0 0 24 24</code>。</li>
+      </ul>
+    </section>
+
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>05 · DOM 与状态</b><span>icons-admin.js</span></div>
+      <table class="spec">
+        <tr><th>节点</th><th>用途</th></tr>
+        <tr><td><code>#icons-modal</code></td><td>弹层壳（复用 .modal / .sm）</td></tr>
+        <tr><td><code>#icons-search</code></td><td>名称 / 别名 / 分组检索</td></tr>
+        <tr><td><code>#icons-new</code></td><td>新增（进入 create 面板）</td></tr>
+        <tr><td><code>#icons-segs</code></td><td>全部 / 内置 / 自定义 / 已停用 + 计数</td></tr>
+        <tr><td><code>#icons-rows</code></td><td>列表（事件委托：选中 / 开关）</td></tr>
+        <tr><td><code>#icons-right</code></td><td>detail / create / edit 三态容器</td></tr>
+      </table>
+      <p class="doc-p" style="margin-top:8px">状态机：<code>list / detail / edit</code> 三级，<code>create</code> 与 <code>edit</code> 共用表单；Esc 逐级返回。</p>
+    </section>
+  </div>
+
+  <div class="doc-row">
+    <section class="doc-col wide">
+      <div class="doc-sec-h"><b>06 · 运行期接线</b><span>design 包</span></div>
+      <table class="spec">
+        <tr><th>函数 / 类型</th><th>行为</th></tr>
+        <tr><td><code>Icon</code> 增 <code>Builtin</code>、<code>ViewBox</code></td><td>内置初始化注册；自定义从文件读；sprite 用各自 viewBox</td></tr>
+        <tr><td><code>Icons()</code> / <code>SearchIcons()</code> / <code>IconCatalog()</code></td><td>只返回启用图标（选择面）</td></tr>
+        <tr><td><code>AllIcons()</code> / <code>GetIconAny()</code></td><td>管理面与渲染用；停用仍可取</td></tr>
+        <tr><td><code>IconSprite()</code> / <code>IconRef()</code> / <code>IconInline()</code></td><td>使用全部已注册图标，避免模板引用因停用变空白</td></tr>
+        <tr><td><code>LoadCustomIcons(dir)</code> / <code>LoadIconSettings(dir)</code></td><td>app.Start 里在体系之后加载</td></tr>
+      </table>
+    </section>
+
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>07 · 验收</b><span>可执行</span></div>
+      <ul class="doc-p" style="padding-left:16px;display:flex;flex-direction:column;gap:5px">
+        <li><code>go vet ./...</code>、<code>go test ./... -count=1</code> 全绿（含 icons/manage/route/MCP 测试）。</li>
+        <li>原生 WebView 实测：新增、检索、停用、启用、移除，零 JS 异常。</li>
+        <li>设计节点 audit 无 emoji / 字符图标 / 非令牌字体。</li>
+        <li>重启后自定义图标与停用状态保持。</li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="doc-foot">
+    <span class="do"><b>DO</b> 内置只读、自定义可编辑；停用只影响选择面；名称即 ID</span>
+    <span class="dont"><b>DON'T</b> 运行期重写画布 icons.js；不给内置图标改路径/改名</span>
+    <span class="end">adago-design · icons manager v1</span>
+  </div>
+</div>

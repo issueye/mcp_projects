@@ -147,3 +147,136 @@ func TestSystemAdminNotMounted(t *testing.T) {
 		t.Fatalf("未装配管理面 delete = %d", res.StatusCode)
 	}
 }
+
+// fakeIcons 只验证图标管理路由/状态码/错误码映射。
+type fakeIcons struct{}
+
+func (fakeIcons) IconSummariesAll() any {
+	return []map[string]any{{"name": "probe", "disabled": true}}
+}
+
+func (fakeIcons) IconDetail(name string) (any, error) {
+	if name != "probe" {
+		return nil, &AdminError{Code: "unknown_icon", Message: "不存在"}
+	}
+	return map[string]any{"name": "probe", "source": "<svg/>"}, nil
+}
+
+func (fakeIcons) CreateIcon(in IconInput) (any, error) {
+	if in.Name == "" {
+		return nil, &AdminError{Code: "invalid_icon", Message: "name required"}
+	}
+	return map[string]any{"name": in.Name}, nil
+}
+
+func (fakeIcons) UpdateIcon(name string, in IconInput) (any, error) {
+	if name == "builtin" {
+		return nil, &AdminError{Code: "icon_builtin_protected", Message: "只读"}
+	}
+	if name == "missing" {
+		return nil, &AdminError{Code: "unknown_icon", Message: "不存在"}
+	}
+	return map[string]any{"name": name}, nil
+}
+
+func (fakeIcons) SetIconDisabled(name string, off bool) (any, error) {
+	if name == "missing" {
+		return nil, &AdminError{Code: "unknown_icon", Message: "不存在"}
+	}
+	return map[string]any{"name": name, "disabled": off}, nil
+}
+
+func (fakeIcons) ResetIcon(name string) (any, error) {
+	if name == "missing" {
+		return nil, &AdminError{Code: "unknown_icon", Message: "不存在"}
+	}
+	return map[string]any{"name": name}, nil
+}
+
+func (fakeIcons) RemoveIcon(name string) error {
+	if name == "builtin" {
+		return &AdminError{Code: "icon_builtin_protected", Message: "受保护"}
+	}
+	return nil
+}
+
+func TestIconAdminRoutes(t *testing.T) {
+	srv, ts := newTestServer(t)
+	srv.Icons = fakeIcons{}
+
+	res, data := doJSON(t, "GET", ts.URL+"/api/catalog/icons", nil)
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("icons list = %d", res.StatusCode)
+	}
+	if list, _ := data["icons"].([]any); len(list) != 1 {
+		t.Fatalf("icons list body = %v", data)
+	}
+
+	res, _ = doJSON(t, "GET", ts.URL+"/api/catalog/icons/probe", nil)
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("icon detail = %d", res.StatusCode)
+	}
+	res, data = doJSON(t, "GET", ts.URL+"/api/catalog/icons/nope", nil)
+	if res.StatusCode != http.StatusNotFound {
+		t.Fatalf("未知图标详情 = %d", res.StatusCode)
+	}
+	if e, _ := data["error"].(map[string]any); e["code"] != "unknown_icon" {
+		t.Fatalf("错误码 = %v", data)
+	}
+
+	res, _ = doJSON(t, "POST", ts.URL+"/api/catalog/icons", map[string]any{})
+	if res.StatusCode != http.StatusBadRequest {
+		t.Fatalf("create 缺 name = %d", res.StatusCode)
+	}
+	res, _ = doJSON(t, "POST", ts.URL+"/api/catalog/icons", map[string]any{"name": "probe"})
+	if res.StatusCode != http.StatusCreated {
+		t.Fatalf("create = %d", res.StatusCode)
+	}
+
+	res, _ = doJSON(t, "PUT", ts.URL+"/api/catalog/icons/builtin", map[string]any{"svg": "<path/>"})
+	if res.StatusCode != http.StatusConflict {
+		t.Fatalf("内置编辑 = %d", res.StatusCode)
+	}
+	res, _ = doJSON(t, "PUT", ts.URL+"/api/catalog/icons/probe", map[string]any{"group": "nav"})
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("edit = %d", res.StatusCode)
+	}
+
+	res, _ = doJSON(t, "POST", ts.URL+"/api/catalog/icons/probe/state", map[string]any{"disabled": true})
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("state = %d", res.StatusCode)
+	}
+	res, _ = doJSON(t, "POST", ts.URL+"/api/catalog/icons/probe/state", map[string]any{})
+	if res.StatusCode != http.StatusBadRequest {
+		t.Fatalf("state 缺 disabled = %d", res.StatusCode)
+	}
+	res, _ = doJSON(t, "POST", ts.URL+"/api/catalog/icons/missing/state", map[string]any{"disabled": true})
+	if res.StatusCode != http.StatusNotFound {
+		t.Fatalf("未知图标 state = %d", res.StatusCode)
+	}
+
+	res, _ = doJSON(t, "POST", ts.URL+"/api/catalog/icons/probe/reset", nil)
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("reset = %d", res.StatusCode)
+	}
+	res, _ = doJSON(t, "DELETE", ts.URL+"/api/catalog/icons/builtin", nil)
+	if res.StatusCode != http.StatusConflict {
+		t.Fatalf("内置删除 = %d", res.StatusCode)
+	}
+	res, _ = doJSON(t, "DELETE", ts.URL+"/api/catalog/icons/probe", nil)
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("自定义删除 = %d", res.StatusCode)
+	}
+}
+
+func TestIconAdminNotMounted(t *testing.T) {
+	_, ts := newTestServer(t)
+	res, _ := doJSON(t, "GET", ts.URL+"/api/catalog/icons", nil)
+	if res.StatusCode != http.StatusNotImplemented {
+		t.Fatalf("未装配图标管理 = %d", res.StatusCode)
+	}
+	res, _ = doJSON(t, "DELETE", ts.URL+"/api/catalog/icons/probe", nil)
+	if res.StatusCode != http.StatusNotImplemented {
+		t.Fatalf("未装配图标删除 = %d", res.StatusCode)
+	}
+}

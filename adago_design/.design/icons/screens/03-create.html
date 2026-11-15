@@ -1,0 +1,165 @@
+<div class="shot">
+  <!--INCLUDE:../systems/backdrop.html-->
+  <div class="scrim"></div>
+
+  <section class="sm" aria-label="图标库管理">
+    <header class="sm-head">
+      <span class="sm-title">图标库</span>
+      <span class="sm-count">44</span>
+      <div class="sm-search">
+        <svg class="ic ic14"><use href="#ds-ic-search"/></svg>
+        <span>搜索名称、别名或分组</span>
+      </div>
+      <span class="btn primary"><svg class="ic ic14"><use href="#ds-ic-plus"/></svg>新增图标</span>
+      <span class="sm-x"><svg class="ic ic14"><use href="#ds-ic-close"/></svg></span>
+    </header>
+
+    <div class="sm-body">
+      <div class="sm-left">
+        <div class="segs">
+          <span class="seg on">全部 <b>44</b></span>
+          <span class="seg">内置 <b>43</b></span>
+          <span class="seg">自定义 <b>1</b></span>
+          <span class="seg">已停用 <b>0</b></span>
+        </div>
+        <div class="sm-list icm-list">
+
+          <div class="sys-row">
+            <span class="icm-glyph"><svg class="ic"><use href="#ds-ic-chevron-right"/></svg></span>
+            <div class="sys-main">
+              <div class="sys-name icm-name">chevron-right <span class="chip">内置</span></div>
+              <div class="sys-meta"><span>arrow</span><span>·</span><span>向右 / 展开</span></div>
+            </div>
+            <span class="sw on"></span>
+          </div>
+
+          <div class="sys-row">
+            <span class="icm-glyph"><svg class="ic"><use href="#ds-ic-close"/></svg></span>
+            <div class="sys-main">
+              <div class="sys-name icm-name">close <span class="chip">内置</span></div>
+              <div class="sys-meta"><span>action</span><span>·</span><span>关闭 / 取消 / 叉</span></div>
+            </div>
+            <span class="sw on"></span>
+          </div>
+
+          <div class="sys-row">
+            <span class="icm-glyph"><svg class="ic"><use href="#ds-ic-search"/></svg></span>
+            <div class="sys-main">
+              <div class="sys-name icm-name">search <span class="chip">内置</span></div>
+              <div class="sys-meta"><span>action</span><span>·</span><span>搜索 / 查找 / 放大镜</span></div>
+            </div>
+            <span class="sw on"></span>
+          </div>
+
+          <div class="sys-row">
+            <span class="icm-glyph"><svg class="ic"><use href="#ds-ic-plus"/></svg></span>
+            <div class="sys-main">
+              <div class="sys-name icm-name">plus <span class="chip">内置</span></div>
+              <div class="sys-meta"><span>action</span><span>·</span><span>新增 / 添加</span></div>
+            </div>
+            <span class="sw on"></span>
+          </div>
+
+          <div class="sys-row">
+            <span class="icm-glyph"><svg class="ic"><use href="#ds-ic-heart"/></svg></span>
+            <div class="sys-main">
+              <div class="sys-name icm-name">heart <span class="chip">内置</span></div>
+              <div class="sys-meta"><span>media</span><span>·</span><span>收藏 / 喜欢 / 爱心</span></div>
+            </div>
+            <span class="sw on"></span>
+          </div>
+
+          <div class="sys-row">
+            <span class="icm-glyph"><svg class="ic"><use href="#ds-ic-home"/></svg></span>
+            <div class="sys-main">
+              <div class="sys-name icm-name">home <span class="chip">内置</span></div>
+              <div class="sys-meta"><span>nav</span><span>·</span><span>主页 / 首页</span></div>
+            </div>
+            <span class="sw on"></span>
+          </div>
+
+          <div class="sys-row">
+            <span class="icm-glyph"><svg class="ic"><use href="#ds-ic-bell"/></svg></span>
+            <div class="sys-main">
+              <div class="sys-name icm-name">bell <span class="chip">内置</span></div>
+              <div class="sys-meta"><span>status</span><span>·</span><span>通知 / 提醒</span></div>
+            </div>
+            <span class="sw on"></span>
+          </div>
+
+          <div class="sys-row">
+            <span class="icm-glyph"><svg class="ic"><use href="#ds-ic-user"/></svg></span>
+            <div class="sys-main">
+              <div class="sys-name icm-name">user <span class="chip">内置</span></div>
+              <div class="sys-meta"><span>nav</span><span>·</span><span>用户 / 账户 / 头像</span></div>
+            </div>
+            <span class="sw on"></span>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="sm-right">
+        <form class="det">
+          <div class="form-head">
+            <span class="back"><svg class="ic ic14"><use href="#ds-ic-chevron-right"/></svg>返回列表</span>
+            <span class="icm-title" style="font-size:17px;font-weight:600;margin-top:10px">新增图标</span>
+            <div class="sub" style="display:flex;gap:8px;font-size:11px;color:var(--ui-ink-3);margin-top:4px">
+              <span>粘贴 SVG 或路径片段</span><span>·</span><span>写入 custom-icons/&lt;name&gt;.json</span>
+            </div>
+          </div>
+
+          <div class="form-scroll">
+            <div class="form-grid">
+              <div class="field">
+                <span class="lbl">名称 <b>*</b></span>
+                <span class="inp err">brand-mark</span>
+                <span class="err">名称已存在：与内置图标同名，请换一个</span>
+              </div>
+              <div class="field">
+                <span class="lbl">分组 <b>*</b></span>
+                <span class="inp">动作与工具 <svg class="ic ic12 caret"><use href="#ds-ic-chevron-down"/></svg></span>
+                <span class="hint">arrow / action / status / nav / media / data</span>
+              </div>
+              <div class="field full">
+                <span class="lbl">别名（逗号分隔，供检索与替换字符）</span>
+                <span class="inp">logo, 品牌, 标记</span>
+              </div>
+              <div class="field full">
+                <span class="lbl">SVG 源码 <b>*</b></span>
+                <span class="icm-src" style="height:118px"><span class="tg">&lt;svg</span> <span class="at">viewBox="0 0 48 48"</span> <span class="at">fill="none"</span><span class="tg">&gt;</span>
+  <span class="tg">&lt;path</span> <span class="at">d="M24 6l15 9v18l-15 9-15-9V15z"</span>
+        <span class="at">stroke="currentColor"</span> <span class="at">stroke-width="3"</span> <span class="at">stroke-linejoin="round"</span><span class="tg">/&gt;</span>
+  <span class="tg">&lt;path</span> <span class="at">d="M24 16l8 8-8 8-8-8z"</span> <span class="at">fill="currentColor"</span><span class="tg">/&gt;</span>
+<span class="tg">&lt;/svg&gt;</span></span>
+                <div class="icm-rule">
+                  <span>允许：path / circle / rect / line / polyline / polygon / ellipse / g / defs 渐变</span>
+                  <span>禁止：script / foreignObject / text / image / style / 外链 href / on* 事件 · 上限 64 KB</span>
+                </div>
+              </div>
+              <div class="field full">
+                <span class="lbl">实时预览</span>
+                <div class="icm-add-prev" style="height:84px">
+                  <svg class="ic ic40" viewBox="0 0 48 48"><path d="M24 6l15 9v18l-15 9-15-9V15z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M24 16l8 8-8 8-8-8z" fill="currentColor"/></svg>
+                  <small>viewBox 0 0 48 48 · 颜色继承 currentColor</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="icm-note">
+              <svg class="ic ic14"><use href="#ds-ic-info"/></svg>
+              <div>保存后立即生效：<b>design_icons</b> 可检索、预览文档的图标精灵自动包含、画布图标管理列表 +1。内置图标重名会被拒绝。</div>
+            </div>
+          </div>
+
+          <div class="form-foot">
+            <span class="hint">新图标默认启用；之后可在详情里停用</span>
+            <span class="grow"></span>
+            <span class="btn ghost">取消</span>
+            <span class="btn primary">保存并启用</span>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+</div>

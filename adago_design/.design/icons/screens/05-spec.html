@@ -1,0 +1,160 @@
+<div class="doc">
+  <div class="doc-h">
+    <div class="doc-mark">D</div>
+    <div>
+      <div class="doc-kicker">adago-design · icons manager v1</div>
+      <div class="doc-title">纸墨 · 图标库弹层视觉规范</div>
+    </div>
+    <div class="doc-meta">
+      <span>960 × 720</span><span>左 360 / 右 560</span><span>头 56 · 脚 44</span>
+      <span>行 56 · 格 32</span><span>栅格 4</span><span>令牌 --ui-*</span>
+    </div>
+  </div>
+
+  <p class="doc-lede">
+    图标库弹层沿用体系管理弹层的壳与列表语法，只把「体系色块」换成「<b>32 图标格 + 24 网格 glyph</b>」，
+    把「Token 概览」换成「<b>尺寸档 + 两种用法 + SVG 源码</b>」。视觉上不新增颜色：glyph 一律继承
+    <b>currentColor</b>，选中/停用/自定义只用纸墨与状态色表达，彩色仍是数据（图标自身的 fill）。
+  </p>
+
+  <div class="doc-row">
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>01 · 结构</b><span>纵向节奏</span></div>
+      <div class="anat">
+        <div class="an"><span class="anl">56</span><b>弹层头</b><s>标题 · 总数 · 搜索 · 新增图标 · 关闭</s></div>
+        <div class="an"><span class="anl">44</span><b>过滤条</b><s>全部 / 内置 / 自定义 / 已停用（带计数）</s></div>
+        <div class="an"><span class="anl">56</span><b>列表行</b><s>32 图标格 · 等宽名称/状态 · 分组·别名 · 开关</s></div>
+        <div class="an"><span class="anl">flex</span><b>两栏</b><s>左 360 列表 / 右 560 详情或表单</s></div>
+        <div class="an"><span class="anl">44</span><b>弹层脚</b><s>只读提示 · 恢复默认 / 删除 · 完成 / 保存</s></div>
+      </div>
+    </section>
+
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>02 · 尺寸与栅格</b><span>4 网格</span></div>
+      <table class="spec">
+        <tr><th>部位</th><th>值</th><th>说明</th></tr>
+        <tr><td>弹层</td><td><code>960 × 720</code></td><td>--ui-modal-w-wide，居中 240 / 90</td></tr>
+        <tr><td>左栏</td><td><code>360</code></td><td>右缘 1px line；过滤条 + 列表</td></tr>
+        <tr><td>列表行</td><td><code>56</code></td><td>图标格 32、glyph 20、开关 32×18</td></tr>
+        <tr><td>详情 hero</td><td><code>48</code></td><td>glyph 28，圆角 12</td></tr>
+        <tr><td>尺寸档</td><td><code>5 × 1fr</code></td><td>格高 62；glyph 12 / 14 / 16 / 20 / 24</td></tr>
+        <tr><td>用法行</td><td><code>34</code></td><td>等宽 10px + 复制按钮</td></tr>
+        <tr><td>源码块</td><td><code>118</code></td><td>等宽 10px / 行高 1.75，可滚动</td></tr>
+      </table>
+    </section>
+
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>03 · 尺寸档</b><span>光学尺寸</span></div>
+      <div class="icm-sizes">
+        <div class="icm-size"><svg class="ic" style="width:12px;height:12px"><use href="#ds-ic-chevron-right"/></svg><b>12</b></div>
+        <div class="icm-size"><svg class="ic" style="width:14px;height:14px"><use href="#ds-ic-chevron-right"/></svg><b>14</b></div>
+        <div class="icm-size"><svg class="ic" style="width:16px;height:16px"><use href="#ds-ic-chevron-right"/></svg><b>16</b></div>
+        <div class="icm-size"><svg class="ic" style="width:20px;height:20px"><use href="#ds-ic-chevron-right"/></svg><b>20</b></div>
+        <div class="icm-size"><svg class="ic" style="width:24px;height:24px"><use href="#ds-ic-chevron-right"/></svg><b>24</b></div>
+      </div>
+      <p class="doc-p" style="margin-top:10px">
+        尺寸只允许 <code>12 / 14 / 16 / 20 / 24</code>（与 .ds-icon--* 对齐）；hero 28、列表格 20、空态 28 是布局尺寸，不是图标档。
+        24 网格上视觉描边 1.5–2px，圆头圆角；自定义图标如用 48 viewBox，由 <code>viewBox</code> 等比缩放，不强制重画。
+      </p>
+    </section>
+  </div>
+
+  <div class="doc-row">
+    <section class="doc-col wide">
+      <div class="doc-sec-h"><b>04 · 列表行与状态</b><span>启用 / 停用 / 自定义</span></div>
+      <div style="display:flex;flex-direction:column;gap:0;border:1px solid var(--ui-line);border-radius:10px;background:var(--ui-surface);overflow:hidden">
+        <div class="sys-row on" style="height:56px">
+          <span class="icm-glyph"><svg class="ic"><use href="#ds-ic-chevron-right"/></svg></span>
+          <div class="sys-main">
+            <div class="sys-name icm-name">chevron-right <span class="chip">内置</span> <span class="chip ok">已启用</span></div>
+            <div class="sys-meta"><span>arrow</span><span>·</span><span>向右 / 展开</span></div>
+          </div>
+          <span class="sw on"></span>
+        </div>
+        <div class="sys-row icm-row-off" style="height:56px">
+          <span class="icm-glyph"><svg class="ic"><use href="#ds-ic-close"/></svg></span>
+          <div class="sys-main">
+            <div class="sys-name icm-name">close <span class="chip">内置</span> <span class="chip warn">已停用</span></div>
+            <div class="sys-meta"><span>action</span><span>·</span><span>关闭 / 取消 / 叉</span></div>
+          </div>
+          <span class="sw"></span>
+        </div>
+        <div class="sys-row" style="height:56px">
+          <span class="icm-glyph"><svg class="ic" viewBox="0 0 48 48"><path d="M24 6l15 9v18l-15 9-15-9V15z" fill="none" stroke="currentColor" stroke-width="3"/><path d="M24 16l8 8-8 8-8-8z" fill="currentColor"/></svg></span>
+          <div class="sys-main">
+            <div class="sys-name icm-name">brand-mark <span class="chip brand">自定义</span></div>
+            <div class="sys-meta"><span>action</span><span>·</span><span>品牌标记 / logo</span></div>
+          </div>
+          <span class="sw on"></span>
+        </div>
+      </div>
+      <p class="doc-p" style="margin-top:10px">
+        停用：图标格与文字降到 45%/55% 不透明度，开关关闭，chip 用 warn；自定义：chip 用 brand-soft；
+        选中行：左侧 2px 墨条 + brand-soft 底（复用 .sys-row.on）。<b>停用只影响选择面</b>，精灵仍包含该图标。
+      </p>
+    </section>
+
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>05 · 键盘</b><span>不依赖鼠标</span></div>
+      <table class="spec">
+        <tr><th>键</th><th>行为</th></tr>
+        <tr><td><code>Up / Down</code></td><td>在过滤后的列表里移动选中</td></tr>
+        <tr><td><code>Enter</code></td><td>打开选中图标详情</td></tr>
+        <tr><td><code>Space</code></td><td>切换选中图标的启用态</td></tr>
+        <tr><td><code>/</code></td><td>聚焦搜索框（已聚焦时输入字符）</td></tr>
+        <tr><td><code>Esc</code></td><td>表单先返回详情；再按关闭弹层</td></tr>
+        <tr><td><code>Tab</code></td><td>在弹层内循环（焦点陷阱）</td></tr>
+      </table>
+    </section>
+  </div>
+
+  <div class="doc-row">
+    <section class="doc-col wide">
+      <div class="doc-sec-h"><b>06 · 色彩</b><span>纸墨 + 状态成对</span></div>
+      <div class="sw-grid">
+        <div class="sw-item"><i style="background:#EDE8DC"></i><div class="tx"><b>canvas</b><code>#EDE8DC</code><s>窗口底</s></div></div>
+        <div class="sw-item"><i style="background:#FBF8F1"></i><div class="tx"><b>surface</b><code>#FBF8F1</code><s>左栏 / 头脚</s></div></div>
+        <div class="sw-item"><i style="background:#FFFDF8"></i><div class="tx"><b>elevated</b><code>#FFFDF8</code><s>弹层 / 右栏</s></div></div>
+        <div class="sw-item"><i style="background:#F2EDE2"></i><div class="tx"><b>subtle</b><code>#F2EDE2</code><s>图标格 / 源码块</s></div></div>
+        <div class="sw-item"><i style="background:#DCD5C6"></i><div class="tx"><b>line</b><code>#DCD5C6</code><s>1px 分隔 / 边框</s></div></div>
+        <div class="sw-item"><i style="background:#16171A"></i><div class="tx"><b>ink</b><code>#16171A</code><s>glyph / 主文字</s></div></div>
+        <div class="sw-item"><i style="background:#57544C"></i><div class="tx"><b>ink-2</b><code>#57544C</code><s>次要文字</s></div></div>
+        <div class="sw-item"><i style="background:#6E6A60"></i><div class="tx"><b>ink-3</b><code>#6E6A60</code><s>分组 / 读数</s></div></div>
+        <div class="sw-item"><i style="background:#E7E1D2"></i><div class="tx"><b>brand-soft</b><code>#E7E1D2</code><s>选中行 / 自定义</s></div></div>
+        <div class="sw-item"><i style="background:#E7F3EA"></i><div class="tx"><b>success-soft</b><code>#E7F3EA</code><s>已启用</s></div></div>
+        <div class="sw-item"><i style="background:#FBEEDA"></i><div class="tx"><b>warn-soft</b><code>#FBEEDA</code><s>已停用 / 移除提示</s></div></div>
+        <div class="sw-item"><i style="background:#FBE9E7"></i><div class="tx"><b>danger-soft</b><code>#FBE9E7</code><s>校验 / 删除</s></div></div>
+      </div>
+    </section>
+
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>07 · 详情块</b><span>尺寸档与源码</span></div>
+      <div style="display:flex;flex-direction:column;gap:10px;border:1px solid var(--ui-line);border-radius:10px;padding:12px;background:var(--ui-elevated)">
+        <div class="icm-sizes" style="grid-template-columns:repeat(5,1fr)">
+          <div class="icm-size" style="height:52px"><svg class="ic" style="width:12px;height:12px"><use href="#ds-ic-search"/></svg><b>12</b></div>
+          <div class="icm-size" style="height:52px"><svg class="ic" style="width:14px;height:14px"><use href="#ds-ic-search"/></svg><b>14</b></div>
+          <div class="icm-size" style="height:52px"><svg class="ic" style="width:16px;height:16px"><use href="#ds-ic-search"/></svg><b>16</b></div>
+          <div class="icm-size" style="height:52px"><svg class="ic" style="width:20px;height:20px"><use href="#ds-ic-search"/></svg><b>20</b></div>
+          <div class="icm-size" style="height:52px"><svg class="ic" style="width:24px;height:24px"><use href="#ds-ic-search"/></svg><b>24</b></div>
+        </div>
+        <div class="icm-use">
+          <code>&lt;svg class="ds-icon ds-icon--20"&gt;&lt;use href="#ds-ic-search"/&gt;&lt;/svg&gt;</code>
+          <span class="btn ghost xs">复制</span>
+        </div>
+        <div class="icm-src" style="height:74px"><span class="tg">&lt;symbol</span> <span class="at">id="ds-ic-search"</span> <span class="at">viewBox="0 0 24 24"</span><span class="tg">&gt;</span>
+  <span class="tg">&lt;circle</span> <span class="at">cx="11" cy="11" r="7"</span><span class="tg">/&gt;</span>
+  <span class="tg">&lt;path</span> <span class="at">d="M20 20l-3.5-3.5"</span><span class="tg">/&gt;</span>
+<span class="tg">&lt;/symbol&gt;</span></div>
+      </div>
+      <p class="doc-p" style="margin-top:10px">
+        源码块只做展示与复制，不引入高亮库；标签色 ink-3、属性值 ink，编辑态换成 <code>textarea.inp</code>（等宽 11 / 行高 1.6）。
+      </p>
+    </section>
+  </div>
+
+  <div class="doc-foot">
+    <span class="do"><b>DO</b> 用 4px 栅格对齐；glyph 全部 currentColor；尺寸档固定 5 档</span>
+    <span class="dont"><b>DON'T</b> 给图标加投影或渐变底色；不要用字符/emoji 代替图标</span>
+    <span class="end">adago-design · icons manager v1</span>
+  </div>
+</div>

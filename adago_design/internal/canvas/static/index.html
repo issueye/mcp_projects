@@ -72,6 +72,7 @@
     </div>
     <div class="tb-spacer"></div>
     <span id="conn" class="conn conn--ok" data-tip="已连接" aria-label="连接状态：已连接" role="status"><i class="dot"></i></span>
+    <button id="icons-open" data-tip="图标库：浏览 SVG 图标 / 新增 / 停用 / 编辑" aria-label="图标库" aria-haspopup="dialog"><svg class="ds-icon ds-icon--16" aria-hidden="true"><use href="#ds-ic-grid"/></svg></button>
     <button id="btn-theme" data-tip="切换界面主题" aria-label="切换界面主题"><svg class="ds-icon ds-icon--16" aria-hidden="true"><use href="#ds-ic-theme"/></svg></button>
   </header>
 
@@ -258,6 +259,41 @@
             <div id="sys-rows" class="sysm-list"></div>
           </div>
           <div id="sys-right" class="sysm-right"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- SVG 图标库管理：搜索 + 过滤 + 列表 + 详情/表单（两栏 960，与体系管理同壳）。
+       内置图标可停用与改分组/别名，不可删、SVG 只读；自定义图标可新增/编辑/移除。 -->
+  <div id="icons-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="icons-modal-title">
+    <div class="modal__mask" data-icons-close></div>
+    <div class="modal__box modal__box--wide">
+      <div class="sysm">
+        <header class="sysm-head">
+          <span class="sysm-title" id="icons-modal-title">图标库</span>
+          <span class="sysm-count" id="icons-count">0</span>
+          <label class="sysm-search">
+            <svg class="ds-icon ds-icon--14" aria-hidden="true"><use href="#ds-ic-search"/></svg>
+            <input id="icons-search" type="search" placeholder="搜索名称、别名或分组" autocomplete="off" aria-label="搜索图标">
+          </label>
+          <button id="icons-new" class="btn btn--primary">
+            <svg class="ds-icon ds-icon--14" aria-hidden="true"><use href="#ds-ic-plus"/></svg>新增图标
+          </button>
+          <button class="modal__x" data-icons-close title="关闭" aria-label="关闭图标库管理">
+            <svg class="ds-icon ds-icon--14" aria-hidden="true"><use href="#ds-ic-close"/></svg>
+          </button>
+        </header>
+        <div class="sysm-body">
+          <div class="sysm-left">
+            <div class="sysm-segs" id="icons-segs">
+              <button class="sysm-seg on" data-filter="all">全部 <b id="icons-cnt-all">0</b></button>
+              <button class="sysm-seg" data-filter="builtin">内置 <b id="icons-cnt-builtin">0</b></button>
+              <button class="sysm-seg" data-filter="custom">自定义 <b id="icons-cnt-custom">0</b></button>
+              <button class="sysm-seg" data-filter="disabled">已停用 <b id="icons-cnt-disabled">0</b></button>
+            </div>
+            <div id="icons-rows" class="sysm-list icm-list"></div>
+          </div>
+          <div id="icons-right" class="sysm-right"></div>
         </div>
       </div>
     </div>

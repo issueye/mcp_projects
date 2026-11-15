@@ -537,7 +537,7 @@ RIGHT().addEventListener("click", (ev) => {
   if (!act) return;
   switch (act.dataset.act) {
     case "edit": if (detail) openEdit(); break;
-    case "back": mode = "detail"; renderRight(); break;
+    case "back": mode = "detail"; if (detail && detail.id === selected) renderRight(); else if (selected) loadDetail(selected); else renderRight(); break;
     case "done": closeSystemManager(); break;
     case "enable": if (detail) mutate(() => api("/api/catalog/systems/" + encodeURIComponent(detail.id) + "/state", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ disabled: false }) }), "已启用「" + detail.name + "」"); break;
     case "reset": resetSelected(); break;

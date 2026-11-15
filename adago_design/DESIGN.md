@@ -164,6 +164,33 @@ ds-progress、ds-navbar、ds-tabbar、ds-list、ds-dialog、ds-toast
 - 启动顺序：`LoadCustomSystems(dir)` → `LoadSystemSettings(dir)`（先注册再套用状态）。
 - 设置写入用 tmp→rename；读失败/坏 JSON 回落空设置，不影响启动。
 
+### 3.6 图标管理（运行期可写）
+
+图标分两层：`icon_paths.go` 的内置图标（`go:generate` 同步画布 `icons.js`），
+与 `<data>/custom-icons/*.json` 的自定义图标。画布工具条「图标库」与 MCP
+`design_icon_manage` 共用同一套 `design` 函数；弹层 v1 见 DESIGN-SYSTEM-UI §14。
+
+| 能力 | 行为 | 落点 |
+|---|---|---|
+| 停用 / 启用 | 只影响**选择面**：`Icons/SearchIcons/IconCatalog/design_icons` 不再返回；精灵与已有模板引用不变 | `icon-settings.json` 的 `disabled` |
+| 编辑（内置） | 只改分组/别名；SVG 只读，「恢复默认」清除覆盖 | `icon-settings.json` 的 `overrides` |
+| 编辑（自定义） | 分组/别名/SVG 正文都可改（重新校验并写回） | `custom-icons/<name>.json` |
+| 新增 | 名称（kebab-case）+ 分组 + 别名 + 粘贴 SVG/路径片段；解析出 body 与 viewBox | `custom-icons/<name>.json` |
+| 移除 | 仅自定义图标；内置返回 `icon_builtin_protected` | 删除文件 + 注册表 |
+| 恢复默认 | 仅内置图标：清空覆盖并重新启用 | 清 settings 条目 |
+
+- `Icon` 增 `Builtin` 与 `ViewBox`；`RegisterIcon` 只注册内置图标（init），
+  自定义图标走 `registerIconLocked(ic, false)`。
+- 选择面与渲染面分开：`Icons/SearchIcons/IconCatalog` 只返回已启用图标；
+  `GetIcon/HasIcon/IconSprite/IconRef/IconInline` 返回全部已注册图标，
+  避免停用后旧模板里的 `{{icon:close}}` 渲染成空白。
+- `parseIconSVG`：`<svg>` 外壳可省略；只允许 path/circle/rect/line/polyline/
+  polygon/ellipse/g/defs/linearGradient/radialGradient/stop/clipPath；拒绝
+  script/foreignObject/text/image/style/use/iframe/audio/video/embed/object、
+  `on*`、`style`、外链 `href`/`url()`、`<!DOCTYPE`；≤ 64 KB；viewBox 必须四数。
+- 启动顺序：`LoadCustomIcons(dir)` → `LoadIconSettings(dir)`（先注册再套用状态）；
+  设置与图标文件均 tmp→rename 原子写。
+
 ## 4. 无限画布（internal/canvas + static/）
 
 ### 4.1 数据模型
@@ -260,6 +287,13 @@ type Node struct {
 | `POST /api/catalog/systems/{id}/state` | `{disabled:true|false}` 停用/启用 |
 | `POST /api/catalog/systems/{id}/reset` | 内置体系恢复默认显示信息并启用 |
 | `DELETE /api/catalog/systems/{id}` | 移除自定义体系；内置 409 `system_builtin_protected` |
+| `GET /api/catalog/icons` | 全部图标摘要（含停用/自定义，管理面，需装配 `IconAdmin`） |
+| `GET /api/catalog/icons/{name}` | 图标详情（summary + 归一化 SVG 源码） |
+| `POST /api/catalog/icons` | 新增自定义图标 `{name,group?,tags?,svg}` |
+| `PUT /api/catalog/icons/{name}` | 编辑 `{group?,tags?,svg?}`；内置传 `svg` → 409 |
+| `POST /api/catalog/icons/{name}/state` | `{disabled:true\|false}` 停用/启用 |
+| `POST /api/catalog/icons/{name}/reset` | 内置图标恢复默认分组/别名并启用 |
+| `DELETE /api/catalog/icons/{name}` | 移除自定义图标；内置 409 `icon_builtin_protected` |
 | `POST /api/catalog/preview` | 生成组件预览节点 `{project,system,components[],theme,title?,artboard?}` |
 
 ### 4.3 截图链路（无 CDP 方案）
@@ -504,7 +538,7 @@ SDK：`github.com/modelcontextprotocol/go-sdk v1.8.0`（与 mem-go 一致）。
 | `project_canvas` | `project`, `ratio?` 或 `width?/height?`, `free?` | 项目（含 `canvas`）+ 可选预设清单 |
 | `design_artboard` | `artboard?`, `family?` | 画板清单或单个 `ArtboardSpec`（含 `contract` 契约文本） |
 | `design_fonts` | `script?=latin/hans/mono` | 字体清单（含授权标记）+ 默认栈 + 授权策略 |
-| `design_icons` | `query?`, `group?`, `format?=sprite/inline` | 图标清单（名字/分组/别名/HTML） |
+| `design_icons` | `query?`, `group?`, `format?=sprite/inline` | 图标清单（名字/分组/别名/HTML；内置 + 自定义，停用隐藏） |
 | `design_systems` | — | 体系清单（id/名称/风格要点/主题/组件数/默认画板） |
 | `design_tokens` | `system`, `theme?=light`, `category?=all/color/type/spacing/radius/shadow/motion`, `brief?` | Token 全量或分类；`brief`（仅 all）精简视图：关键语义色的值、字阶 size/weight、间距/圆角阶梯，省略阴影/动效/变体 |
 | `design_components` | `system`, `component?`（单个则含 HTML 片段） | 组件清单/详情/用法守则 |
@@ -526,6 +560,7 @@ SDK：`github.com/modelcontextprotocol/go-sdk v1.8.0`（与 mem-go 一致）。
 | `design_derive` | `primary`(#RRGGBB), `name`, `base_system`, `addToCanvas?=true` | 10 阶品牌色板 + 派生体系（持久化注册）+ 色板节点 |
 | `design_register` | `name`, `tokens_json`, `dark_json?`, `base_system?` | 自定义体系注册（结构兜底 + 持久化） |
 | `design_system_manage` | `action`(list/create/update/disable/enable/remove/reset), `id?`, `name?`, `vendor?`, `family?`, `base?`, `primary?`, `description?`, `summary?`, `json?` | 体系管理：停用只影响选择面；内置可停用/改显示信息不可删；自定义可整体改 JSON/移除 |
+| `design_icon_manage` | `action`(list/create/update/disable/enable/remove/reset), `name?`, `group?`, `tags?`, `svg?`, `query?` | 图标管理：停用只影响 `design_icons`/检索；内置可停用/改分组别名、SVG 只读不可删；自定义可粘贴 SVG 新增/编辑/移除 |
 | `design_audit` | `system`（体系走查）, `theme?`, `addToCanvas?=true`；或 `nodeID`（节点级走查，优先） | 体系级：WCAG 对比度/字号/阶梯走查评分 + 报告节点；节点级：外链资源 / 图标与符号 / 尺寸契约 / 字体授权（`AuditNodeHTML`） |
 | `canvas_connect` | `from`, `to`, `label?` | 节点间贝塞尔连线（SVG，持久化） |
 | `canvas_group` | `title`, `node_ids[]`, `padding?` | 分组框（垫底虚线框，自动包住成员） |
@@ -669,16 +704,21 @@ stdio JSON-RPC 走继承管道不受影响）。日志写 `<data>/adago-design.l
   MCP 配置片段。窗口本身靠真机冒烟（见下）。
 - `internal/canvas`：`embed_test.go` 锁住页面契约（embed bootstrap 先于样式、
   两条隐藏规则、`js/native.js` dataset 字段、`main.js` 接线）；
-  `admin_route_test.go` 锁管理端点路由/状态码/错误码映射（fake Admin）与
+  `admin_route_test.go` 锁管理端点路由/状态码/错误码映射（fake Admin/fake Icons）与
   `/api/catalog/palette` 色板预览。
 - `internal/design`：`manage_test.go` 覆盖停用持久化与过滤、内置显示信息覆盖
   与恢复默认、内置保护（删除/覆盖均拒绝）、自定义新增/改名/整体 JSON/移除、
   非法主色与非法 Token JSON。
+- `internal/design`：`icons_manage_test.go` 覆盖自定义图标全生命周期、内置保护、
+  停用持久化与「停用仍可渲染」、分组/别名覆盖与恢复、SVG 校验（脚本/文本/外链/
+  事件/style/坏 viewBox）、磁盘加载与设置套用。
 - `internal/app`：`systems_test.go` 走 Catalog 管理集成（摘要/停用/新增/编辑/
-  JSON/移除/错误码）。
+  JSON/移除/错误码）；`icons_test.go` 走图标 Catalog 集成（新增/详情/停用/
+  内置保护/移除/错误码）。
 - `internal/mcpserver`：`systems_test.go` 走 `design_system_manage` 契约
   （list/create/disable→design_systems 隐藏/design_tokens 拒绝/enable/
-  内置保护/remove）。
+  内置保护/remove）；`icons_test.go` 走 `design_icon_manage` 契约
+  （create→design_icons 可检索/disable 后隐藏/enable/内置保护/非法 SVG/remove）。
 - 前端：`go generate` 同步 icons.js；用无头 Chromium 做真实输入事件回归
   （拖动跨越 iframe 区域不丢事件、检查模式 A↔B 跨卡片配对、截图链路出图）。
 - 门禁：`GOWORK=off go test ./... && go vet ./...`。

@@ -54,6 +54,7 @@ func NewServer(d Deps) *mcp.Server {
 				"⑤ design_audit 走查（体系级：字体授权、图标一致性、尺寸规范；传 node_id 可走查单个已生成节点的外链/图标/尺寸契约）→ canvas_arrange 排版 → " +
 				"canvas_screenshot 回看 → canvas_export 导出独立 HTML。" +
 				"体系本身可管理（停用/新增/编辑/移除）用 design_system_manage；停用后目录与预览不再出现它。" +
+				"图标库可管理（新增自定义 SVG / 停用 / 移除）用 design_icon_manage；design_icons 自动包含自定义、隐藏停用。" +
 				"硬规则：设计稿必须归属于已存在的项目 —— 任何新增设计稿的工具（design_preview / design_screen / " +
 				"canvas_add / design_audit / design_derive / design_compare）都必须传 project；没有项目就先 project_create，" +
 				"否则会返回 project_required。" +
@@ -179,6 +180,13 @@ func registerTools(server *mcp.Server, d Deps) {
 			"停用只影响目录、搜索与预览（已上画布的稿不回收）；内置体系可停用/改显示信息，不可删除；" +
 			"自定义体系可整体编辑 JSON 或移除。新增走品牌派生（base + primary）。",
 	}, systemManageTool(d))
+
+	mcp.AddTool(server, &mcp.Tool{
+		Name: "design_icon_manage",
+		Description: "SVG 图标库管理：list / create / update / disable / enable / remove / reset。" +
+			"内置图标可停用、可改分组/别名，SVG 只读、不可删除；自定义图标可粘贴 SVG 新增、整体编辑、移除。" +
+			"停用只影响 design_icons / 检索 / 目录（精灵仍保留，旧模板引用不会变空白）。",
+	}, iconManageTool(d))
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "design_audit",

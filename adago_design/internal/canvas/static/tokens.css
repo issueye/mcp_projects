@@ -137,6 +137,14 @@
   --ui-sysm-sw-h: 18px;          /* 启用开关高度 */
   --ui-sysm-search-w: 230px;     /* 搜索框宽度 */
   --ui-sysm-json-h: 240px;       /* 自定义 JSON 编辑区高度 */
+  --ui-icm-row-h: 56px;          /* 图标库列表行 */
+  --ui-icm-glyph: 32px;          /* 列表图标格 */
+  --ui-icm-hero: 48px;           /* 详情 hero 图标格 */
+  --ui-icm-size-h: 62px;         /* 尺寸档格高 */
+  --ui-icm-src-h: 118px;         /* 详情 SVG 源码块高度 */
+  --ui-icm-code-h: 148px;        /* 表单 SVG 编辑区高度 */
+  --ui-icm-prev-h: 84px;         /* 表单实时预览区高度 */
+  --ui-icm-empty-max-w: 320px;   /* 图标空态文案宽度 */
   --ui-ask-w: 420px;
   --ui-toast-max-w: 560px;
   --ui-empty-max-w: 440px;
