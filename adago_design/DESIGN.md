@@ -633,7 +633,7 @@ func IconRef(name string, size int) string
 func ExpandIcons(s string) string        // 展开模板里的 {{icon:name:size}}
 ```
 
-- 42 个图标、24 网格、1.8 描边、`currentColor`（自动继承 Token 色）。
+- 74 个图标、24 网格、1.8 描边、`currentColor`（自动继承 Token 色）。
 - 分组：`arrow / action / status / nav / media / data`；名字扁平语义（`close` / `check` /
   `chevron-right`），分组放 `Group` 字段，历史字符符号放 `Tags`（`design_icons?query=✕`）。
 - 组件模板写 `{{icon:check:12}}`，渲染时展开 —— 保持模板可读、可 diff，且不会被

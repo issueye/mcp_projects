@@ -17,6 +17,12 @@ func init() {
 		Body: `<path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/>`})
 	RegisterIcon(Icon{Name: "arrow-up-right", Group: IconGroupArrow, Tags: []string{"↗", "external", "share", "open"},
 		Body: `<path d="M7 17L17 7"/><path d="M9 7h8v8"/>`})
+	RegisterIcon(Icon{Name: "arrow-right", Group: IconGroupArrow, Tags: []string{"→", "right", "next", "forward"},
+		Body: `<path d="M5 12h14"/><path d="M13 6l6 6-6 6"/>`})
+	RegisterIcon(Icon{Name: "arrow-up", Group: IconGroupArrow, Tags: []string{"↑", "up", "top"},
+		Body: `<path d="M12 19V5"/><path d="M6 11l6-6 6 6"/>`})
+	RegisterIcon(Icon{Name: "arrow-down", Group: IconGroupArrow, Tags: []string{"↓", "down", "bottom"},
+		Body: `<path d="M12 5v14"/><path d="M6 13l6 6 6-6"/>`})
 
 	// ---------------- action：动作与工具 ----------------
 	RegisterIcon(Icon{Name: "plus", Group: IconGroupAction, Tags: []string{"+", "＋", "add", "new"},
@@ -53,6 +59,30 @@ func init() {
 	RegisterIcon(Icon{Name: "settings", Group: IconGroupAction, Tags: []string{"config", "preference", "sliders"},
 		Body: `<path d="M4 8h9"/><path d="M17 8h3"/><path d="M4 16h3"/><path d="M11 16h9"/>` +
 			`<circle cx="15" cy="8" r="2"/><circle cx="9" cy="16" r="2"/>`})
+	RegisterIcon(Icon{Name: "edit", Group: IconGroupAction, Tags: []string{"✎", "pencil", "write", "compose", "编辑"},
+		Body: `<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/>`})
+	RegisterIcon(Icon{Name: "copy", Group: IconGroupAction, Tags: []string{"duplicate", "clone", "复制"},
+		Body: `<rect x="9" y="9" width="12" height="12" rx="2"/>` +
+			`<path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>`})
+	RegisterIcon(Icon{Name: "download", Group: IconGroupAction, Tags: []string{"↓", "save", "import", "下载"},
+		Body: `<path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M4 20h16"/>`})
+	RegisterIcon(Icon{Name: "upload", Group: IconGroupAction, Tags: []string{"↑", "export", "上传"},
+		Body: `<path d="M12 15V4"/><path d="M7 9l5-5 5 5"/><path d="M4 20h16"/>`})
+	RegisterIcon(Icon{Name: "filter", Group: IconGroupAction, Tags: []string{"funnel", "筛选", "过滤"},
+		Body: `<path d="M20 4H4l6 7v6l4 2v-8z"/>`})
+	RegisterIcon(Icon{Name: "calendar", Group: IconGroupAction, Tags: []string{"📅", "date", "schedule", "日期", "日程"},
+		Body: `<rect x="4" y="6" width="16" height="14" rx="2"/><path d="M8 3v5"/><path d="M16 3v5"/>` +
+			`<path d="M4 11h16"/>`})
+	RegisterIcon(Icon{Name: "lock", Group: IconGroupAction, Tags: []string{"🔒", "secure", "password", "private", "锁"},
+		Body: `<rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/>`})
+	RegisterIcon(Icon{Name: "eye", Group: IconGroupAction, Tags: []string{"👁", "view", "preview", "show", "可见"},
+		Body: `<path d="M3 12c1.8-3.6 4.9-6 9-6s7.2 2.4 9 6c-1.8 3.6-4.9 6-9 6s-7.2-2.4-9-6z"/>` +
+			`<circle cx="12" cy="12" r="3"/>`})
+	RegisterIcon(Icon{Name: "eye-off", Group: IconGroupAction, Tags: []string{"hidden", "隐私", "不可见", "hide"},
+		Body: `<path d="M3 12c1.8-3.6 4.9-6 9-6s7.2 2.4 9 6c-1.8 3.6-4.9 6-9 6s-7.2-2.4-9-6z"/>` +
+			`<path d="M4 4l16 16"/>`})
+	RegisterIcon(Icon{Name: "key", Group: IconGroupAction, Tags: []string{"🔑", "auth", "permission", "密钥"},
+		Body: `<circle cx="7" cy="12" r="3.5"/><path d="M10.5 12H21"/><path d="M17 12v4"/><path d="M20 12v3"/>`})
 
 	// ---------------- status：状态与反馈 ----------------
 	RegisterIcon(Icon{Name: "check", Group: IconGroupStatus, Tags: []string{"✓", "✔", "ok", "done", "success"},
@@ -70,6 +100,15 @@ func init() {
 	RegisterIcon(Icon{Name: "spinner", Group: IconGroupStatus, Tags: []string{"loading", "wait", "progress"},
 		Body: `<path d="M12 4a8 8 0 018 8" opacity=".9"/><path d="M20 12a8 8 0 01-8 8"/>` +
 			`<path d="M12 20a8 8 0 01-8-8"/><path d="M4 12a8 8 0 018-8"/>`})
+	RegisterIcon(Icon{Name: "alert-circle", Group: IconGroupStatus, Tags: []string{"!", "error", "alert", "notice"},
+		Body: `<circle cx="12" cy="12" r="8.5"/><path d="M12 7v6"/><path d="M12 16.4v.9"/>`})
+	RegisterIcon(Icon{Name: "question", Group: IconGroupStatus, Tags: []string{"?", "help", "faq", "疑问"},
+		Body: `<circle cx="12" cy="12" r="8.5"/><path d="M9.4 9a2.6 2.6 0 015.1.8c0 1.7-2.5 2.1-2.5 3.4"/>` +
+			`<path d="M12 16.4v.9"/>`})
+	RegisterIcon(Icon{Name: "shield", Group: IconGroupStatus, Tags: []string{"安全", "secure", "protection", "verified"},
+		Body: `<path d="M12 4l7 3v5c0 4.2-3 7-7 8-4-1-7-3.8-7-8V7z"/>`})
+	RegisterIcon(Icon{Name: "clock", Group: IconGroupStatus, Tags: []string{"🕒", "time", "timer", "时间"},
+		Body: `<circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/>`})
 
 	// ---------------- nav：导航入口 ----------------
 	RegisterIcon(Icon{Name: "home", Group: IconGroupNav, Tags: []string{"◉", "index", "首页", "main"},
@@ -83,6 +122,20 @@ func init() {
 	RegisterIcon(Icon{Name: "bell", Group: IconGroupNav, Tags: []string{"notice", "notification", "remind"},
 		Body: `<path d="M8 9.5a4 4 0 018 0c0 3.6 1.4 5.2 1.4 5.2H6.6S8 13.1 8 9.5z"/>` +
 			`<path d="M10.4 17.6a1.7 1.7 0 003.2 0"/>`})
+	RegisterIcon(Icon{Name: "globe", Group: IconGroupNav, Tags: []string{"web", "language", "地球", "网络"},
+		Body: `<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17"/>` +
+			`<path d="M12 3.5c2.4 2.4 3.6 5.4 3.6 8.5s-1.2 6.1-3.6 8.5c-2.4-2.4-3.6-5.4-3.6-8.5s1.2-6.1 3.6-8.5z"/>`})
+	RegisterIcon(Icon{Name: "mail", Group: IconGroupNav, Tags: []string{"email", "邮件", "联系", "inbox"},
+		Body: `<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M4 6.5l8 6 8-6"/>`})
+	RegisterIcon(Icon{Name: "map-pin", Group: IconGroupNav, Tags: []string{"location", "定位", "地址", "place"},
+		Body: `<path d="M12 21s6.5-6 6.5-11a6.5 6.5 0 00-13 0C5.5 15 12 21 12 21z"/>` +
+			`<circle cx="12" cy="10" r="2.5"/>`})
+	RegisterIcon(Icon{Name: "users", Group: IconGroupNav, Tags: []string{"team", "成员", "团队", "group"},
+		Body: `<circle cx="9" cy="8" r="3"/><path d="M3 20c1-3.2 3.2-5 6-5s5 1.8 6 5"/>` +
+			`<path d="M15 5.2a3 3 0 010 5.6"/><path d="M17 15.2c1.6.8 2.7 2.4 3 4.8"/>`})
+	RegisterIcon(Icon{Name: "logout", Group: IconGroupNav, Tags: []string{"exit", "signout", "退出", "登出"},
+		Body: `<path d="M14 5h4.5A1.5 1.5 0 0120 6.5v11a1.5 1.5 0 01-1.5 1.5H14"/>` +
+			`<path d="M9 8l-4 4 4 4"/><path d="M5 12h9"/>`})
 
 	// ---------------- media：内容互动 ----------------
 	RegisterIcon(Icon{Name: "heart", Group: IconGroupMedia, Tags: []string{"♥", "like", "favorite", "赞"},
@@ -95,6 +148,16 @@ func init() {
 			`<circle cx="9.2" cy="9.6" r="1.2"/>`})
 	RegisterIcon(Icon{Name: "play", Group: IconGroupMedia, Tags: []string{"video", "start"},
 		Body: `<circle cx="12" cy="12" r="8.5"/><path d="M10 8.8l5 3.2-5 3.2z"/>`})
+	RegisterIcon(Icon{Name: "star", Group: IconGroupMedia, Tags: []string{"★", "☆", "rating", "favorite", "收藏", "评分"},
+		Body: `<path d="M12 4l2.4 5 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4-3.9-3.8 5.4-.8z"/>`})
+	RegisterIcon(Icon{Name: "bookmark", Group: IconGroupMedia, Tags: []string{"收藏", "阅读", "书签", "save"},
+		Body: `<path d="M6 5h12v15l-6-4-6 4z"/>`})
+	RegisterIcon(Icon{Name: "camera", Group: IconGroupMedia, Tags: []string{"photo", "拍照", "相机", "picture"},
+		Body: `<rect x="3" y="7" width="18" height="12" rx="2"/><circle cx="12" cy="13" r="4"/>` +
+			`<path d="M8 7l1.5-3h5L16 7"/>`})
+	RegisterIcon(Icon{Name: "mic", Group: IconGroupMedia, Tags: []string{"voice", "录音", "语音", "audio"},
+		Body: `<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0"/>` +
+			`<path d="M12 18v3"/><path d="M8 21h8"/>`})
 
 	// ---------------- data：列表与数据 ----------------
 	RegisterIcon(Icon{Name: "list", Group: IconGroupData, Tags: []string{"rows", "table", "列表"},
@@ -109,4 +172,19 @@ func init() {
 			`<rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>`})
 	RegisterIcon(Icon{Name: "refresh", Group: IconGroupData, Tags: []string{"reload", "sync", "重试"},
 		Body: `<path d="M20 12a8 8 0 10-2.6 5.9"/><path d="M20 6.5V12h-5.5"/>`})
+	RegisterIcon(Icon{Name: "chart", Group: IconGroupData, Tags: []string{"bar", "统计", "柱状图", "report"},
+		Body: `<path d="M4 20h16"/><path d="M7 17V10"/><path d="M12 17V6"/><path d="M17 17v-4"/>`})
+	RegisterIcon(Icon{Name: "pie-chart", Group: IconGroupData, Tags: []string{"chart", "饼图", "占比", "analytics"},
+		Body: `<circle cx="12" cy="12" r="8.5"/><path d="M12 12V3.5"/><path d="M12 12l7.4 4.2"/>`})
+	RegisterIcon(Icon{Name: "database", Group: IconGroupData, Tags: []string{"db", "storage", "数据", "存储"},
+		Body: `<ellipse cx="12" cy="6" rx="7" ry="2.8"/>` +
+			`<path d="M5 6v12c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8V6"/>` +
+			`<path d="M5 12c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8"/>`})
+	RegisterIcon(Icon{Name: "file", Group: IconGroupData, Tags: []string{"document", "文档", "page", "文件"},
+		Body: `<path d="M6 4h8l4 4v12H6z"/><path d="M14 4v4h4"/><path d="M9 13h6"/><path d="M9 16h4"/>`})
+	RegisterIcon(Icon{Name: "code", Group: IconGroupData, Tags: []string{"dev", "代码", "program", "snippet"},
+		Body: `<path d="M9 7l-4 5 4 5"/><path d="M15 7l4 5-4 5"/>`})
+	RegisterIcon(Icon{Name: "layers", Group: IconGroupData, Tags: []string{"stack", "图层", "层", "blocks"},
+		Body: `<path d="M12 4l8 4.5-8 4.5-8-4.5z"/><path d="M4 13l8 4.5 8-4.5"/>` +
+			`<path d="M4 17.5l8 4.5 8-4.5"/>`})
 }

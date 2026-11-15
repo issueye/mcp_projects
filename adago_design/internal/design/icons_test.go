@@ -8,7 +8,7 @@ import (
 
 func TestIconRegistryInvariants(t *testing.T) {
 	icons := Icons()
-	if len(icons) < 24 {
+	if len(icons) < 70 {
 		t.Fatalf("图标太少：%d", len(icons))
 	}
 	nameRe := regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)

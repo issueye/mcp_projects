@@ -67,7 +67,7 @@ project_create（或 project_list 选已有）
 |---|---|---|
 | 画板（尺寸） | `design_artboard` | 8 块画板：iPhone 15 / SE、Android 360、微信小程序、iPad、Web 1280/1440、桌面应用壳。给出内容区、安全区、栅格、导出倍率与「尺寸契约」文本 |
 | 字体（授权） | `design_fonts` | 字体注册表带商用/嵌入/再分发三个标记；默认栈是 Inter + Noto Sans SC（OFL），全平台可复现 |
-| 图标 | `design_icons` | 42 个内置 24 网格线性图标 + 运行期自定义 SVG；`{{icon:name:size}}` 占位符在渲染时展开为内联精灵 |
+| 图标 | `design_icons` | 74 个内置 24 网格线性图标 + 运行期自定义 SVG；`{{icon:name:size}}` 占位符在渲染时展开为内联精灵 |
 
 三条硬规则：
 
