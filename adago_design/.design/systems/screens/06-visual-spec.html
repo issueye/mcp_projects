@@ -1,0 +1,154 @@
+<div class="doc">
+  <div class="doc-h">
+    <div class="doc-mark">D</div>
+    <div>
+      <div class="doc-kicker">adago-design · systems manager v2</div>
+      <div class="doc-title">纸墨 · 体系管理弹层视觉规范</div>
+    </div>
+    <div class="doc-meta">
+      <span>960 × 720</span><span>左 360 / 右 560</span><span>头 56 · 脚 44</span>
+      <span>行 64</span><span>栅格 4</span><span>令牌 --ui-*</span>
+    </div>
+  </div>
+
+  <p class="doc-lede">
+    弹层是「<b>列表 + 详情</b>」的工具，不是表单页：左栏负责找（搜索、过滤、状态），右栏负责看与改
+    （详情 / 编辑按需进入）。视觉仍只有纸墨与状态色；彩色只作为每个体系的<b>主色色块</b>数据出现，
+    且始终配等宽色值，不靠颜色单独表达含义。
+  </p>
+
+  <div class="doc-row">
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>01 · 结构</b><span>纵向节奏</span></div>
+      <div class="anat">
+        <div class="an"><span class="anl">56</span><b>弹层头</b><s>标题 · 总数 · 搜索 · 新增 · 关闭</s></div>
+        <div class="an"><span class="anl">44</span><b>过滤条</b><s>全部 / 内置 / 自定义 / 已停用（带计数）</s></div>
+        <div class="an"><span class="anl">64</span><b>列表行</b><s>主色块 · 名称/状态 · 厂商·类型·ID · 开关</s></div>
+        <div class="an"><span class="anl">flex</span><b>两个栏</b><s>左 360 列表 / 右 560 详情或编辑</s></div>
+        <div class="an"><span class="anl">44</span><b>弹层脚</b><s>只读提示 · 恢复默认 · 完成（或保存）</s></div>
+      </div>
+    </section>
+
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>02 · 尺寸与栅格</b><span>4 网格</span></div>
+      <table class="spec">
+        <tr><th>部位</th><th>值</th><th>说明</th></tr>
+        <tr><td>弹层</td><td><code>960 × 720</code></td><td>--ui-modal-w-wide，居中 240 / 90</td></tr>
+        <tr><td>左栏</td><td><code>360</code></td><td>右缘 1px line；顶部过滤条</td></tr>
+        <tr><td>右栏</td><td><code>flex</code></td><td>头 20 内距；正文 16；脚 12</td></tr>
+        <tr><td>行高</td><td><code>64</code></td><td>色块 28、开关 32×18</td></tr>
+        <tr><td>表单</td><td>2 列 + full</td><td>列间距 16，行间距 12</td></tr>
+        <tr><td>色板</td><td>10 × 1fr</td><td>块 34 高 + 序号 8px mono</td></tr>
+      </table>
+    </section>
+
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>03 · 色彩</b><span>纸墨 + 状态成对</span></div>
+      <div class="sw-grid">
+        <div class="sw-item"><i style="background:#EDE8DC"></i><div class="tx"><b>canvas</b><code>#EDE8DC</code><s>窗口底</s></div></div>
+        <div class="sw-item"><i style="background:#FBF8F1"></i><div class="tx"><b>surface</b><code>#FBF8F1</code><s>左栏 / 头脚</s></div></div>
+        <div class="sw-item"><i style="background:#FFFDF8"></i><div class="tx"><b>elevated</b><code>#FFFDF8</code><s>弹层 / 右栏</s></div></div>
+        <div class="sw-item"><i style="background:#F2EDE2"></i><div class="tx"><b>subtle</b><code>#F2EDE2</code><s>输入 / 搜索</s></div></div>
+        <div class="sw-item"><i style="background:#DCD5C6"></i><div class="tx"><b>line</b><code>#DCD5C6</code><s>1px 分隔</s></div></div>
+        <div class="sw-item"><i style="background:#16171A"></i><div class="tx"><b>ink</b><code>#16171A</code><s>主文字 / 主按钮</s></div></div>
+        <div class="sw-item"><i style="background:#57544C"></i><div class="tx"><b>ink-2</b><code>#57544C</code><s>次要文字</s></div></div>
+        <div class="sw-item"><i style="background:#6E6A60"></i><div class="tx"><b>ink-3</b><code>#6E6A60</code><s>说明 / 等宽读数</s></div></div>
+        <div class="sw-item"><i style="background:#E7E1D2"></i><div class="tx"><b>brand-soft</b><code>#E7E1D2</code><s>选中行</s></div></div>
+        <div class="sw-item"><i style="background:#E7F3EA"></i><div class="tx"><b>success-soft</b><code>#E7F3EA</code><s>已启用</s></div></div>
+        <div class="sw-item"><i style="background:#FBEEDA"></i><div class="tx"><b>warn-soft</b><code>#FBEEDA</code><s>已停用</s></div></div>
+        <div class="sw-item"><i style="background:#FBE9E7"></i><div class="tx"><b>danger-soft</b><code>#FBE9E7</code><s>校验 / 移除</s></div></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="doc-row">
+    <section class="doc-col wide">
+      <div class="doc-sec-h"><b>04 · 组件</b><span>列表 / 详情 / 表单</span></div>
+      <div style="display:flex;gap:16px;align-items:flex-start">
+        <div style="width:340px;border:1px solid var(--ui-line);border-radius:10px;overflow:hidden;background:var(--ui-surface)">
+          <div class="sys-row" style="height:60px">
+            <span class="sys-swatch" style="background:#1677FF"></span>
+            <div class="sys-main"><div class="sys-name">Ant Design 5 <span class="chip">内置</span></div><div class="sys-meta">蚂蚁集团 · web · <span class="mono">ant</span></div></div>
+            <span class="sw on"></span>
+          </div>
+          <div class="sys-row on" style="height:60px">
+            <span class="sys-swatch" style="background:#C8412B"></span>
+            <div class="sys-main"><div class="sys-name">山茶茶饮 <span class="chip brand">自定义</span></div><div class="sys-meta">品牌派生 · mobile · <span class="mono">camellia-tea</span></div></div>
+            <span class="sw"></span>
+          </div>
+          <div class="sys-row off" style="height:60px;border-bottom:none">
+            <span class="sys-swatch" style="background:#FF6900;opacity:.55"></span>
+            <div class="sys-main"><div class="sys-name">小米 MIUI <span class="chip">内置</span> <span class="chip warn">已停用</span></div><div class="sys-meta">小米 · mobile · <span class="mono">xiaomi</span></div></div>
+            <span class="sw"></span>
+          </div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:10px">
+          <div class="cmp-label" style="font-size:11px;color:var(--ui-ink-3)">状态胶囊</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span class="chip">内置</span><span class="chip brand">自定义</span>
+            <span class="chip ok">已启用</span><span class="chip warn">已停用</span>
+            <span class="chip">已改显示信息</span>
+          </div>
+          <div class="cmp-label" style="font-size:11px;color:var(--ui-ink-3);margin-top:4px">按钮</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <span class="btn primary">新增体系</span><span class="btn">编辑显示信息</span>
+            <span class="btn ghost">取消</span><span class="btn danger">移除</span>
+            <span class="btn ghost disabled">恢复默认</span>
+          </div>
+          <div class="cmp-label" style="font-size:11px;color:var(--ui-ink-3);margin-top:4px">输入</div>
+          <div style="display:flex;gap:8px">
+            <div class="inp" style="flex:1">默认</div>
+            <div class="inp focus" style="flex:1">聚焦</div>
+            <div class="inp err" style="flex:1">校验失败</div>
+          </div>
+        </div>
+      </div>
+      <div class="hint">行内只保留开关；选中行左侧 2px 墨条 + brand-soft 底；停用行整体降透明度，状态用 warn 胶囊。<br>
+        按钮 32 高 / 圆角 6 / primary 墨底纸字；danger 只用于移除；恢复默认在无覆盖时 disabled。</div>
+    </section>
+
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>05 · 状态矩阵</b><span>一眼分辨</span></div>
+      <table class="spec">
+        <tr><th>状态</th><th>表达</th></tr>
+        <tr><td><b>启用</b></td><td>开关 on（墨底）+ 详情 chip「已启用」</td></tr>
+        <tr><td><b>已停用</b></td><td>行降透明 + 开关 off + chip warn；详情顶部 warn 横幅 + 启用按钮</td></tr>
+        <tr><td><b>内置</b></td><td>chip 中性「内置」；不可删除；Token 只读</td></tr>
+        <tr><td><b>自定义</b></td><td>chip brand「自定义」；可编辑 JSON / 移除</td></tr>
+        <tr><td><b>已改显示信息</b></td><td>详情 chip「已改显示信息」；恢复默认可用</td></tr>
+        <tr><td><b>选中</b></td><td>左 2px 墨条 + brand-soft；右侧换成该体系详情</td></tr>
+        <tr><td><b>搜索无结果</b></td><td>左列表空态（图标+两句）；右栏引导</td></tr>
+        <tr><td><b>保存失败</b></td><td>字段红边 + 行内错误；JSON 用危险浅底代码块承载错误码</td></tr>
+      </table>
+    </section>
+  </div>
+
+  <div class="doc-row">
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>06 · 键盘与焦点</b><span>列表优先</span></div>
+      <table class="spec">
+        <tr><th>键</th><th>行为</th></tr>
+        <tr><td><code>上 / 下</code></td><td>列表移动选中项，右栏同步详情</td></tr>
+        <tr><td><code>Enter</code></td><td>进入编辑（内置=显示信息；自定义=显示信息页签）</td></tr>
+        <tr><td><code>Space</code></td><td>切换当前体系启用 / 停用（焦点在行上时）</td></tr>
+        <tr><td><code>n</code></td><td>新增体系（焦点不在输入框时）</td></tr>
+        <tr><td><code>/</code></td><td>聚焦搜索</td></tr>
+        <tr><td><code>Esc</code></td><td>编辑回详情；详情关闭弹层</td></tr>
+        <tr><td><code>Tab</code></td><td>弹层内循环；关闭后焦点回「管理」</td></tr>
+      </table>
+    </section>
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>07 · 动效与密度</b><span>只做状态反馈</span></div>
+      <p class="doc-p"><b>动效</b>：行 hover 120ms 背景；右栏详情与编辑之间 180ms 淡入；不使用位移弹跳。<br>
+        <b>密度</b>：正文 12、说明 11、微标 10（等宽）；行 64；表单项 32 高。<br>
+        <b>滚动</b>：列表与右栏各自滚动，弹层本身不滚；头脚固定。<br>
+        <b>门禁</b>：canvas.css 零色值 / 零字号字面量；新令牌进 tokens.css 并由 ui_tokens_test 覆盖。</p>
+    </section>
+  </div>
+
+  <div class="doc-foot">
+    <div class="do"><b>做</b><span>列表+详情</span><span>开关表达启用</span><span>色板预览</span><span>行内错误</span></div>
+    <div class="dont"><b>不做</b><span>表单常驻</span><span>三个行内按钮</span><span>内置 JSON</span><span>新强调色</span></div>
+    <div class="end">AA · 正文 12+ · 说明 ≥ ink-3 · 等宽读数</div>
+  </div>
+</div>

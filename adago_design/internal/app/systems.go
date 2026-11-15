@@ -54,6 +54,22 @@ func (Catalog) SystemJSON(id string) (string, error) {
 	return raw, nil
 }
 
+// Palette 返回品牌主色的 10 阶色板（新增表单的实时预览）。
+func (Catalog) Palette(primary string) ([]string, error) {
+	hex := strings.TrimSpace(primary)
+	if hex == "" {
+		return nil, &canvas.AdminError{Code: "invalid_system", Message: "primary 必填"}
+	}
+	if !strings.HasPrefix(hex, "#") {
+		hex = "#" + hex
+	}
+	scale, ok := design.BrandPalette(hex)
+	if !ok {
+		return nil, &canvas.AdminError{Code: "invalid_system", Message: "主色必须是 #RRGGBB，得到 " + primary}
+	}
+	return scale, nil
+}
+
 // CreateSystem 新增一个品牌派生体系（结构继承 base，主色重着色）。
 func (c Catalog) CreateSystem(in canvas.SystemInput) (any, error) {
 	sys, err := design.CreateSystem(design.CreateInput{

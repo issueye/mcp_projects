@@ -1,0 +1,81 @@
+<div class="shot">
+  <!--INCLUDE:backdrop.html-->
+  <div class="scrim"></div>
+
+  <section class="sm" aria-label="设计体系管理">
+    <header class="sm-head">
+      <span class="sm-title">设计体系</span>
+      <span class="sm-count">9</span>
+      <div class="sm-search">
+        <svg class="ic ic14"><use href="#ds-ic-search"/></svg>
+        <span>搜索名称、厂商或 ID</span>
+      </div>
+      <span class="btn primary"><svg class="ic ic14"><use href="#ds-ic-plus"/></svg>新增体系</span>
+      <span class="sm-x"><svg class="ic ic14"><use href="#ds-ic-close"/></svg></span>
+    </header>
+
+    <div class="sm-body">
+      <div class="sm-left">
+        <div class="segs">
+          <span class="seg on">全部 <b>9</b></span>
+          <span class="seg">内置 <b>8</b></span>
+          <span class="seg">自定义 <b>1</b></span>
+          <span class="seg">已停用 <b>0</b></span>
+        </div>
+        <div class="sm-list">
+          <!--INCLUDE:list-apple.html-->
+        </div>
+      </div>
+
+      <div class="sm-right">
+        <div class="det">
+          <header class="det-head">
+            <span class="det-swatch" style="background:#007AFF"></span>
+            <div class="det-title">
+              <div class="nm">Apple HIG (iOS) <span class="chip">内置</span> <span class="chip ok">已启用</span></div>
+              <div class="sub"><span>Apple</span><span>·</span><span>mobile</span><span>·</span><span class="mono">apple</span></div>
+            </div>
+            <div class="det-acts">
+              <span class="btn"><svg class="ic ic14"><use href="#ds-ic-settings"/></svg>编辑显示信息</span>
+              <span class="btn ghost xs" style="width:32px;padding:0"><svg class="ic ic14"><use href="#ds-ic-more"/></svg></span>
+            </div>
+          </header>
+
+          <div class="det-body">
+            <div class="kv-grid">
+              <div class="kv"><span class="k">厂商</span><span class="v">Apple</span></div>
+              <div class="kv"><span class="k">落地类型</span><span class="v">mobile</span></div>
+              <div class="kv"><span class="k">默认画板</span><span class="v mono">iphone-15</span></div>
+              <div class="kv"><span class="k">组件</span><span class="v"><span class="mono">22</span> 个 · 主题 light / dark</span></div>
+              <div class="kv"><span class="k">主色</span><span class="v"><i class="sys-swatch" style="width:12px;height:12px;border-radius:3px;display:inline-block;vertical-align:-2px;background:#007AFF"></i> <span class="mono">#007AFF</span></span></div>
+              <div class="kv"><span class="k">来源</span><span class="v">内置（data/apple.json）</span></div>
+            </div>
+
+            <div class="sec-title">Token 概览 <span class="line"></span></div>
+            <div class="tiles">
+              <div class="tile"><span class="k">颜色</span><span class="v">18</span></div>
+              <div class="tile"><span class="k">字阶</span><span class="v">8</span></div>
+              <div class="tile"><span class="k">间距</span><span class="v">10</span></div>
+              <div class="tile"><span class="k">圆角</span><span class="v">6</span></div>
+            </div>
+
+            <div class="sec-title">显示信息 <span class="line"></span></div>
+            <div class="kv-grid">
+              <div class="kv"><span class="k">名称</span><span class="v">Apple HIG (iOS)</span></div>
+              <div class="kv"><span class="k">一句话风格</span><span class="v">克制、以内容为中心，8pt 栅格 + 连续圆角</span></div>
+            </div>
+            <p class="desc">面向 iPhone 的系统级界面基线：分组列表、触控 44pt、毛玻璃浮层与 SF Pro 字阶。<br>
+              <b>内置体系只读 Token</b>，可改名称 / 厂商 / 描述 / 一句话风格；改动用「恢复默认」清除。</p>
+          </div>
+
+          <footer class="det-foot">
+            <span class="hint">内置体系不可删除 · Token 只读</span>
+            <span class="grow"></span>
+            <span class="btn ghost">恢复默认</span>
+            <span class="btn">完成</span>
+          </footer>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

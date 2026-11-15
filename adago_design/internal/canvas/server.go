@@ -66,6 +66,7 @@ type SystemInput struct {
 type SystemAdmin interface {
 	SystemSummariesAll() any
 	SystemJSON(id string) (string, error)
+	Palette(primary string) ([]string, error)
 	CreateSystem(in SystemInput) (any, error)
 	UpdateSystem(id string, in SystemInput) (any, error)
 	SetSystemDisabled(id string, disabled bool) (any, error)
@@ -156,6 +157,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/catalog/systems", s.handleCatalogSystems)
 	mux.HandleFunc("GET /api/catalog/systems/{id}", s.handleCatalogSystem)
 	mux.HandleFunc("GET /api/catalog/systems/{id}/json", s.handleCatalogSystemJSON)
+	mux.HandleFunc("GET /api/catalog/palette", s.handleCatalogPalette)
 	mux.HandleFunc("POST /api/catalog/systems", s.handleCreateSystem)
 	mux.HandleFunc("PUT /api/catalog/systems/{id}", s.handleUpdateSystem)
 	mux.HandleFunc("POST /api/catalog/systems/{id}/state", s.handleSystemState)
@@ -829,6 +831,19 @@ func (s *Server) handleCatalogSystemJSON(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"id": id, "json": raw})
+}
+
+func (s *Server) handleCatalogPalette(w http.ResponseWriter, r *http.Request) {
+	if s.Admin == nil {
+		writeErr(w, http.StatusNotImplemented, APIError("no_admin", "设计体系管理未装配", ""))
+		return
+	}
+	scale, err := s.Admin.Palette(r.URL.Query().Get("primary"))
+	if err != nil {
+		writeAdminErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"palette": scale})
 }
 
 func (s *Server) handleCreateSystem(w http.ResponseWriter, r *http.Request) {

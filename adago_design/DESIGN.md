@@ -145,7 +145,8 @@ ds-progress、ds-navbar、ds-tabbar、ds-list、ds-dialog、ds-toast
 ### 3.5 体系管理（运行期可写）
 
 内置体系来自 `go:embed`，但「用哪些体系」是用户态：画布浮窗「设计体系 · 管理」
-与 MCP `design_system_manage` 共用同一套 `design` 管理函数。
+与 MCP `design_system_manage` 共用同一套 `design` 管理函数。管理弹层 v2 是
+960×720 两栏（左 360 搜索/过滤/列表，右 560 详情/编辑），见 DESIGN-SYSTEM-UI §13。
 
 | 能力 | 行为 | 落点 |
 |---|---|---|
@@ -253,6 +254,7 @@ type Node struct {
 | `GET /api/catalog/systems` | 已启用体系摘要（目录侧栏）；`?all=1` 返回含停用（管理面，需装配 Admin） |
 | `GET /api/catalog/systems/{id}` | 体系详情（Token + 组件 + 守则 + builtin/disabled/overridden/primary） |
 | `GET /api/catalog/systems/{id}/json` | 自定义体系完整 JSON（管理面高级编辑） |
+| `GET /api/catalog/palette` | `?primary=#RRGGBB` → 10 阶派生色板（新增表单实时预览） |
 | `POST /api/catalog/systems` | 新增（品牌派生）：`{name,vendor,family,base,primary,id?,description?}` |
 | `PUT /api/catalog/systems/{id}` | 编辑：显示信息 `{name,vendor,description,summary}` 或自定义整体 `{json}` |
 | `POST /api/catalog/systems/{id}/state` | `{disabled:true|false}` 停用/启用 |
@@ -667,7 +669,8 @@ stdio JSON-RPC 走继承管道不受影响）。日志写 `<data>/adago-design.l
   MCP 配置片段。窗口本身靠真机冒烟（见下）。
 - `internal/canvas`：`embed_test.go` 锁住页面契约（embed bootstrap 先于样式、
   两条隐藏规则、`js/native.js` dataset 字段、`main.js` 接线）；
-  `admin_route_test.go` 锁管理端点路由/状态码/错误码映射（fake Admin）。
+  `admin_route_test.go` 锁管理端点路由/状态码/错误码映射（fake Admin）与
+  `/api/catalog/palette` 色板预览。
 - `internal/design`：`manage_test.go` 覆盖停用持久化与过滤、内置显示信息覆盖
   与恢复默认、内置保护（删除/覆盖均拒绝）、自定义新增/改名/整体 JSON/移除、
   非法主色与非法 Token JSON。

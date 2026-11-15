@@ -79,6 +79,15 @@ func TestCatalogSystemAdmin(t *testing.T) {
 		t.Fatalf("编辑未生效: %+v", mm)
 	}
 
+	// 色板预览
+	scale, err := c.Palette("#C8412B")
+	if err != nil || len(scale) != 10 {
+		t.Fatalf("Palette = %v, %v", scale, err)
+	}
+	if _, err := c.Palette("nope"); !errors.As(err, &ae) || ae.Code != "invalid_system" {
+		t.Fatalf("非法主色错误 = %v", err)
+	}
+
 	// 完整 JSON 可读
 	raw, err := c.SystemJSON("app-probe")
 	if err != nil {

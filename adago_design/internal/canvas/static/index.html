@@ -227,32 +227,41 @@
     </div>
   </div>
 
-  <!-- 设计体系管理：停用 / 新增 / 编辑 / 移除。
+  <!-- 设计体系管理：搜索 + 过滤 + 列表 + 详情/编辑（两栏 960）。
        内置体系可停用与改显示信息，不可删除；自定义体系可编辑 JSON 与移除。 -->
   <div id="sys-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="sys-modal-title">
     <div class="modal__mask" data-sys-close></div>
     <div class="modal__box modal__box--wide">
-      <header class="modal__head">
-        <span id="sys-modal-title">设计体系管理</span>
-        <button id="sys-modal-close" class="modal__x" data-sys-close title="关闭" aria-label="关闭设计体系管理">
-          <svg class="ds-icon ds-icon--14" aria-hidden="true"><use href="#ds-ic-close"/></svg>
-        </button>
-      </header>
-      <div class="modal__body">
-        <div id="sys-create" class="sys-form"></div>
-        <div class="proj-list-title">
-          全部体系 <span id="sys-count" class="proj-count">0</span>
+      <div class="sysm">
+        <header class="sysm-head">
+          <span class="sysm-title" id="sys-modal-title">设计体系</span>
+          <span class="sysm-count" id="sys-count">0</span>
+          <label class="sysm-search">
+            <svg class="ds-icon ds-icon--14" aria-hidden="true"><use href="#ds-ic-search"/></svg>
+            <input id="sys-search" type="search" placeholder="搜索名称、厂商或 ID" autocomplete="off" aria-label="搜索设计体系">
+          </label>
+          <button id="sys-new" class="btn btn--primary">
+            <svg class="ds-icon ds-icon--14" aria-hidden="true"><use href="#ds-ic-plus"/></svg>新增体系
+          </button>
+          <button class="modal__x" data-sys-close title="关闭" aria-label="关闭设计体系管理">
+            <svg class="ds-icon ds-icon--14" aria-hidden="true"><use href="#ds-ic-close"/></svg>
+          </button>
+        </header>
+        <div class="sysm-body">
+          <div class="sysm-left">
+            <div class="sysm-segs" id="sys-segs">
+              <button class="sysm-seg on" data-filter="all">全部 <b id="sys-cnt-all">0</b></button>
+              <button class="sysm-seg" data-filter="builtin">内置 <b id="sys-cnt-builtin">0</b></button>
+              <button class="sysm-seg" data-filter="custom">自定义 <b id="sys-cnt-custom">0</b></button>
+              <button class="sysm-seg" data-filter="disabled">已停用 <b id="sys-cnt-disabled">0</b></button>
+            </div>
+            <div id="sys-rows" class="sysm-list"></div>
+          </div>
+          <div id="sys-right" class="sysm-right"></div>
         </div>
-        <div id="sys-rows" class="proj-rows"></div>
-        <div id="sys-edit" class="sys-form hidden"></div>
       </div>
-      <footer class="modal__foot">
-        内置体系可停用、可改显示信息，但不可删除；自定义体系可整体编辑 JSON 与移除。
-        停用后不再出现在目录、搜索与 MCP 工具里（画布上已生成的稿不回收）。
-      </footer>
     </div>
   </div>
-
   <!-- 唯一的入口模块：其余模块由 main.js 的 import 图按依赖序求值。
        icons.js 仍为经典脚本（go:generate 产物，需先于工具条注入 <symbol>）。 -->
   <script type="module" src="js/main.js"></script>

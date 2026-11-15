@@ -1,0 +1,126 @@
+<div class="doc narrow">
+  <div class="doc-h">
+    <div class="doc-mark">D</div>
+    <div>
+      <div class="doc-kicker">adago-design · systems manager v2 · 实现契约</div>
+      <div class="doc-title">只重做弹层，不动数据与 MCP</div>
+    </div>
+    <div class="doc-meta"><span>960 × 720</span><span>--ui-modal-w-wide</span><span>无后端变更</span></div>
+  </div>
+
+  <p class="doc-lede">
+    管理能力（停用/新增/编辑/移除/恢复默认）与 HTTP / MCP 接口在 v1 已完整，本次只替换
+    <b>管理弹层的 DOM、样式与交互</b>：从「表单常驻单栏」改为「搜索 + 过滤 + 列表 + 详情/编辑两栏」。
+    数据格式、错误码、持久化文件、侧栏目录均不变。
+  </p>
+
+  <div class="doc-row">
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>01 · DOM 结构</b><span>index.html #sys-modal</span></div>
+      <table class="spec">
+        <tr><th>层</th><th>元素</th><th>职责</th></tr>
+        <tr><td>头</td><td><code>.sm-head</code></td><td>标题 + 总数 chip + 搜索（230）+ 新增体系 + 关闭</td></tr>
+        <tr><td>左</td><td><code>.sm-left</code></td><td>过滤条 <code>.segs</code> + 列表 <code>.sm-list</code>（行 <code>.sys-row</code>）</td></tr>
+        <tr><td>右</td><td><code>.sm-right</code></td><td><code>.det</code> 详情 / <code>.form</code> 新增编辑（同一容器切换）</td></tr>
+        <tr><td>脚</td><td><code>.det-foot</code> / <code>.form-foot</code></td><td>只读提示 + 恢复默认 / 取消 + 保存</td></tr>
+      </table>
+      <p class="doc-p">复用现有 <code>.modal</code> / <code>.modal__mask</code>；宽度类改为 <code>.modal__box--wide</code> 960。
+        详情与编辑用同一个右栏容器，靠 JS 切换 <code>data-mode</code>（detail / create / edit / edit-json）。</p>
+    </section>
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>02 · 数据字段</b><span>沿用 /api/catalog/systems</span></div>
+      <table class="spec">
+        <tr><th>字段</th><th>用途</th></tr>
+        <tr><td><code>id / name / vendor / family</code></td><td>行与详情标题、meta</td></tr>
+        <tr><td><code>builtin / disabled / overridden</code></td><td>chip、开关、恢复默认可用性、移除按钮</td></tr>
+        <tr><td><code>primary</code></td><td>主色块 + 色值 + 编辑预填</td></tr>
+        <tr><td><code>summary / description</code></td><td>详情显示信息区</td></tr>
+        <tr><td>detail.light.*</td><td>Token 概览计数（colors / type.levels / spacing / radius）</td></tr>
+      </table>
+      <p class="doc-p">列表一次拉 <code>?all=1</code>；详情不额外请求（字段已够），仅自定义 JSON 页签请求 <code>/{id}/json</code>。</p>
+    </section>
+  </div>
+
+  <div class="doc-row">
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>03 · 状态与交互</b><span>一个弹层五种模式</span></div>
+      <table class="spec">
+        <tr><th>模式</th><th>右栏</th><th>进入 / 退出</th></tr>
+        <tr><td><code>detail</code></td><td>只读详情 + 编辑/恢复默认/移除</td><td>选中行；Esc 关闭弹层</td></tr>
+        <tr><td><code>create</code></td><td>新增表单 + 色板预览</td><td>「新增体系」/ n；返回或 Esc 回详情</td></tr>
+        <tr><td><code>edit</code></td><td>显示信息表单</td><td>「编辑显示信息」/ Enter；保存回详情</td></tr>
+        <tr><td><code>edit-json</code></td><td>自定义 JSON 页签</td><td>编辑里切页签；保存成功回详情</td></tr>
+        <tr><td><code>empty</code></td><td>无匹配 / 未选中引导</td><td>搜索无结果；清空搜索恢复列表</td></tr>
+      </table>
+      <p class="doc-p">开关直接调 <code>POST /{id}/state</code>；成功后重拉列表并保留选中；删除走 <code>uiConfirm</code> 后 <code>DELETE</code>。
+        任何变更后同步刷新侧栏 <code>loadCatalog()</code>，并收起体系详情。</p>
+    </section>
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>04 · 改动清单</b><span>前端为主</span></div>
+      <table class="spec">
+        <tr><th>文件</th><th>改动</th></tr>
+        <tr><td><code>static/index.html</code></td><td>重写 <code>#sys-modal</code> 骨架（头/两栏/脚），新增搜索与过滤容器</td></tr>
+        <tr><td><code>static/js/systems-admin.js</code></td><td>状态机（detail/create/edit/edit-json/empty）、搜索过滤、开关、色板预览、页签、键盘</td></tr>
+        <tr><td><code>static/canvas.css</code></td><td>新增 <code>.sm-*</code> / <code>.sys-row</code> / <code>.det-*</code> / <code>.form-*</code> 令牌化样式</td></tr>
+        <tr><td><code>static/tokens.css</code></td><td><code>--ui-modal-w-wide: 960px</code>；可选 <code>--ui-modal-h-wide: 720px</code></td></tr>
+        <tr><td><code>internal/canvas/admin_route_test.go</code> 等</td><td>不改 API；补/保留路由与契约测试</td></tr>
+      </table>
+    </section>
+  </div>
+
+  <div class="doc-row">
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>05 · 接口</b><span>全部已有</span></div>
+      <table class="spec">
+        <tr><td><code>GET /api/catalog/systems?all=1</code></td><td>列表（含停用）</td></tr>
+        <tr><td><code>GET /api/catalog/systems/{id}/json</code></td><td>自定义 JSON</td></tr>
+        <tr><td><code>POST /api/catalog/systems</code></td><td>新增（品牌派生）</td></tr>
+        <tr><td><code>PUT /api/catalog/systems/{id}</code></td><td>显示信息或整体 JSON</td></tr>
+        <tr><td><code>POST /{id}/state</code> · <code>POST /{id}/reset</code></td><td>停用启用 / 恢复默认</td></tr>
+        <tr><td><code>DELETE /{id}</code></td><td>移除自定义</td></tr>
+      </table>
+      <p class="doc-p">错误码沿用：<code>unknown_system / system_duplicate / system_builtin_protected / invalid_system</code>。
+        行内错误展示取 <code>err.message</code>；JSON 错误原样展示（含 invalid_system 前缀）。</p>
+    </section>
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>06 · 验收</b><span>机器 + 真机</span></div>
+      <table class="spec">
+        <tr><th>项</th><th>通过条件</th></tr>
+        <tr><td>门禁</td><td>go vet / go test 全绿；ui_tokens_test 覆盖新样式（零色值/字号字面量）</td></tr>
+        <tr><td>列表</td><td>9 条一次可见（720 高内滚动），搜索/过滤实时，无结果有空态</td></tr>
+        <tr><td>详情</td><td>内置/自定义、启用/停用、是否有覆盖的按钮状态正确；Token 概览数字来自 detail</td></tr>
+        <tr><td>开关</td><td>切换后列表状态与侧栏目录同步；失败回滚并 toast</td></tr>
+        <tr><td>新增</td><td>主色非法/ID 冲突行内报错；成功后切到新体系详情</td></tr>
+        <tr><td>JSON</td><td>仅自定义显示页签；校验失败展示错误、不写盘</td></tr>
+        <tr><td>键盘</td><td>上下方向键 / Enter / Space / n / /；Esc 分级；Tab 循环；关闭焦点回「管理」</td></tr>
+        <tr><td>窗口</td><td>960 在 1040 最小窗口内仍可用（94vw 上限）；深色主题对比度达标</td></tr>
+      </table>
+    </section>
+  </div>
+
+  <div class="doc-row">
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>07 · 风险与兼容</b><span>回退容易</span></div>
+      <p class="doc-p"><b>不做后端变更</b>：失败时只需回退 <code>systems-admin.js</code> + <code>#sys-modal</code> 骨架即可回到 v1；
+        数据文件（system-settings.json / custom-systems）不受影响。<br>
+        <b>960 宽</b>：小窗口用 <code>min(960px, 94vw)</code>；高度 <code>min(720px, 82vh)</code>，列表与右栏各自滚动。<br>
+        <b>深色</b>：沿用 --ui-* 翻转；主色块本身是数据，不参与主题推导。</p>
+    </section>
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>08 · 交付顺序</b><span>本板为设计</span></div>
+      <div class="flow">
+        <span class="step"><b>1</b> 设计稿（本板）</span><span class="arw"><svg class="ic ic12"><use href="#ds-ic-chevron-right"/></svg></span>
+        <span class="step"><b>2</b> tokens + 骨架</span><span class="arw"><svg class="ic ic12"><use href="#ds-ic-chevron-right"/></svg></span>
+        <span class="step"><b>3</b> 列表/详情/编辑 JS</span><span class="arw"><svg class="ic ic12"><use href="#ds-ic-chevron-right"/></svg></span>
+        <span class="step"><b>4</b> 测试与真机</span>
+      </div>
+      <p class="doc-p">设计图确认后按本契约落地；API、MCP 与持久化保持不变。</p>
+    </section>
+  </div>
+
+  <div class="doc-foot">
+    <div class="do"><b>做</b><span>两栏</span><span>搜索过滤</span><span>开关</span><span>编辑按需</span></div>
+    <div class="dont"><b>不做</b><span>后端改动</span><span>数据迁移</span><span>新组件库</span><span>第二套配色</span></div>
+    <div class="end">契约 · 2026-11-15 · 待实现</div>
+  </div>
+</div>

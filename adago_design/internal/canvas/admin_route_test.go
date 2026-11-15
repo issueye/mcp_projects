@@ -17,6 +17,12 @@ func (fakeAdmin) SystemJSON(id string) (string, error) {
 	}
 	return `{"id":"fake"}`, nil
 }
+func (fakeAdmin) Palette(primary string) ([]string, error) {
+	if primary == "" {
+		return nil, &AdminError{Code: "invalid_system", Message: "primary 必填"}
+	}
+	return []string{"#111111", "#222222"}, nil
+}
 func (fakeAdmin) CreateSystem(in SystemInput) (any, error) {
 	if in.Name == "" {
 		return nil, &AdminError{Code: "invalid_system", Message: "name required"}
@@ -95,6 +101,19 @@ func TestSystemAdminRoutes(t *testing.T) {
 	res, _ = doJSON(t, "GET", ts.URL+"/api/catalog/systems/nope/json", nil)
 	if res.StatusCode != http.StatusNotFound {
 		t.Fatalf("未知体系 json = %d", res.StatusCode)
+	}
+
+	// 色板预览
+	res, data = doJSON(t, "GET", ts.URL+"/api/catalog/palette?primary=%23111111", nil)
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("palette = %d", res.StatusCode)
+	}
+	if p, _ := data["palette"].([]any); len(p) != 2 {
+		t.Fatalf("palette body = %v", data)
+	}
+	res, _ = doJSON(t, "GET", ts.URL+"/api/catalog/palette", nil)
+	if res.StatusCode != http.StatusBadRequest {
+		t.Fatalf("空 primary = %d", res.StatusCode)
 	}
 
 	// 编辑 / 重置 / 删除

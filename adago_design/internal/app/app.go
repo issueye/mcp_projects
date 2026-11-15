@@ -193,9 +193,9 @@ func (Catalog) SystemSummaries() any {
 	return out
 }
 
-// SystemDetail 返回体系完整数据。
+// SystemDetail 返回体系完整数据（含停用：管理面需要看已停用体系的详情）。
 func (Catalog) SystemDetail(id string) (any, bool) {
-	sys, ok := design.GetSystem(id)
+	sys, ok := design.GetSystemAny(id)
 	if !ok {
 		return nil, false
 	}

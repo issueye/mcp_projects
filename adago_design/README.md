@@ -82,15 +82,18 @@ project_create（或 project_list 选已有）
 
 ## 设计体系管理（动态）
 
-左侧「设计体系」浮窗标题条上的 **管理** 打开管理弹层（原生窗口/浏览器里都可）：
+左侧「设计体系」浮窗标题条上的 **管理** 打开管理弹层（原生窗口/浏览器里都可）。
+v2 弹层为 **960×720 两栏**：左 360 = 搜索 + 过滤（全部/内置/自定义/已停用）+ 列表；
+右 560 = 详情，点「编辑」才进入表单；新增/编辑共用右侧面板。
 
 | 能力 | 说明 |
 |---|---|
-| 新增 | 品牌派生：名称 + 结构基底 + 品牌主色（#RRGGBB），可填厂商/落地类型/ID/描述；颜色生成 10 阶色板，字型/间距/圆角/阴影/动效继承基底 |
-| 编辑 | **内置**：改显示信息（名称/厂商/描述/一句话风格），Token 不变；用「恢复默认」清除覆盖；**自定义**：同一表单 + 整体 JSON 编辑（校验 colors/type/radius） |
-| 停用 / 启用 | 只影响「选择面」：目录、搜索、`design_preview` 与 MCP 工具不再出现该体系；**画布上已生成的稿不回收** |
+| 新增 | 品牌派生：名称 + 结构基底 + 品牌主色（#RRGGBB），可填厂商/落地类型/ID/描述；**主色旁实时预览 10 阶色板**，字型/间距/圆角/阴影/动效继承基底 |
+| 编辑 | **内置**：改显示信息（名称/厂商/描述/一句话风格），Token 不变；用「恢复默认」清除覆盖；**自定义**：显示信息 / 完整 JSON 两个页签（校验 colors/type/radius） |
+| 停用 / 启用 | 行内开关；只影响「选择面」：目录、搜索、`design_preview` 与 MCP 工具不再出现该体系；**画布上已生成的稿不回收** |
 | 恢复默认 | 仅内置体系：清掉显示信息覆盖并重新启用 |
 | 移除 | 仅自定义体系；内置体系受保护（提示改为停用），避免误删 8 套内置规范 |
+| 键盘 | ↑↓ 选择、Enter 编辑、Space 停用/启用、n 新增、/ 搜索、Esc 分级返回/关闭、Tab 陷阱 |
 
 - 持久化：自定义体系在 `<data>/custom-systems/<id>.json`；停用列表与内置显示信息覆盖在 `<data>/system-settings.json`（tmp→rename 原子写）。启动顺序：先加载自定义体系，再套用设置。
 - 同一套能力也暴露给 Agent：MCP 工具 **`design_system_manage`**（`list / create / update / disable / enable / remove / reset`）。
@@ -99,13 +102,17 @@ project_create（或 project_list 选已有）
 | 方法/路径 | 说明 |
 |---|---|
 | `GET /api/catalog/systems` | 已启用体系摘要；`?all=1` 含停用（管理面） |
-| `GET /api/catalog/systems/{id}` | 体系详情 |
+| `GET /api/catalog/systems/{id}` | 体系详情（含停用，管理面需要） |
 | `GET /api/catalog/systems/{id}/json` | 自定义体系完整 JSON |
+| `GET /api/catalog/palette?primary=#RRGGBB` | 主色的 10 阶派生色板（新增预览） |
 | `POST /api/catalog/systems` | 新增 `{name,vendor?,family?,base,primary,id?,description?}` |
 | `PUT /api/catalog/systems/{id}` | 编辑显示信息，或自定义 `{json}` 整体替换 |
 | `POST /api/catalog/systems/{id}/state` | `{disabled: true\|false}` |
 | `POST /api/catalog/systems/{id}/reset` | 内置恢复默认 |
 | `DELETE /api/catalog/systems/{id}` | 移除自定义体系 |
+
+设计稿：画布项目「adago-design · 设计体系管理弹层 v2」（说明 / 默认 / 停用 / 新增 /
+JSON / 空态 / 视觉规范 / 实现契约）。
 
 错误码：`unknown_system` / `system_duplicate` / `system_builtin_protected` / `invalid_system`。
 

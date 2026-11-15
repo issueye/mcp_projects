@@ -1,0 +1,80 @@
+<div class="shot">
+  <!--INCLUDE:backdrop.html-->
+  <div class="scrim"></div>
+
+  <section class="sm" aria-label="设计体系管理">
+    <header class="sm-head">
+      <span class="sm-title">设计体系</span>
+      <span class="sm-count">9</span>
+      <div class="sm-search"><svg class="ic ic14"><use href="#ds-ic-search"/></svg><span>搜索名称、厂商或 ID</span></div>
+      <span class="btn primary"><svg class="ic ic14"><use href="#ds-ic-plus"/></svg>新增体系</span>
+      <span class="sm-x"><svg class="ic ic14"><use href="#ds-ic-close"/></svg></span>
+    </header>
+
+    <div class="sm-body">
+      <div class="sm-left">
+        <div class="segs">
+          <span class="seg">全部 <b>9</b></span>
+          <span class="seg">内置 <b>8</b></span>
+          <span class="seg">自定义 <b>1</b></span>
+          <span class="seg on">已停用 <b>1</b></span>
+        </div>
+        <div class="sm-list">
+          <!--INCLUDE:list-disabled.html-->
+        </div>
+      </div>
+
+      <div class="sm-right">
+        <div class="det">
+          <header class="det-head">
+            <span class="det-swatch" style="background:#1677FF;opacity:.7"></span>
+            <div class="det-title">
+              <div class="nm">Ant Design 5 <span class="chip">内置</span> <span class="chip warn">已停用</span></div>
+              <div class="sub"><span>蚂蚁集团</span><span>·</span><span>web</span><span>·</span><span class="mono">ant</span></div>
+            </div>
+            <div class="det-acts">
+              <span class="btn"><svg class="ic ic14"><use href="#ds-ic-settings"/></svg>编辑显示信息</span>
+              <span class="btn ghost xs" style="width:32px;padding:0"><svg class="ic ic14"><use href="#ds-ic-more"/></svg></span>
+            </div>
+          </header>
+
+          <div class="det-body">
+            <div class="banner">
+              <svg class="ic ic14"><use href="#ds-ic-warning"/></svg>
+              <span class="grow">已停用 · 目录、搜索、预览与 MCP 工具不再出现它；画布上已有的稿保留。</span>
+              <span class="btn xs" style="background:var(--ui-warn-soft);border-color:transparent;color:var(--ui-warn-ink)">启用</span>
+            </div>
+
+            <div class="kv-grid">
+              <div class="kv"><span class="k">厂商</span><span class="v">蚂蚁集团</span></div>
+              <div class="kv"><span class="k">落地类型</span><span class="v">web</span></div>
+              <div class="kv"><span class="k">默认画板</span><span class="v mono">web-1440</span></div>
+              <div class="kv"><span class="k">组件</span><span class="v"><span class="mono">22</span> 个 · 主题 light / dark</span></div>
+              <div class="kv"><span class="k">主色</span><span class="v"><i class="sys-swatch" style="width:12px;height:12px;border-radius:3px;display:inline-block;vertical-align:-2px;background:#1677FF"></i> <span class="mono">#1677FF</span></span></div>
+              <div class="kv"><span class="k">来源</span><span class="v">内置（data/ant.json）</span></div>
+            </div>
+
+            <div class="sec-title">Token 概览 <span class="line"></span></div>
+            <div class="tiles">
+              <div class="tile"><span class="k">颜色</span><span class="v">19</span></div>
+              <div class="tile"><span class="k">字阶</span><span class="v">8</span></div>
+              <div class="tile"><span class="k">间距</span><span class="v">9</span></div>
+              <div class="tile"><span class="k">圆角</span><span class="v">6</span></div>
+            </div>
+
+            <div class="sec-title">显示信息 <span class="line"></span></div>
+            <p class="desc">企业级中后台的组件密度与中性色阶，适合表格、表单、复杂筛选。<br>
+              <b>停用不等于删除</b>：随时可以启用回来；内置体系永远不能移除。</p>
+          </div>
+
+          <footer class="det-foot">
+            <span class="hint">启用后立即回到目录与预览</span>
+            <span class="grow"></span>
+            <span class="btn ghost disabled">恢复默认</span>
+            <span class="btn">完成</span>
+          </footer>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

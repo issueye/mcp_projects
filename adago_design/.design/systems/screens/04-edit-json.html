@@ -1,0 +1,71 @@
+<div class="shot">
+  <!--INCLUDE:backdrop.html-->
+  <div class="scrim"></div>
+
+  <section class="sm" aria-label="设计体系管理">
+    <header class="sm-head">
+      <span class="sm-title">设计体系</span>
+      <span class="sm-count">9</span>
+      <div class="sm-search"><svg class="ic ic14"><use href="#ds-ic-search"/></svg><span>搜索名称、厂商或 ID</span></div>
+      <span class="btn primary"><svg class="ic ic14"><use href="#ds-ic-plus"/></svg>新增体系</span>
+      <span class="sm-x"><svg class="ic ic14"><use href="#ds-ic-close"/></svg></span>
+    </header>
+
+    <div class="sm-body">
+      <div class="sm-left">
+        <div class="segs">
+          <span class="seg on">全部 <b>9</b></span>
+          <span class="seg">内置 <b>8</b></span>
+          <span class="seg">自定义 <b>1</b></span>
+          <span class="seg">已停用 <b>0</b></span>
+        </div>
+        <div class="sm-list">
+          <!--INCLUDE:list-camellia.html-->
+        </div>
+      </div>
+
+      <div class="sm-right">
+        <div class="form-head">
+          <span class="back"><svg class="ic ic14"><use href="#ds-ic-chevron-right"/></svg>返回详情</span>
+          <span class="sm-title" style="font-size:14px">编辑 · 山茶茶饮</span>
+          <span class="chip brand">自定义</span>
+          <span class="grow" style="flex:1"></span>
+          <span class="btn ghost xs"><svg class="ic ic14"><use href="#ds-ic-trash"/></svg>移除</span>
+        </div>
+
+        <div class="tabs">
+          <span class="tab">显示信息</span>
+          <span class="tab on">完整 JSON</span>
+        </div>
+
+        <div class="form-scroll">
+          <div class="code" style="min-height:280px">{
+  "id": "camellia-tea",
+  "name": "山茶茶饮",
+  "vendor": "自定义 · 品牌派生",
+  "family": "mobile",
+  "themes": ["light", "dark"],
+  "style": { "summary": "暖调纸面，茶汤主色" },
+  "light": {
+    "colors": {
+      "primary": { "value": "#C8412B" },
+      "success": { "value": "green" }
+    },
+    "grid": 4
+  }
+}</div>
+          <div class="json-box">invalid_system: light: 颜色 success="green" 不是合法 hex/rgba/渐变</div>
+          <p class="hint">严格校验 colors（hex/rgba/渐变）、字号 1–200、圆角 0–200；id 不可修改。<br>
+            改动 JSON 时以 JSON 为准，「显示信息」表单字段会被忽略。保存后立即生效并持久化到 custom-systems/camellia-tea.json。</p>
+        </div>
+
+        <footer class="form-foot">
+          <span class="hint">Esc 取消 · 校验失败不会写盘</span>
+          <span class="grow"></span>
+          <span class="btn">取消</span>
+          <span class="btn primary">保存</span>
+        </footer>
+      </div>
+    </div>
+  </section>
+</div>

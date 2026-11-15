@@ -170,6 +170,10 @@ func getSystemAny(id string) (*System, bool) {
 	return s, ok
 }
 
+// GetSystemAny 按 ID 查找体系（含停用）。管理面需要读停用体系的详情与 JSON；
+// 目录/预览/搜索仍走 GetSystem（停用视为不存在）。
+func GetSystemAny(id string) (*System, bool) { return getSystemAny(id) }
+
 // IsSystemEnabled 判断体系是否已启用（未知 ID 返回 false）。
 func IsSystemEnabled(id string) bool {
 	registryMu.RLock()

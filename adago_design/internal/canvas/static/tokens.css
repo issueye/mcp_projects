@@ -129,7 +129,14 @@
   --ui-tb-menu-max-h: 440px;
   --ui-tip-max-w: 240px;
   --ui-modal-w: 580px;
-  --ui-modal-w-wide: 760px; /* 管理类弹层（设计体系管理） */
+  --ui-modal-w-wide: 960px;      /* 管理类弹层（设计体系管理） */
+  --ui-modal-h-wide: 720px;
+  --ui-sysm-w-left: 360px;       /* 体系管理左栏 */
+  --ui-sysm-head-h: 56px;        /* 体系管理弹层头 */
+  --ui-sysm-row-h: 64px;         /* 体系管理列表行 */
+  --ui-sysm-sw-h: 18px;          /* 启用开关高度 */
+  --ui-sysm-search-w: 230px;     /* 搜索框宽度 */
+  --ui-sysm-json-h: 240px;       /* 自定义 JSON 编辑区高度 */
   --ui-ask-w: 420px;
   --ui-toast-max-w: 560px;
   --ui-empty-max-w: 440px;
