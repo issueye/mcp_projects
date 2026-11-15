@@ -144,6 +144,10 @@ body.is-dragging #inspector{backdrop-filter:none;background:var(--ui-surface)}
 .tb-brand{display:flex;align-items:center;gap:var(--ui-space-4);min-width:0;
   white-space:nowrap;
   font-weight:var(--ui-weight-bold);font-size:var(--ui-text-md);padding-right:var(--ui-space-3)}
+/* 原生窗口内嵌（html[data-embed="native"]）：品牌与主题开关由原生标题条承担，
+   页面隐藏这两处，把工具条左端还给画布控件。浏览器模式完全不变。 */
+html[data-embed="native"] .tb-brand,
+html[data-embed="native"] #btn-theme{display:none}
 .tb-logo{display:inline-flex;width:var(--ui-space-10);height:var(--ui-space-10);
   border-radius:var(--ui-radius-md);background:var(--ui-brand);color:var(--ui-on-brand);
   align-items:center;justify-content:center;font-size:var(--ui-text-sm);

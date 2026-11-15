@@ -1,0 +1,90 @@
+<div class="doc doc--narrow">
+  <div class="doc-h">
+    <div class="doc-mark">D</div>
+    <div>
+      <div class="doc-kicker">adago-design · 设计说明 · 2026-11-15</div>
+      <div class="doc-title">从「浏览器里的画布」到「桌面上的画布」</div>
+    </div>
+    <div class="doc-meta"><span>11 张稿</span><span>先设计后实现</span><span>v1</span></div>
+  </div>
+
+  <p class="doc-lede">
+    现在运行 <span class="mono">adago-design.exe serve</span> 会拉起<b>系统默认浏览器</b>打开 <span class="mono">127.0.0.1:8788</span>。画布本身是一个完整的工具界面，但它<b>没有桌面身份</b>：和二十个网页标签挤在一起、关窗口就找不到、被 Agent 的截图超时自动拉起时还会抢走焦点。本次改造只换<b>承载方式</b>——用 mygo 原生窗口 + 内嵌 WebView 装同一张页面，画布的产品逻辑一行不改。
+  </p>
+
+  <div class="doc-row">
+    <section class="doc-col wide">
+      <div class="doc-sec-h"><b>01 · 现状与目标</b><span>为什么是「内嵌页面」而不是「原生重写」</span></div>
+      <table class="spec">
+        <tr><th>现状</th><th>目标</th></tr>
+        <tr><td>系统浏览器打开，混在网页标签里</td><td>独立桌面窗口：任务栏/托盘有身份，标题条写清作用域</td></tr>
+        <tr><td>服务在跑、窗口已关时无法唤起（只能再开浏览器）</td><td>二次启动唤起既有窗口；单实例按数据目录分区</td></tr>
+        <tr><td>截图超时自动拉浏览器，抢焦点且可能撞上已有实例</td><td>原生模式下 AutoOpen 改为聚焦窗口，不再弹浏览器</td></tr>
+        <tr><td>看不到服务/数据/持久化状态，排障要翻日志</td><td>状态条常驻：服务地址、数据目录、项目/稿件数、最近写入、写盘失败</td></tr>
+        <tr><td>页面交互完整（拖拽/检查/SSE/截图）</td><td><b>不重写</b>：内嵌同一页面，交互、API、canvas.json 全部沿用</td></tr>
+      </table>
+    </section>
+    <section class="doc-col slim">
+      <div class="doc-sec-h"><b>02 · 三条原则</b><span>约束先于样式</span></div>
+      <ul class="doc-list">
+        <li><b>一层 chrome</b>：页面已有浮动工具条与双浮窗；原生只加标题条 40 与状态条 26，不重复画布操作。</li>
+        <li><b>令牌同源</b>：壳只用页面同一套 <span class="mono">--ui-*</span> 纸墨令牌，未新增强调色；彩色仍只属于预览与检查标注。</li>
+        <li><b>零协议变更</b>：不新增 API、不改数据格式、不做第二份页面；唯一页面差异是 <span class="mono">?embed=native</span> 分支。</li>
+      </ul>
+      <p class="doc-p"><b>非目标：</b>不把画布工具搬进原生（缩放/比例/检查仍归页面）；不做多标签；不做云同步；不改 MCP 工具契约。</p>
+    </section>
+  </div>
+
+  <div class="doc-row">
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>03 · 设计图索引</b><span>11 张，按「正常 / 异常 / 规范 / 契约」</span></div>
+      <table class="spec idx">
+        <tr><th>#</th><th>稿</th><th>回答什么</th></tr>
+        <tr><td>01</td><td><b>主窗 · 浅色</b></td><td>壳的默认形态：标题条/内嵌页/状态条三段，页面 brand 隐藏</td></tr>
+        <tr><td>02</td><td><b>主窗 · 深色</b></td><td>同一套令牌翻转，页面与壳同时换肤</td></tr>
+        <tr><td>03</td><td><b>冷启动</b></td><td>窗口先出现，服务绑定后加载页面三步可见</td></tr>
+        <tr><td>04</td><td><b>二次启动</b></td><td>唤起既有窗口 + 原生 toast，而不是再开一个</td></tr>
+        <tr><td>05</td><td><b>页面故障</b></td><td>页面加载失败/渲染进程崩溃：错误码 + 三个出口</td></tr>
+        <tr><td>06</td><td><b>实例占用</b></td><td>数据目录被无窗口实例占着：不启动服务，只给出口</td></tr>
+        <tr><td>07</td><td><b>沉浸全屏</b></td><td>F11 收起两条，页面铺满</td></tr>
+        <tr><td>08</td><td><b>托盘菜单</b></td><td>隐藏窗口后服务继续跑，从托盘回来</td></tr>
+        <tr><td>09</td><td><b>视觉规范</b></td><td>色彩/结构/字型/组件/状态矩阵/键盘</td></tr>
+        <tr><td>10</td><td><b>实现契约</b></td><td>架构、改动面、标志矩阵、页面契约、验收</td></tr>
+      </table>
+    </section>
+
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>04 · 决策记录</b><span>有争议的四点，先定下来</span></div>
+      <ul class="doc-list">
+        <li><b>品牌只出现一次</b>：原生标题条承担身份，页面 <span class="mono">.tb-brand</span> 在 embed 分支隐藏；工具条左侧空间还给画布控件。</li>
+        <li><b>主题归原生</b>：壳的主题按钮同时改壳与页面（页面读 <span class="mono">localStorage</span> + <span class="mono">data-theme</span>），页面自己的主题按钮隐藏，避免两处开关。</li>
+        <li><b>作用域只读</b>：标题条的作用域胶囊来自页面 dataset，仅复述不切换；切换仍在页面文件夹菜单，保留单一交互入口。</li>
+        <li><b>单实例按数据目录</b>：锁名带 <span class="mono">-data</span> 哈希，保留「不同数据目录可并存」的既有约定；同目录第二次启动只唤起。</li>
+        <li><b>状态不弹窗</b>：持久化失败/截图任务等状态用状态条与胶囊表达；只有「页面不可用」才占据页面区的故障卡。</li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="doc-row">
+    <section class="doc-col wide">
+      <div class="doc-sec-h"><b>05 · 交付顺序</b><span>设计 / 实现 / 门禁</span></div>
+      <div class="flow">
+        <span class="step"><b>1</b> 设计图</span><span class="arw"><svg class="ic ic12"><use href="#ds-ic-chevron-right"/></svg></span>
+        <span class="step"><b>2</b> 壳 + embed 分支</span><span class="arw"><svg class="ic ic12"><use href="#ds-ic-chevron-right"/></svg></span>
+        <span class="step"><b>3</b> 配置接线</span><span class="arw"><svg class="ic ic12"><use href="#ds-ic-chevron-right"/></svg></span>
+        <span class="step"><b>4</b> 测试与文档</span>
+      </div>
+      <p class="doc-p">实现必须满足：既有 <span class="mono">go test ./...</span> 全绿；新增 embed 契约与标志矩阵测试；<span class="mono">-browser</span> 能完整回到今天的行为。</p>
+    </section>
+    <section class="doc-col slim">
+      <div class="doc-sec-h"><b>06 · 验收语境</b><span>给实现者的提醒</span></div>
+      <p class="doc-p">设计稿里所有尺寸都落在 4 的倍数网格；标题条 40、状态条 26 是硬约束（与页面 gutter 12 对齐）。截图/MCP 路径不改，但要保证内嵌页在前台时探测能被领取。</p>
+    </section>
+  </div>
+
+  <div class="doc-foot">
+    <div class="do"><b>做</b><span>一层壳</span><span>同一张页面</span><span>可回退浏览器</span></div>
+    <div class="dont"><b>不做</b><span>原生重写画布</span><span>双份页面</span><span>新协议 / 新数据格式</span></div>
+    <div class="end">先设计 · 后实现 · 2026-11-15</div>
+  </div>
+</div>

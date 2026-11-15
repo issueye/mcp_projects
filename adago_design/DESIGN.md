@@ -51,11 +51,13 @@
                                      └─────────────────────┘
 ```
 
-- **一个二进制，两种形态**（同 browser-use）：
-  - `adago-design.exe mcp`：stdio MCP + 内嵌回环画布服务（Agent 接入用）。
-    首次调用画布类工具时按需启动 HTTP 服务；`--open`/`ADAGO_DESIGN_OPEN=1`
-    时自动拉起系统默认浏览器。
-  - `adago-design.exe serve`：只跑画布 Web 服务（人工查看用）。
+- **一个二进制，三种输入面**（同 browser-use）：
+  - `adago-design.exe [serve]`：**原生窗口**（mygo + WebView2 内嵌画布页）+ HTTP MCP，
+    人工与 Agent 共用一个进程（缺省形态）。
+  - `adago-design.exe serve -browser`：旧形态，用系统默认浏览器打开画布（排障/回退）。
+  - `adago-design.exe mcp`：stdio MCP + 无窗口画布服务（Agent 接入）；
+    加 `-window`（或 `-open`）则同时创建原生窗口。
+  - `serve -no-open` / `ADAGO_DESIGN_UI=none`：只跑服务，不打开任何界面。
 - **HTTP MCP 端点（两种形态都有）**：画布服务的同一个监听端口上挂
   `POST /mcp`（Streamable HTTP，无状态：每请求一个临时会话，响应
   `application/json`，不用 SSE、不设 `Mcp-Session-Id`；`GET`/`DELETE` 回 405）。
@@ -67,10 +69,11 @@
   「同数据目录唯一实例」。
 - 端口：默认 `8788`，被占用则向上递增探测（最多 +20），实际地址通过
   `canvas_url` 工具与 `/api/health` 暴露。
-- **单实例防护**：绑定端口前先探测 `port..port+20` 是否已有**同数据目录**的实例
-  （`/api/health` 回显 `server`/`data_dir`）。命中时 `serve` 委派浏览器打开
-  已有实例并退出，`mcp` 快速失败并提示 —— 避免两个进程各自内存态全量覆盖
-  `canvas.json`（后写覆盖先写，静默丢节点）；不同数据目录可共存。
+- **单实例防护**：绑端口前先探测 `port..port+20` 是否已有**同数据目录**的实例
+  （`/api/health` 回显 `server`/`data_dir`）。原生窗口模式在此之上还有一层
+  mygo 单实例锁（锁名含数据目录哈希）：同目录第二次启动把命令行转交给已运行
+  实例并唤起窗口；命中「无窗口实例」时，原生窗口进入故障卡（05/06 稿），
+  不抢服务、不写数据；不同数据目录可共存。
 - 数据目录：`%APPDATA%\adago-design\`（`--data`/`ADAGO_DESIGN_DATA` 覆盖），
   画布状态持久化为 `canvas.json`（原子写入 + `.bak`/`.bak2` 备份轮换，见 §4.1）。
 
@@ -413,8 +416,47 @@ style-src 'unsafe-inline'; img-src data:; font-src data:`）—— `canvas_add`
 项目已被删但节点残留的，也一并归入，避免出现无主设计稿。
 这是唯一的自动建项目场景，只为不丢历史数据，新写入仍然严格校验。
 
-## 5. MCP 工具（internal/mcpserver）
+### 4.6 原生窗口壳（internal/native）
 
+`serve` 的缺省形态：一枚 mygo 窗口，内嵌 WebView 指向本进程的 `/?embed=native`。
+壳只画「窗口最外一圈」，画布交互全部留在页面里（设计稿：画布项目
+「adago-design · 原生内嵌窗口设计图」）。
+
+```
+┌ mygo 窗口 ─────────────────────────────────────────────┐
+│ 标题条 40：身份 · 作用域回显 · MCP 胶囊 · 动作 · 窗口按钮 │
+│ ┌ WebView2：/?embed=native ───────────────────────────┐ │
+│ │ 画布页（工具条 / 双浮窗 / 节点 / 检查器 / 截图任务）  │ │
+│ └─────────────────────────────────────────────────────┘ │
+│ 状态条 26：服务地址 · 数据目录 · 计数 · rev · 持久化       │
+└────────────────────────────────────────────────────────┘
+```
+
+| 关注点 | 实现 |
+|---|---|
+| 窗口 | `mygo.NewWindow`（`TitleBarHidden`、标题条 40、最小 1040×640） |
+| 内嵌页 | `win.NewWebView({URL: base + "/?embed=native"})` + `ui.WebView`；不描边不内缩 |
+| 标题条 | `ui.Row(...).DragWindow()`；`c.TitleBar().Right` 给系统窗口按钮留位 |
+| 状态条 | `/api/health` 每 2s 拉一次：服务/数据/项目数/稿数/rev/`persist_error` |
+| 作用域 | 页面每秒把 `data-scope` / `data-scope-count` / `data-project-count` / `data-node-count` 写到 `<html>`；壳 `Page.Eval` 读取并同步窗口标题 |
+| 主题 | 壳 `ui.Theme` + 页面 `localStorage.adago.theme` / `data-theme` 同时切换 |
+| 生命周期 | 启动卡（DOMReady 前）→ 就绪 → 页面故障（自动重试 1 次）/ 实例占用 |
+| 二次启动 | mygo 单实例锁（锁名 = 应用名@数据目录哈希）→ 唤起并 `Focus` |
+| 自动拉起 | `Deps.OpenCanvas` 注入：原生模式先 `Shell.Focus()`，失败再退浏览器 |
+| 窗口记忆 | `<data>/window.json`（宽高/位置/最大化/主题），`OnClose` 与 700ms 防抖写盘 |
+| 托盘 | 显示/隐藏窗口、在浏览器打开、复制 MCP 配置、打开数据目录、重载、退出 |
+| 快捷键 | 菜单加速器：Ctrl+R、Ctrl+Shift+I、F11、Ctrl+Shift+L、Ctrl+Shift+O、Ctrl+Q |
+
+**页面契约（唯一差异）**：`?embed=native` 时 `index.html` 在样式前给
+`<html>` 加 `data-embed="native"`，`canvas.css` 隐藏 `.tb-brand` 与 `#btn-theme`
+（身份与主题归原生层）；`js/native.js` 回写 dataset 与 `document.title`。
+浏览器模式零变化，门禁在 `embed_test.go`。
+
+**失败与回退**：WebView2 不可用 / 页面加载失败 → 故障卡（三个出口：重载、
+开发者工具、浏览器）；`-browser` 或 `ADAGO_DESIGN_UI=browser` 回到旧路径，
+数据格式与 HTTP API 完全不变。
+
+## 5. MCP 工具（internal/mcpserver）
 SDK：`github.com/modelcontextprotocol/go-sdk v1.8.0`（与 mem-go 一致）。
 服务器名 `adago-design`；Instructions 指引：先 `design_systems` 再
 `design_tokens`/`design_components`，产出用 `design_preview`（`addToCanvas`）
@@ -445,7 +487,7 @@ SDK：`github.com/modelcontextprotocol/go-sdk v1.8.0`（与 mem-go 一致）。
 | `canvas_undo` / `canvas_redo` | — | 撤销 / 重做最近一次画布内容操作（描述 + 剩余深度；无操作返回 `nothing_to_undo|redo`） |
 | `canvas_restore` | — | 恢复最近一次清空的节点 |
 | `canvas_export` | `title?` | 全画布独立 HTML 板文件路径 |
-| `canvas_screenshot` | `nodeID?`（空=全画布）, `scale?=1` | `ImageContent`（PNG）；超时且 `AutoOpen` 时自动拉起浏览器重试一次（每进程一次，测试/CI 关闭） |
+| `canvas_screenshot` | `nodeID?`（空=全画布）, `scale?=1` | `ImageContent`（PNG）；超时且 `AutoOpen` 时自动拉起画布重试一次（原生窗口先聚焦、无窗口退浏览器；每进程一次，测试/CI 关闭） |
 | `canvas_url` | — | 画布访问地址与打开方式 |
 | `design_derive` | `primary`(#RRGGBB), `name`, `base_system`, `addToCanvas?=true` | 10 阶品牌色板 + 派生体系（持久化注册）+ 色板节点 |
 | `design_register` | `name`, `tokens_json`, `dark_json?`, `base_system?` | 自定义体系注册（结构兜底 + 持久化） |
@@ -547,7 +589,7 @@ func ExpandIcons(s string) string        // 展开模板里的 {{icon:name:size}
 ```powershell
 # 构建（GOWORK=off，与其它 mcp_projects 一致）
 cd mcp_projects/adago_design
-GOWORK=off go build -trimpath -o bin/adago-design.exe .
+GOWORK=off go build -trimpath -ldflags="-s -w -H windowsgui" -o bin/adago-design.exe .
 
 # ada-go 接入（stdio）
 # .adago/mcp.json:
@@ -556,7 +598,12 @@ GOWORK=off go build -trimpath -o bin/adago-design.exe .
  "args":["mcp"],"enabled":true}
 ```
 
-`scripts/build-mcp.ps1` 增补 `adago-design` 目标（console 二进制）。
+`scripts/build-mcp.ps1` 增补 `adago-design` 目标（**windowsgui**，无控制台；
+stdio JSON-RPC 走继承管道不受影响）。日志写 `<data>/adago-design.log`（4MB 轮换）。
+图标三层：`assets/icon.png`（512 母版）→ `go run ./tools/icopack` 生成
+`assets/icon.ico` + `internal/native/assets/{icon,tray}.png`；`windres -F pe-x86-64`
+把 ico 编成 `rsrc_windows_amd64.syso`（exe 资源）。一键重生成：
+`pwsh -File tools/make-icon.ps1`。
 
 ## 8. 测试与验收
 
@@ -578,11 +625,20 @@ GOWORK=off go build -trimpath -o bin/adago-design.exe .
   `tools/call`（design_tokens、design_preview、canvas_add、canvas_screenshot
   超时路径），断言结果结构；目录类工具与画板透传单测；
   `design_audit` 节点级走查（脏稿 fail 明细 / 净稿满分 / 缺参报错）与
-  `design_tokens` brief/全量双形态（`enhance3_test.go`）。
+  `design_tokens` brief/全量双形态（`enhance3_test.go`）；
+  `OpenCanvas` 注入点（`open_test.go`：原生聚焦优先、每进程至多一次）。
+- `internal/config`：界面形态矩阵（`ResolveUI`：serve/mcp × -browser/-window/
+  -no-open/-open × `ADAGO_DESIGN_UI`，`config_test.go`）。
+- `internal/native`：无 GUI 的纯函数单测（`native_test.go`）：数据目录锁名、
+  `window.json` 归一化与 round trip、`/api/health` 解析、端口标签、年龄文案、
+  MCP 配置片段。窗口本身靠真机冒烟（见下）。
+- `internal/canvas`：`embed_test.go` 锁住页面契约（embed bootstrap 先于样式、
+  两条隐藏规则、`js/native.js` dataset 字段、`main.js` 接线）。
 - 前端：`go generate` 同步 icons.js；用无头 Chromium 做真实输入事件回归
   （拖动跨越 iframe 区域不丢事件、检查模式 A↔B 跨卡片配对、截图链路出图）。
 - 门禁：`GOWORK=off go test ./... && go vet ./...`。
-- 冒烟：`serve` 起服务 → 浏览器打开画布 → MCP stdio 会话调用工具链。
+- 冒烟：`serve` 起原生窗口 → 页面可交互 → `/mcp` 调工具新增节点即时出现 →
+  截图回传 PNG → Ctrl+R 重载 → F11 全屏 → 二次启动聚焦 → `-browser` 回退。
 
 ## 9. 里程碑
 
@@ -591,5 +647,7 @@ GOWORK=off go build -trimpath -o bin/adago-design.exe .
   design_screen（4 种整页模板）、design_search、canvas_arrange/restore/export。✅
 - M2：design_derive（品牌色派生体系，持久化注册）、design_register（自定义体系）、
   design_audit（WCAG 走查）、canvas_connect/canvas_group（连线与分组框，canvas.json v2）。✅
-- M3（候选）：minimap、框选批量操作、画布内编辑、演示模式、Markdown 设计文档导出、
+- M3：**原生窗口壳**（mygo + WebView2 内嵌画布，状态条/托盘/单实例/窗口记忆；
+  `-browser` 保留旧路径）。✅
+- M4（候选）：minimap、框选批量操作、画布内编辑、演示模式、Markdown 设计文档导出、
   ZIP 导出、Web 字体打包、ada-go 插件化、组件级对比。

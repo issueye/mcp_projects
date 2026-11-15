@@ -1,0 +1,140 @@
+<div class="doc doc--narrow">
+  <div class="doc-h">
+    <div class="doc-mark">D</div>
+    <div>
+      <div class="doc-kicker">adago-design · native shell · 实现契约</div>
+      <div class="doc-title">一层壳，零新协议</div>
+    </div>
+    <div class="doc-meta"><span>mygo v0.7.4</span><span>WebView2</span><span>GOWORK=off</span><span>CGO 0</span></div>
+  </div>
+
+  <p class="doc-lede">
+    原生壳是<b>同一进程内的一层 mygo 窗口</b>：窗口里只有一枚 <b>WebView</b> 指向已经在跑的画布页，标题条/状态条/托盘由 Go 直接画。HTTP API、MCP 工具契约、<b>canvas.json 格式</b>、页面 DOM 与类名全部不变；页面只新增一个 <b>?embed=native</b> 分支。系统浏览器不是被删除，而是降级成 <b>-browser</b> 回退路径。
+  </p>
+
+  <div class="doc-row">
+    <section class="doc-col" style="flex:1.35">
+      <div class="doc-sec-h"><b>01 · 架构</b><span>进程内分层，不是两个进程</span><span class="n">serve</span></div>
+      <div class="flow">
+        <span class="step"><b>mygo 窗口</b>标题条 40 · 状态条 26 · 托盘</span>
+        <span class="arw"><svg class="ic ic12"><use href="#ds-ic-chevron-right"/></svg></span>
+        <span class="step"><b>WebView2</b>/?embed=native</span>
+        <span class="arw"><svg class="ic ic12"><use href="#ds-ic-chevron-right"/></svg></span>
+        <span class="step"><b>net/http</b>127.0.0.1:8788</span>
+        <span class="arw">↔</span>
+        <span class="step"><b>canvas.Store</b>canvas.json + .bak</span>
+      </div>
+      <div class="flow" style="margin-top:8px">
+        <span class="step"><b>MCP 客户端</b>HTTP :8788/mcp · stdio mcp</span>
+        <span class="arw"><svg class="ic ic12"><use href="#ds-ic-chevron-right"/></svg></span>
+        <span class="step"><b>mcpserver</b>与壳同进程共享 Store</span>
+        <span class="arw"><svg class="ic ic12"><use href="#ds-ic-chevron-right"/></svg></span>
+        <span class="step"><b>截图任务</b>页面长轮询后离屏光栅化</span>
+      </div>
+      <p class="doc-p"><b>关键取舍：</b>不把画布 UI 重写为原生控件。页面已有完整交互（拖拽、检查模式、SSE、截图），重写等于重做产品；壳只补「桌面入口 + 状态 + 系统集成」。<b>AutoOpen</b>（截图超时自动拉起画布）在原生模式下改为<b>聚焦既有窗口</b>，不再弹浏览器。</p>
+    </section>
+
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>02 · 改动面</b><span>文件清单</span></div>
+      <table class="spec">
+        <tr><th>文件</th><th>改动</th></tr>
+        <tr><td><code>internal/native/*.go</code></td><td><b>新增</b>：shell / view / theme / tray / icon</td></tr>
+        <tr><td><code>main.go</code></td><td>serve 走原生壳；实例占用与二次启动分支</td></tr>
+        <tr><td><code>internal/config</code></td><td>UI 模式：native / browser / none</td></tr>
+        <tr><td><code>internal/app/app.go</code></td><td>打开界面从 Start 移出，改为装配层决定</td></tr>
+        <tr><td><code>internal/mcpserver</code></td><td><code>Deps.OpenCanvas</code> 注入点（默认回退浏览器）</td></tr>
+        <tr><td><code>static/index.html</code> <code>js/state.js</code></td><td>embed 分支 + dataset 契约</td></tr>
+        <tr><td><code>go.mod/go.sum</code></td><td>引入 <code>github.com/egoist/mygo v0.7.4</code></td></tr>
+        <tr><td><code>README / DESIGN</code></td><td>形态、标志、回退与测试说明</td></tr>
+      </table>
+    </section>
+  </div>
+
+  <div class="doc-row">
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>03 · 标志矩阵</b><span>一种界面，三条退路</span></div>
+      <table class="spec">
+        <tr><th>命令 / 标志</th><th>界面</th><th>说明</th></tr>
+        <tr><td><code>serve</code>（缺省）</td><td><span class="doc-tag ok">原生窗口</span></td><td>窗口 + HTTP MCP；关闭窗口即退出</td></tr>
+        <tr><td><code>serve -browser</code></td><td><span class="doc-tag">系统浏览器</span></td><td>完全保留旧行为，用于排障</td></tr>
+        <tr><td><code>serve -no-open</code></td><td><span class="doc-tag">无界面</span></td><td>只跑服务（CI / 服务器场景）</td></tr>
+        <tr><td><code>mcp</code></td><td><span class="doc-tag">无界面</span></td><td>stdio MCP，AutoOpen 回退浏览器</td></tr>
+        <tr><td><code>mcp -window</code></td><td><span class="doc-tag ok">原生窗口</span></td><td>stdio + 窗口；AutoOpen 聚焦窗口</td></tr>
+        <tr><td>再次启动（同 -data）</td><td><span class="doc-tag ok">唤起</span></td><td>单实例锁按数据目录分区；第二次只转发并退出</td></tr>
+      </table>
+      <p class="doc-p"><b>兼容：</b><code>-open</code> / <code>ADAGO_DESIGN_OPEN</code> 保留，等价于「显示原生窗口」；<code>-theme</code>、<code>-port</code>、<code>-data</code> 语义不变。</p>
+    </section>
+
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>04 · 页面契约</b><span>embed=native 的全部差异</span></div>
+      <ul class="doc-list">
+        <li><b>URL</b>：<code>/?embed=native</code>，服务端原样返回同一份 index.html（不新增模板分支）。</li>
+        <li><b>隐藏品牌与主题按钮</b>：<code>.tb-brand</code>、<code>#btn-theme</code>；身份与主题归原生层，避免双份。</li>
+        <li><b>只读回显</b>：页面把 <code>data-scope</code> / <code>data-scope-count</code> / <code>data-project-count</code> / <code>data-node-count</code> 写到 <code>&lt;html&gt;</code>，壳每 2s 用 <code>Page.Eval</code> 取一次。</li>
+        <li><b>标题</b>：<code>document.title = "&lt;作用域&gt; · adago-design"</code>，浏览器模式下同样受益。</li>
+        <li><b>不变</b>：全部 id / 类名 / DOM 结构 / API / canvas.json 不动；浏览器模式像素级不变。</li>
+        <li><b>机制</b>：只有 <code>.hidden</code> 与 <code>html[data-embed]</code> 两条选择器，可被门禁静态断言。</li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="doc-row">
+    <section class="doc-col wide">
+      <div class="doc-sec-h"><b>05 · mygo 映射</b><span>壳的每一块都有对应 API</span></div>
+      <table class="spec">
+        <tr><th>界面</th><th>API</th><th>要点</th></tr>
+        <tr><td>窗口（无系统标题栏）</td><td><code>mygo.NewWindow(WindowOptions{TitleBarStyle: TitleBarHidden, TitleBarHeight: 40})</code></td><td>标题条自绘，右上留 <code>TitleBar().Right</code></td></tr>
+        <tr><td>内嵌页</td><td><code>win.NewWebView(WebViewOptions{URL: base + "/?embed=native"})</code> + <code>ui.WebView(c, v)</code></td><td>WebView 无尺寸，Grow 撑满；不描边不圆角</td></tr>
+        <tr><td>重载 / 开发者工具</td><td><code>Page().Reload()</code> · <code>ToggleDevTools()</code></td><td>菜单加速器 Ctrl+R / Ctrl+Shift+I / F11</td></tr>
+        <tr><td>读页面状态</td><td><code>Page().Eval(js)</code></td><td>2s 一次，窗口隐藏时暂停</td></tr>
+        <tr><td>页面故障</td><td><code>OnDidFailLoad</code> · <code>OnRenderProcessGone</code></td><td>进入故障卡，自动重试 1 次</td></tr>
+        <tr><td>二次启动</td><td><code>RequestSingleInstanceLock()</code> · <code>OnSecondInstance</code></td><td>锁名含数据目录哈希，<code>-data</code> 互不干扰</td></tr>
+        <tr><td>托盘</td><td><code>mygo.NewTray(TrayOptions{Icon, Menu})</code></td><td>显示/隐藏/浏览器/复制 MCP/数据目录/退出</td></tr>
+        <tr><td>窗口标题</td><td><code>win.SetTitle()</code>（页面 dataset 驱动）</td><td>任务栏显示当前作用域</td></tr>
+        <tr><td>窗口界记忆</td><td><code>w.Size()</code> · <code>w.Position()</code> · <code>SetBounds()</code></td><td>写 <code>&lt;data&gt;/window.json</code>，坏值回落缺省</td></tr>
+        <tr><td>退出顺序</td><td><code>App.OnQuit</code></td><td>存窗口界、停 HTTP、释放锁</td></tr>
+      </table>
+    </section>
+
+    <section class="doc-col slim">
+      <div class="doc-sec-h"><b>06 · 生命周期</b><span>服务先行，窗口随后</span></div>
+      <ul class="doc-list">
+        <li><b>1</b> 解析配置，再取单实例锁（按 -data 分区）</li>
+        <li><b>2</b> <code>app.Start</code>：端口探测、Store、MCP 装配</li>
+        <li><b>3</b> 实例被占则进故障卡（05/06 稿），不写数据</li>
+        <li><b>4</b> 建窗、建 WebView、DOMReady 后收起启动卡</li>
+        <li><b>5</b> 运行：Agent 写入经 SSE 即时反映</li>
+        <li><b>6</b> 关闭窗口 = 退进程：存窗口界、停服务</li>
+      </ul>
+      <p class="doc-p"><b>为什么先起服务：</b>WebView 的 URL 必须指向已绑定端口；同时实例冲突可以在建窗前判定，避免出现「空窗口」。</p>
+    </section>
+  </div>
+
+  <div class="doc-row">
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>07 · 验收</b><span>机器门禁 + 真机冒烟</span></div>
+      <ul class="doc-list">
+        <li><b>门禁</b>：<code>GOWORK=off go build ./... && go vet ./... && go test ./...</code> 全绿。</li>
+        <li><b>契约测试</b>：embed 分支选择器存在；dataset 键在 <code>state.js</code> 写入；<code>-browser/-no-open/-window</code> 解析矩阵；<code>Deps.OpenCanvas</code> 被调用一次且可回退。</li>
+        <li><b>冒烟</b>：原生窗口可打开、页面可交互、Agent 经 /mcp 新增节点即时出现、canvas_screenshot 回传 PNG、Ctrl+R 重载、F11 全屏、二次启动聚焦。</li>
+        <li><b>不回归</b>：MCP 工具清单与错误码、HTTP API、canvas.json v4 格式、既有 41 张稿可读。</li>
+      </ul>
+    </section>
+
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>08 · 风险与回退</b><span>失败要能一眼退回</span></div>
+      <ul class="doc-list">
+        <li><b>缺少 WebView2 运行时</b>：启动卡直说，并给「在浏览器打开」出口；不让进程静默死掉。</li>
+        <li><b>纯 Go 构建</b>：mygo 走 purego，<code>CGO_ENABLED=0</code> 仍产出单个 exe；构建脚本不改。</li>
+        <li><b>无窗口 / CI</b>：<code>-no-open</code> 与测试不创建窗口；<code>go test</code> 永不弹窗。</li>
+        <li><b>回退</b>：<code>-browser</code> 或 <code>ADAGO_DESIGN_UI=browser</code> 回到旧路径，不改数据。</li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="doc-foot">
+    <div class="do"><b>做</b><span>同进程一层壳</span><span>embed 单分支</span><span>状态自解释</span><span>可回退浏览器</span></div>
+    <div class="dont"><b>不做</b><span>重写画布 UI</span><span>第二份 index.html</span><span>改 API / 数据格式</span><span>启动即弹原生对话框</span></div>
+    <div class="end">契约 · 2026-11-15 · 待实现</div>
+  </div>
+</div>

@@ -1,0 +1,164 @@
+<div class="doc">
+  <div class="doc-h">
+    <div class="doc-mark">D</div>
+    <div>
+      <div class="doc-kicker">adago-design · native shell v1</div>
+      <div class="doc-title">纸窗 Paper Frame · 原生内嵌窗口视觉规范</div>
+    </div>
+    <div class="doc-meta">
+      <span>1440 × 900</span><span>标题条 40</span><span>状态条 26</span><span>栅格 4</span>
+      <span>Inter + Noto Sans SC</span><span>令牌 --ui-*</span>
+    </div>
+  </div>
+
+  <p class="doc-lede">
+    原生壳<b>不另立一套风格</b>：它直接继承画布页的 <b>--ui-*</b> 令牌，只负责「窗口最外一圈」——标题条回答<b>这是谁、看哪个作用域、服务是否就绪</b>，状态条回答<b>服务地址、数据目录、项目/稿件数量、最近一次写入</b>。页面仍是产品，壳是入口；页面里的浮动工具条与浮窗不搬到原生层。<b>单色品牌</b>：壳内没有第二种强调色，彩色只属于预览卡与检查标注 A/B。
+  </p>
+
+  <div class="doc-row">
+    <section class="doc-col wide">
+      <div class="doc-sec-h"><b>01 · 色彩</b><span>纸面 / 墨 / 状态成对</span><span class="n">--ui-*</span></div>
+      <div class="sw-grid">
+        <div class="sw-item"><i style="background:#EDE8DC"></i><div class="tx"><b>canvas</b><code>#EDE8DC</code><s>工作区底</s></div></div>
+        <div class="sw-item"><i style="background:#FBF8F1"></i><div class="tx"><b>surface</b><code>#FBF8F1</code><s>标题条 / 状态条 / 浮窗</s></div></div>
+        <div class="sw-item"><i style="background:#FFFDF8"></i><div class="tx"><b>elevated</b><code>#FFFDF8</code><s>卡片 / 纸张 / 菜单</s></div></div>
+        <div class="sw-item"><i style="background:#F2EDE2"></i><div class="tx"><b>subtle</b><code>#F2EDE2</code><s>hover / 输入底</s></div></div>
+        <div class="sw-item"><i style="background:#DCD5C6"></i><div class="tx"><b>line</b><code>#DCD5C6</code><s>发丝分隔（1px）</s></div></div>
+        <div class="sw-item"><i style="background:#C9C0AC"></i><div class="tx"><b>line-strong</b><code>#C9C0AC</code><s>强调描边</s></div></div>
+        <div class="sw-item"><i style="background:#16171A"></i><div class="tx"><b>ink</b><code>#16171A</code><s>16.17:1</s></div></div>
+        <div class="sw-item"><i style="background:#57544C"></i><div class="tx"><b>ink-2</b><code>#57544C</code><s>6.82:1</s></div></div>
+        <div class="sw-item"><i style="background:#6E6A60"></i><div class="tx"><b>ink-3</b><code>#6E6A60</code><s>4.87:1（11px 下限）</s></div></div>
+        <div class="sw-item"><i style="background:#16171A"></i><div class="tx"><b>brand</b><code>#16171A</code><s>主按钮 / 激活</s></div></div>
+        <div class="sw-item"><i style="background:#F6F3EC"></i><div class="tx"><b>on-brand</b><code>#F6F3EC</code><s>墨底纸字</s></div></div>
+        <div class="sw-item"><i style="background:#E7E1D2"></i><div class="tx"><b>brand-soft</b><code>#E7E1D2</code><s>选中弱底</s></div></div>
+        <div class="sw-item"><i style="background:#E7F3EA"></i><div class="tx"><b>success-soft</b><code>#E7F3EA</code><s>4.71:1 配 ink</s></div></div>
+        <div class="sw-item"><i style="background:#FBEEDA"></i><div class="tx"><b>warn-soft</b><code>#FBEEDA</code><s>5.53:1 配 ink</s></div></div>
+        <div class="sw-item"><i style="background:#FBE9E7"></i><div class="tx"><b>danger-soft</b><code>#FBE9E7</code><s>5.58:1 配 ink</s></div></div>
+        <div class="sw-item"><i style="background:#0B5FFF"></i><div class="tx"><b>ins-a / ins-b</b><code>#0B5FFF</code><s>检查标注，数据色</s></div></div>
+      </div>
+      <div class="doc-row" style="gap:10px">
+        <div class="doc-col" style="flex:1;padding:10px 12px">
+          <p class="doc-p"><b>用色纪律</b><br>壳只用 surface / line / ink 三档；状态胶囊用成对 soft+ink；<b>不引入青铜或任何新强调色</b>。彩色只来自 8 套体系的预览卡，以及检查模式的 A/B 编码色。</p>
+        </div>
+        <div class="doc-col" style="flex:1;padding:10px 12px">
+          <p class="doc-p"><b>明暗同源</b><br>切主题 = 同一套令牌翻转；原生壳与内嵌页<b>同时</b>切换（壳改 ui.Theme，页通过 <span class="mono">localStorage</span> + <span class="mono">data-theme</span> 生效）。分隔线在深色下换成 <span class="mono">#2E313A</span>，不靠对比度硬撑。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="doc-col slim">
+      <div class="doc-sec-h"><b>02 · 结构</b><span>窗口纵向节奏</span></div>
+      <div class="anat">
+        <div class="an"><span class="anl">40</span><b>标题条</b><s>身份 · 作用域 · MCP · 动作 · 窗口按钮</s></div>
+        <div class="an is-flex"><span class="anl">flex</span><b>内嵌页</b><s>整幅 WebView，不描边、不圆角、不内缩</s></div>
+        <div class="an"><span class="anl">26</span><b>状态条</b><s>服务 · 数据目录 · 计数 · 最近写入</s></div>
+      </div>
+      <div class="doc-sec-h" style="margin-top:4px"><b>03 · 间距与圆角</b><span>4 网格</span></div>
+      <table class="spec">
+        <tr><th>部位</th><th>尺寸</th><th>说明</th></tr>
+        <tr><td>条内左右</td><td><code>12</code></td><td>与页面 gutter 同值</td></tr>
+        <tr><td>控件</td><td><code>28 × 28</code></td><td>图标按钮，16 图标</td></tr>
+        <tr><td>胶囊</td><td><code>24</code> 高</td><td>圆角 6，不抢眼</td></tr>
+        <tr><td>标题条控件间距</td><td><code>10 / 2</code></td><td>分组 10，组内 2</td></tr>
+        <tr><td>窗口按钮区</td><td><code>138 × 40</code></td><td>3 × 46，原生绘制</td></tr>
+        <tr><td>圆角</td><td><code>6 / 12 / 999</code></td><td>控件 / 浮窗卡 / 状态胶囊</td></tr>
+      </table>
+    </section>
+  </div>
+
+  <div class="doc-row">
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>04 · 字型</b><span>Inter + Noto Sans SC / JetBrains Mono</span></div>
+      <div class="type-row"><div class="tn">title</div><div class="ts" style="font-size:17px;font-weight:600;letter-spacing:-.01em">正在启动 adago-design</div><code>17 / 600</code></div>
+      <div class="type-row"><div class="tn">body</div><div class="ts" style="font-size:13px">全部项目 · 4 个项目 · 41 张稿</div><code>13 / 400</code></div>
+      <div class="type-row"><div class="tn">label</div><div class="ts" style="font-size:12px;color:#57544C">画布服务 · 持久化正常</div><code>12 / 400</code></div>
+      <div class="type-row"><div class="tn">micro</div><div class="ts monot" style="font-size:10px;font-family:'JetBrains Mono',monospace;color:#6E6A60">127.0.0.1:8788 · rev 128</div><code>10 / 500 mono</code></div>
+      <div class="type-row"><div class="tn">kicker</div><div class="ts" style="font-size:9px;font-weight:600;letter-spacing:.08em;color:#6E6A60">CANVAS</div><code>9 / 600 +.08em</code></div>
+      <p class="doc-p">中文界面不用等宽；机器读数（端口、路径、rev、工具名）一律等宽并开 tabular-nums，数字跳动时不推挤布局。</p>
+    </section>
+
+    <section class="doc-col wide">
+      <div class="doc-sec-h"><b>05 · 组件</b><span>标题条 / 状态条 / 故障卡</span></div>
+      <div class="cmp">
+        <div class="cmp-row">
+          <div class="cmp-label">作用域胶囊</div>
+          <div class="nb-scope" style="background:var(--ui-surface)"><svg class="ic ic14"><use href="#ds-ic-folder"/></svg><b>全部项目</b><span class="nb-count">4</span></div>
+          <div class="nb-scope"><svg class="ic ic14"><use href="#ds-ic-folder"/></svg><b>移动端改版</b><span class="nb-count">12</span></div>
+        </div>
+        <div class="cmp-note">只读：作用域切换仍在页面工具条的文件夹菜单；原生层只复述当前值（页面 dataset 提供）。点它不做事，因此没有下拉箭头。</div>
+
+        <div class="cmp-row">
+          <div class="cmp-label">MCP 胶囊</div>
+          <div class="nb-pill ok"><span class="dot"></span><span class="k">MCP</span><span class="sep2"></span><span class="mono">:8788/mcp</span></div>
+          <div class="nb-pill warn"><span class="dot"></span><span class="k">截图任务中</span></div>
+          <div class="nb-pill bad"><span class="dot"></span><span class="k">写盘失败</span></div>
+        </div>
+        <div class="cmp-note">三态：就绪（success）/ 有事在做（warn，仅截图任务与持久化重试）/ 失败（danger）。端点永远显示，方便直接抄进 MCP 配置。</div>
+
+        <div class="cmp-row">
+          <div class="cmp-label">图标动作</div>
+          <span class="nb-ic"><svg class="ic"><use href="#ds-ic-theme"/></svg></span>
+          <span class="nb-ic is-hover"><svg class="ic"><use href="#ds-ic-refresh"/></svg></span>
+          <span class="nb-ic"><svg class="ic"><use href="#ds-ic-arrow-up-right"/></svg></span>
+          <span class="nb-ic"><svg class="ic"><use href="#ds-ic-more"/></svg></span>
+          <span class="kbd">F11</span><span class="kbd">Ctrl</span><span class="kbd">R</span>
+        </div>
+        <div class="cmp-note">主题 / 重新加载 / 在浏览器打开 / 更多；28×28，hover 换 subtle 底，按下不改尺寸。全部动作都有 tooltip 与键盘入口。</div>
+
+        <div class="cmp-row">
+          <div class="cmp-label">状态条</div>
+          <div class="sb" style="border:1px solid var(--ui-line);border-radius:6px;height:26px">
+            <span class="sb-g"><span class="dot ok"></span>画布服务 <span class="mono">127.0.0.1:8788</span></span>
+            <span class="sb-vr"></span>
+            <span class="sb-g"><span class="mono">4</span> 个 · <span class="mono">41</span> 张稿</span>
+            <span class="sb-grow"></span>
+            <span class="sb-g">rev <span class="mono">128</span></span>
+          </div>
+        </div>
+        <div class="cmp-note">左：服务与数据（可复制）；右：最近写入与页面缩放。异常时左端圆点换色并直说原因，不弹出对话框。</div>
+      </div>
+    </section>
+  </div>
+
+  <div class="doc-row">
+    <section class="doc-col wide">
+      <div class="doc-sec-h"><b>06 · 状态矩阵</b><span>壳只有一个窗口，状态必须自解释</span></div>
+      <table class="spec">
+        <tr><th>状态</th><th>标题条</th><th>页面区</th><th>状态条</th></tr>
+        <tr><td><b>正常</b></td><td>作用域胶囊 + MCP 绿</td><td>内嵌页</td><td>服务/数据/计数/rev</td></tr>
+        <tr><td><b>冷启动</b></td><td>「启动中」warn + 动作禁用</td><td>启动卡（三步 + 进度）</td><td>「启动中」+ 数据目录</td></tr>
+        <tr><td><b>页面故障</b></td><td>MCP 仍绿 · 重载按钮激活</td><td>故障卡（错误码 + 三个出口）</td><td>「页面故障」danger + 重试次数</td></tr>
+        <tr><td><b>实例占用</b></td><td>「未启动」warn</td><td>故障卡（已有实例地址 + 出口）</td><td>「未启动画布服务」+ 已有实例</td></tr>
+        <tr><td><b>持久化失败</b></td><td>MCP 胶囊转 bad「写盘失败」</td><td>不变（数据在内存）</td><td>左端 danger + 最近一次错误</td></tr>
+        <tr><td><b>截图任务</b></td><td>MCP 胶囊转 warn「截图任务中」</td><td>不变</td><td>「截图 n 次 · 最近 128ms」</td></tr>
+        <tr><td><b>二次启动</b></td><td>窗口前置并聚焦</td><td>不变</td><td>原生 toast「已切换到运行中的窗口」</td></tr>
+        <tr><td><b>沉浸全屏</b></td><td>隐藏</td><td>页面铺满 + 右上提示胶囊</td><td>隐藏</td></tr>
+      </table>
+    </section>
+
+    <section class="doc-col slim">
+      <div class="doc-sec-h"><b>07 · 焦点与键盘</b><span>谁拥有按键</span></div>
+      <p class="doc-p"><b>页面拥有键盘</b>：点进页面后，空格平移、0/F/缩放、Esc 逐级退出全部照旧。壳只在<b>页面之外</b>（标题条/状态条）接键，并保证点完壳控件后焦点<b>回到页面</b>。</p>
+      <table class="spec">
+        <tr><th>键</th><th>行为</th><th>层</th></tr>
+        <tr><td><code>F11</code></td><td>沉浸全屏（隐藏两条）</td><td>原生</td></tr>
+        <tr><td><code>Ctrl+R</code></td><td>重载内嵌页</td><td>原生</td></tr>
+        <tr><td><code>Ctrl+Shift+I</code></td><td>开发者工具（调试）</td><td>原生</td></tr>
+        <tr><td><code>Ctrl+Shift+L</code></td><td>切换界面主题（壳 + 页面）</td><td>原生</td></tr>
+        <tr><td><code>Ctrl+Shift+O</code></td><td>在系统浏览器打开</td><td>原生</td></tr>
+        <tr><td><code>Ctrl+Q</code></td><td>退出应用</td><td>原生</td></tr>
+        <tr><td><code>Esc</code></td><td>检查/弹层/单画布逐级退出</td><td>页面</td></tr>
+        <tr><td><code>Space</code></td><td>临时平移画布</td><td>页面</td></tr>
+        <tr><td><code>0</code> <code>F</code></td><td>居中 / 适配内容</td><td>页面</td></tr>
+        <tr><td><code>Shift N</code></td><td>新建项目</td><td>页面</td></tr>
+        <tr><td><code>Ctrl+Z</code></td><td>撤销画布操作</td><td>页面</td></tr>
+      </table>
+    </section>
+  </div>
+
+  <div class="doc-foot">
+    <div class="do"><b>做</b><span>一层 chrome</span><span>token 同源</span><span>状态自解释</span><span>页面仍是产品</span></div>
+    <div class="dont"><b>不做</b><span>第二套品牌色</span><span>把画布工具搬到原生</span><span>双击标题条改版式</span><span>弹原生对话框报错</span></div>
+    <div class="end">AA · 正文 12+ · 说明色 ≥ ink-3 · 壳内无装饰色</div>
+  </div>
+</div>

@@ -14,6 +14,17 @@
   } catch (_) { /* 隐私模式下 localStorage 不可用，保持服务端缺省 */ }
 })();
 </script>
+<!-- 原生窗口内嵌（?embed=native）：身份与主题归原生标题条，页面让出这两处。
+     与主题 bootstrap 一样先于样式表执行，避免首帧闪出品牌区。 -->
+<script>
+(function () {
+  try {
+    if ((location.search || "").indexOf("embed=native") >= 0) {
+      document.documentElement.dataset.embed = "native";
+    }
+  } catch (_) { /* 地址栏异常时保持普通浏览器形态 */ }
+})();
+</script>
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="canvas.css">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='6' fill='%2316171A'/><text x='12' y='17' font-size='13' text-anchor='middle' fill='%23F6F3EC' font-family='sans-serif'>D</text></svg>">

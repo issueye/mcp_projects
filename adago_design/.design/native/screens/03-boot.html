@@ -1,0 +1,64 @@
+<div class="screen">
+  <header class="nb">
+    <div class="nb-brand">
+      <span class="nb-seal">D</span>
+      <span class="nb-name">adago-design</span>
+      <span class="nb-sub">canvas</span>
+    </div>
+    <span class="nb-vr"></span>
+    <div class="nb-pill warn"><span class="dot"></span><span class="k">启动中</span></div>
+    <div class="nb-grow"></div>
+    <div class="nb-pill">
+      <span class="dot"></span><span class="k">MCP</span><span class="sep2"></span>
+      <span class="mono">等待就绪</span>
+    </div>
+    <div class="nb-acts">
+      <span class="nb-ic is-disabled"><svg class="ic"><use href="#ds-ic-theme"/></svg></span>
+      <span class="nb-ic is-disabled"><svg class="ic"><use href="#ds-ic-refresh"/></svg></span>
+      <span class="nb-ic is-disabled"><svg class="ic"><use href="#ds-ic-arrow-up-right"/></svg></span>
+      <span class="nb-ic is-disabled"><svg class="ic"><use href="#ds-ic-more"/></svg></span>
+    </div>
+    <div class="nb-wctl">
+      <i><svg class="wglyph" viewBox="0 0 10 10"><path d="M2 5h6"/></svg></i>
+      <i><svg class="wglyph" viewBox="0 0 10 10"><rect x="2.2" y="2.2" width="5.6" height="5.6"/></svg></i>
+      <i class="close"><svg class="wglyph" viewBox="0 0 10 10"><path d="M2.4 2.4l5.2 5.2M7.6 2.4L2.4 7.6"/></svg></i>
+    </div>
+  </header>
+
+  <div class="embed">
+    <div class="pg-veil">
+      <div class="grid"></div>
+      <div class="boot-card">
+        <div class="boot-mark">D</div>
+        <h3>正在启动 adago-design</h3>
+        <p>窗口先出现，画布页在服务绑定端口后加载。首次启动需要初始化 WebView2 运行时，通常不超过 3 秒。</p>
+        <div class="boot-steps">
+          <div class="boot-step">
+            <span class="st done"><svg class="ic ic10"><use href="#ds-ic-check"/></svg></span>
+            数据目录<span class="mono">%APPDATA%\adago-design</span>
+          </div>
+          <div class="boot-step">
+            <span class="st done"><svg class="ic ic10"><use href="#ds-ic-check"/></svg></span>
+            画布服务<span class="mono">127.0.0.1:8788</span>
+          </div>
+          <div class="boot-step">
+            <span class="st load"></span>
+            加载画布页面<span class="mono">/?embed=native</span>
+          </div>
+        </div>
+        <div class="boot-progress"><i></i></div>
+        <div class="boot-note">加载完成即切换；失败则进入「页面故障」态，可重试或改用浏览器。</div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="sb">
+    <span class="sb-g sb-warn"><span class="dot warn"></span>启动中</span>
+    <span class="sb-vr"></span>
+    <span class="sb-g">数据 <span class="mono">%APPDATA%\adago-design</span></span>
+    <span class="sb-vr"></span>
+    <span class="sb-g">版本 <span class="mono">0.2.0</span></span>
+    <span class="sb-grow"></span>
+    <span class="sb-g">冷启动 · 仅第一次需要初始化</span>
+  </footer>
+</div>

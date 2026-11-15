@@ -13,7 +13,6 @@ import (
 	"adagodesign/internal/canvas"
 	"adagodesign/internal/config"
 	"adagodesign/internal/design"
-	"adagodesign/internal/openbrowser"
 )
 
 // Server 是运行中的画布服务句柄。
@@ -130,9 +129,8 @@ func Start(ctx context.Context, cfg *config.Config, opts ...Option) (*Server, er
 		}
 	}()
 	log.Printf("画布已就绪: %s (data=%s)", srv.BaseURL, cfg.DataDir)
-	if cfg.Open {
-		openbrowser.Open(srv.BaseURL)
-	}
+	// 界面（原生窗口 / 系统浏览器 / 无）由装配层按 config.ResolveUI 决定：
+	// app.Start 只负责起服务，避免包内同时依赖桌面壳与浏览器拉起。
 	return srv, nil
 }
 

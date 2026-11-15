@@ -19,6 +19,7 @@ import { pollNodes } from "./sync.js";
 import { setPanelCollapsed } from "./dock.js";
 import { loadCatalog } from "./catalog.js";
 import { taskLoop } from "./capture.js";
+import { publishNativeState } from "./native.js";
 import "./keyboard.js"; // 副作用导入：全局快捷键（Del/F/0/Ctrl+Z）与空格临时平移模式
 import { INS } from "../inspect.js";
 
@@ -178,3 +179,6 @@ try {
 } catch (_) { /* SSE 不可用时仍走 2s 轮询兜底 */ }
 loadCatalog();
 taskLoop();
+// 原生壳契约：作用域/计数/标题每秒回写一次 <html data-*>（原生标题条只读这些值）。
+publishNativeState();
+setInterval(publishNativeState, 1000);

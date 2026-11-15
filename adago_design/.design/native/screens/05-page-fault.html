@@ -1,0 +1,57 @@
+<div class="screen">
+  <header class="nb">
+    <div class="nb-brand">
+      <span class="nb-seal">D</span>
+      <span class="nb-name">adago-design</span>
+      <span class="nb-sub">canvas</span>
+    </div>
+    <span class="nb-vr"></span>
+    <div class="nb-grow"></div>
+    <div class="nb-pill ok">
+      <span class="dot"></span><span class="k">MCP</span><span class="sep2"></span>
+      <span class="mono">:8788/mcp</span>
+    </div>
+    <div class="nb-acts">
+      <span class="nb-ic"><svg class="ic"><use href="#ds-ic-theme"/></svg></span>
+      <span class="nb-ic"><svg class="ic"><use href="#ds-ic-refresh"/></svg></span>
+      <span class="nb-ic"><svg class="ic"><use href="#ds-ic-arrow-up-right"/></svg></span>
+      <span class="nb-ic"><svg class="ic"><use href="#ds-ic-more"/></svg></span>
+    </div>
+    <div class="nb-wctl">
+      <i><svg class="wglyph" viewBox="0 0 10 10"><path d="M2 5h6"/></svg></i>
+      <i><svg class="wglyph" viewBox="0 0 10 10"><rect x="2.2" y="2.2" width="5.6" height="5.6"/></svg></i>
+      <i class="close"><svg class="wglyph" viewBox="0 0 10 10"><path d="M2.4 2.4l5.2 5.2M7.6 2.4L2.4 7.6"/></svg></i>
+    </div>
+  </header>
+
+  <div class="embed">
+    <div class="pg-veil">
+      <div class="grid"></div>
+      <div class="fault-card">
+        <div class="fault-mark"><svg class="ic" style="width:28px;height:28px"><use href="#ds-ic-warning"/></svg></div>
+        <h3>画布页面无法加载</h3>
+        <p>本地服务仍在运行（<b style="color:var(--ui-ink)">MCP 端点可用</b>），只是内嵌页面没有渲染成功。修好前 <span class="mono" style="font-size:11px">canvas_screenshot</span> 会超时。</p>
+        <div class="fault-code">ERR_FAILED · net::ERR_CONNECTION_REFUSED<br>renderer process exited · code 3</div>
+        <div class="fault-url">http://127.0.0.1:8788/?embed=native</div>
+        <div class="fault-acts">
+          <span class="btn primary"><svg class="ic ic14"><use href="#ds-ic-refresh"/></svg>重新加载页面</span>
+          <span class="btn ghost"><svg class="ic ic14"><use href="#ds-ic-settings"/></svg>开发者工具</span>
+          <span class="btn ghost"><svg class="ic ic14"><use href="#ds-ic-arrow-up-right"/></svg>在浏览器打开</span>
+        </div>
+        <div class="fault-hint"><b>自动重试已执行 1 次</b> · 页面进程崩溃与加载失败共用此态；重载不影响 <span class="mono">canvas.json</span>，画布数据不会丢。</div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="sb">
+    <span class="sb-g sb-bad"><span class="dot bad"></span>页面故障</span>
+    <span class="sb-vr"></span>
+    <span class="sb-g">画布服务 <span class="mono">127.0.0.1:8788</span> · 正常</span>
+    <span class="sb-vr"></span>
+    <span class="sb-g">数据 <span class="mono">%APPDATA%\adago-design</span></span>
+    <span class="sb-grow"></span>
+    <span class="sb-g sb-ok"><span class="dot ok"></span>MCP 已就绪</span>
+    <span class="sb-vr"></span>
+    <span class="sb-g">重试 <span class="mono">1 / 1</span></span>
+  </footer>
+</div>

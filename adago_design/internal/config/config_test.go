@@ -118,3 +118,66 @@ func TestDefaultDataDirEnvOverride(t *testing.T) {
 		t.Fatalf("DefaultDataDir() = %q, 期望 %q", got, want)
 	}
 }
+
+func TestResolveUI(t *testing.T) {
+	t.Setenv("ADAGO_DESIGN_UI", "")
+	cases := []struct {
+		name string
+		cfg  Config
+		mode string
+		want UIKind
+	}{
+		{"serve 缺省原生窗口", Config{}, "serve", UINative},
+		{"mcp 缺省无界面", Config{}, "mcp", UINone},
+		{"no-open 最高优先", Config{NoOpen: true, Browser: true, Open: true, Window: true}, "serve", UINone},
+		{"browser 回退", Config{Browser: true}, "serve", UIBrowser},
+		{"mcp -window", Config{Window: true}, "mcp", UINative},
+		{"mcp -open", Config{Open: true}, "mcp", UINative},
+		{"mcp -browser", Config{Browser: true}, "mcp", UIBrowser},
+	}
+	for _, c := range cases {
+		if got := c.cfg.ResolveUI(c.mode); got != c.want {
+			t.Errorf("%s: ResolveUI(%q) = %q, 期望 %q", c.name, c.mode, got, c.want)
+		}
+	}
+
+	t.Setenv("ADAGO_DESIGN_UI", "none")
+	if got := (&Config{UIEnv: UINone, Window: true}).ResolveUI("serve"); got != UINone {
+		t.Errorf("ADAGO_DESIGN_UI 应压过标志，得 %q", got)
+	}
+}
+
+func TestFromFlagsUIFlags(t *testing.T) {
+	t.Setenv("ADAGO_DESIGN_DATA", "")
+	t.Setenv("ADAGO_DESIGN_OPEN", "")
+	t.Setenv("ADAGO_DESIGN_UI", "")
+
+	cfg, err := FromFlags("test", []string{"-browser"})
+	if err != nil || !cfg.Browser || cfg.Window || cfg.NoOpen {
+		t.Fatalf("-browser 解析异常: %+v, %v", cfg, err)
+	}
+	cfg, err = FromFlags("test", []string{"-window"})
+	if err != nil || !cfg.Window {
+		t.Fatalf("-window 解析异常: %+v, %v", cfg, err)
+	}
+	cfg, err = FromFlags("test", []string{"-no-open"})
+	if err != nil || !cfg.NoOpen {
+		t.Fatalf("-no-open 解析异常: %+v, %v", cfg, err)
+	}
+
+	for raw, want := range map[string]UIKind{
+		"native": UINative, "window": UINative,
+		"browser": UIBrowser, "web": UIBrowser,
+		"none": UINone, "headless": UINone,
+		"": UIKind(""), "nonsense": UIKind(""),
+	} {
+		t.Setenv("ADAGO_DESIGN_UI", raw)
+		cfg, err := FromFlags("test", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if cfg.UIEnv != want {
+			t.Errorf("ADAGO_DESIGN_UI=%q → %q, 期望 %q", raw, cfg.UIEnv, want)
+		}
+	}
+}

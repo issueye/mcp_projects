@@ -1,8 +1,10 @@
-# adago_design — 设计体系 MCP（浏览器无限画布）
+# adago_design — 设计体系 MCP（原生窗口 · 内嵌无限画布）
 
-一个「设计体系 + 浏览器无限画布」的 MCP 服务器：AI Agent 通过 MCP 工具读取
+一个「设计体系 + 无限画布」的 MCP 服务器：AI Agent 通过 MCP 工具读取
 多套设计体系的 Design Token 与组件规范，把组件预览（真实 HTML+CSS 渲染）以
-卡片形式摆到浏览器里的无限画布上，做多体系并排对比、组合页面、截图回传。
+卡片形式摆到无限画布上，做多体系并排对比、组合页面、截图回传。
+画布跑在 **mygo 原生窗口内嵌的 WebView2** 里（缺省形态），也可以用
+`-browser` 回到系统浏览器。
 
 内置八套体系（Token 基于各体系公开设计规范整理，为近似实现）：
 
@@ -101,28 +103,88 @@ project_create（或 project_list 选已有）
 
 # 或手动
 cd mcp_projects/adago_design
-GOWORK=off go build -trimpath -o bin/adago-design.exe .
+GOWORK=off go build -trimpath -ldflags="-s -w -H windowsgui" -o bin/adago-design.exe .
 ```
 
-## 运行形态（一个二进制，两种模式）
+依赖 `github.com/egoist/mygo v0.7.4`（Windows 上用系统 WebView2 运行时；
+Win10/11 自带）。纯 Go 构建，`CGO_ENABLED=0` 可用，产物仍是单个 exe。
+
+构建用 `-ldflags "-H windowsgui"` 链接：**不弹黑色控制台**。日志同时写
+`<数据目录>\adago-design.log`（4MB 后轮换为 `.1`）与 stderr（控制台可用时）。
+GUI 子系统从终端启动 `serve` 会立即返回、进程常驻；要停止请关窗口 / 托盘退出，
+`-no-open` 没有窗口时用任务管理器结束进程。
+
+**图标**：`assets/icon.png`（512 母版）→ `tools/icopack` 生成 `assets/icon.ico`
+与 `internal/native/assets/{icon,tray}.png`；`windres` 把 ico 编进
+`rsrc_windows_amd64.syso`（Explorer/任务栏的 exe 图标）。改图标后：
 
 ```powershell
-# 人工查看：只跑画布服务并自动打开浏览器（同时暴露 HTTP MCP：/mcp）
-bin\adago-design.exe serve            # http://127.0.0.1:8788/  +  http://127.0.0.1:8788/mcp
+pwsh -File tools/make-icon.ps1   # 需要 MinGW-w64 的 windres
+```
 
-# Agent 接入：stdio MCP + 内嵌画布服务（不自动开浏览器；同样带 /mcp）
+窗口图标与托盘图标在运行时由 Go 设置，不依赖 syso；当前 binutils 没有
+`pe-aarch64`，arm64 构建暂时只有窗口/托盘图标、exe 文件图标缺失。
+
+## 运行形态（一个二进制，三种输入面）
+
+```powershell
+# 人工查看：原生窗口（标题条 + 内嵌画布页 + 状态条），同端口暴露 HTTP MCP
+bin\adago-design.exe serve            # 窗口 + http://127.0.0.1:8788/mcp
+
+# 回退：系统默认浏览器打开画布（旧形态，排障用）
+bin\adago-design.exe serve -browser
+
+# 只跑服务，不打开任何界面
+bin\adago-design.exe serve -no-open
+
+# Agent 接入：stdio MCP + 无窗口画布服务（同样带 /mcp）
 bin\adago-design.exe mcp
+
+# Agent 接入 + 原生窗口（截图超时会聚焦这个窗口，而不是弹浏览器）
+bin\adago-design.exe mcp -window
 ```
 
 公共参数：`-port 8788`（被占用自动 +1 探测）、`-data <目录>`（默认
 `%APPDATA%\adago-design`，可被 `ADAGO_DESIGN_DATA` 覆盖）、`-open`、
-`-theme dark|light`。
+`-browser`、`-window`、`-no-open`、`-theme dark|light`；
+环境变量 `ADAGO_DESIGN_UI=native|browser|none` 压过标志（CI/脚本用）。
+
+## 原生窗口（native shell）
+
+```
+┌ mygo 窗口 ─────────────────────────────────────────────┐
+│ 标题条 40：品牌 · 作用域 · MCP 胶囊 · 主题/重载/浏览器/更多 │
+│ ┌ 内嵌画布页（/?embed=native）─────────────────────────┐ │
+│ │ 工具条 / 双浮窗 / 卡片 / 检查器 / 截图任务全在页面里   │ │
+│ └─────────────────────────────────────────────────────┘ │
+│ 状态条 26：服务地址 · 数据目录 · 项目/稿数 · rev · 持久化  │
+└────────────────────────────────────────────────────────┘
+```
+
+- **设计图**：画布项目「adago-design · 原生内嵌窗口设计图」（11 张稿：
+  主窗浅/深、冷启动、二次启动、页面故障、实例占用、沉浸全屏、托盘、视觉规范、实现契约）。
+- **一层 chrome**：壳只画标题条与状态条；画布操作（缩放/比例/检查/清空）仍在页面里，
+  不搬两遍。页面在 `?embed=native` 下隐藏自己的品牌与主题按钮（身份和主题归原生层），
+  其余 DOM、类名、交互不变。
+- **状态自解释**：启动卡（服务绑定→页面加载）→ 就绪；页面加载失败/渲染进程退出进入
+  故障卡（重载 / 开发者工具 / 浏览器三个出口）；数据目录被无窗口实例占用时只给出口、
+  不抢服务。持久化失败与截图任务在 MCP 胶囊与状态条上显示，不弹对话框。
+- **二次启动**：单实例锁按数据目录分区（锁名含 `-data` 哈希）；同目录再启动会把命令行
+  转交给已运行实例并把窗口前置，然后退出。不同 `-data` 可并存。
+- **窗口记忆**：`<data>/window.json` 记宽高/位置/最大化/主题；关闭或拖动后 700ms 落盘。
+- **日志**：`<data>/adago-design.log`（4MB 轮换，同时打 stderr）；GUI 构建没有控制台也能排障。
+- **托盘**：显示/隐藏窗口、在浏览器打开、复制 MCP 配置（HTTP）、打开数据目录、重载、退出。
+- **快捷键**：`Ctrl+R` 重载、`Ctrl+Shift+I` 开发者工具、`F11` 全屏、`Ctrl+Shift+L` 换肤、
+  `Ctrl+Shift+O` 浏览器打开、`Ctrl+Q` 退出；页面快捷键（空格平移、`0`/`F`、`Ctrl+Z`）照旧。
+- **截图不变**：`canvas_screenshot` 仍由页面里的离屏 iframe 光栅化；超时且 `AutoOpen` 时，
+  原生模式先聚焦窗口，没有窗口才退浏览器（每进程至多一次）。
 
 **单实例防护**：绑定端口前先探测 `port..port+20` 是否已有**同数据目录**的
-实例（`/api/health` 回显 `server`/`data_dir`/`rev` 供比对）。命中时：
-`serve` 模式直接委派浏览器打开已有实例并退出（exit 0）；`mcp` 模式快速失败，
-提示关闭旧实例或换 `-data` —— 两个实例同时写同一份 `canvas.json` 会互相覆盖。
-不同数据目录的实例互不冲突，各占各的端口共存。
+实例（`/api/health` 回显 `server`/`data_dir`/`rev` 供比对）。原生窗口模式在
+mygo 单实例锁之后运行；命中「无窗口实例」时窗口进故障卡并给出出口。
+`-browser` / `-no-open` 路径命中时沿用旧行为（委派浏览器 / 直接退出）。
+`mcp` 模式快速失败，提示关闭旧实例或换 `-data` —— 两个实例同时写同一份
+`canvas.json` 会互相覆盖。不同数据目录的实例互不冲突，各占各的端口共存。
 
 **持久化加固**：`canvas.json` 紧凑序列化；写盘走「tmp → 旧文件轮换进
 `.bak`/`.bak2` → 就位」三步，任一步失败记入 `lastPersistErr` 并打日志
@@ -159,7 +221,7 @@ bin\adago-design.exe mcp
 | `canvas_export` | 导出整块画布为独立 HTML 文件 |
 | `canvas_connect` | 节点间连线（带标签的贝塞尔曲线，持久化） |
 | `canvas_group` | 分组框（自动包住成员节点，垫底虚线框） |
-| `canvas_screenshot` | 截图画布或单个节点，返回 PNG（需画布已在浏览器打开；超时且允许时自动拉起浏览器并重试一次，每进程至多自动开一次） |
+| `canvas_screenshot` | 截图画布或单个节点，返回 PNG（需画布页已打开：原生窗口或浏览器；超时且允许时先聚焦原生窗口、否则拉起浏览器并重试一次，每进程至多一次） |
 | `canvas_url` | 获取画布访问地址 |
 
 错误以 `isError` 结果返回并携带稳定错误码：`project_required` / `unknown_project` /
@@ -197,7 +259,7 @@ bin\adago-design.exe mcp
 不会和已运行的画布服务抢「同数据目录唯一实例」：
 
 ```powershell
-# 先起服务（已在跑就跳过）
+# 先起服务（已在跑就跳过）；不带 -no-open 则是原生窗口 + 同一端点
 bin\adago-design.exe serve -no-open
 
 # 探活 + 握手（Accept 必须同时含 application/json 与 text/event-stream）
@@ -347,8 +409,8 @@ Agent 修改画布版式后，画布 UI 经 SSE 即时同步（无需手动刷�
 `canvas_screenshot` 创建截图任务 → 已打开的画布页面长轮询领取 → 把目标
 预览 HTML 放进离屏 iframe → `SVG foreignObject` 序列化 → `<canvas>` 光栅化
 → PNG 回传给 MCP。8 秒内没有页面响应则返回 `capture_timeout`；生产模式
-（`mcp` 子命令）会在超时后自动拉起浏览器打开画布并重试一次
-（每进程至多自动开一次，测试/CI 可关）。
+（`serve` / `mcp`）会在超时后自动把画布露出来再重试一次：原生窗口先
+`Focus()`，没有窗口才退系统浏览器（每进程至多一次，测试/CI 可关）。
 预览内容是纯 CSS（无外链资源、图标为内联 `<symbol>` 精灵），渲染安全不失真；
 所有入库节点 HTML 统一注入 CSP
 （`default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:`，
@@ -380,14 +442,22 @@ nodes 捕获阶段接管 / CSS 光标规则）。
 - `internal/canvas`：Store CRUD/持久化/并发、HTTP API 全路径、截图任务闭环、
   **P0 加固**（备份轮换与降级恢复、写盘失败可见、列表剥 HTML、SSE 推送、
   部分更新指针语义、多实例探测，见 `hardening_test.go`）、
-  **CSP 注入**（注入位置/幂等/旧快照自愈，见 `sanitize_test.go`）。
+  **CSP 注入**（注入位置/幂等/旧快照自愈，见 `sanitize_test.go`）、
+  **页面 embed 契约**（bootstrap 先于样式、两条隐藏规则、dataset 字段与接线，
+  见 `embed_test.go`）。
+- `internal/config`：界面形态矩阵（serve/mcp × `-browser`/`-window`/`-no-open`/
+  `-open` × `ADAGO_DESIGN_UI`，见 `config_test.go`）。
+- `internal/native`：无 GUI 的纯函数单测（锁名、`window.json` 归一化与 round trip、
+  `/api/health` 解析、端口标签、年龄文案、MCP 配置片段，见 `native_test.go`）；
+  窗口本身靠真机冒烟（启动/二次启动/冲突卡/截图回传）。
 - `internal/design`：8 体系 Token 完备性（数据源 `data/*.json`）、全部组件可渲染
   （21 个，含 tabs/table/pagination）、图标库不变量、字体授权（全部体系可商用）、
   画板推导值、**渲染产物无 emoji/字符图标**、规格阶梯走查（CSS 字面值须落阶梯）、
   **节点级走查**（外链/符号/尺寸契约/字体授权，见 `nodeaudit_test.go`）。
 - `internal/mcpserver`：内存 MCP 会话走 `tools/list` + `tools/call` 契约，
   含 `design_icons` / `design_fonts` / `design_artboard` 与画板透传、
-  `design_audit` 节点级走查与 `design_tokens` brief（`enhance3_test.go`）。
+  `design_audit` 节点级走查与 `design_tokens` brief（`enhance3_test.go`）、
+  `OpenCanvas` 注入点（`open_test.go`）。
 
 设计细节见 [DESIGN.md](DESIGN.md)；六项历史问题的分析与改造记录见
 [IMPROVEMENTS.md](IMPROVEMENTS.md)。

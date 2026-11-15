@@ -631,7 +631,7 @@ func (s *Server) handleCaptureWait(w http.ResponseWriter, r *http.Request) {
 	if res == nil {
 		writeErr(w, http.StatusConflict, APIError("capture_timeout",
 			"画布页面未在时限内回传截图",
-			"先在浏览器打开画布地址（canvas_url），再重试 canvas_screenshot"))
+			"先打开画布地址（canvas_url；原生窗口或浏览器），再重试 canvas_screenshot"))
 		return
 	}
 	if res.Error != "" {

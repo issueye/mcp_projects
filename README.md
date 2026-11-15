@@ -33,7 +33,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-mcp.ps1 [-Regi
 | `browser_use` | `mcp_projects/browser_use/bin/browser-use.exe` | 官方插件 `browser-use` 自动按这个路径查找可执行文件；也可用 `BROWSER_USE_EXE` 覆盖。无需 MCP 配置 |
 | `computer_use` | `mcp_projects/computer_use/bin/computer-use.exe` | 走 `mcp-client` 插件：`computer-use mcp --spawn`（stdio），或 `computer-use mcp --http --port 8767`（Streamable HTTP）。`-Register` 会写入 `.adago/mcp.json` 或 `~/.adago/mcp.json` |
 | `cron` | `mcp_projects/cron/bin/cron.exe` | 网关按「可执行文件同目录」启动；桌面构建由 `desktop/main.cjs` 自动编译，单独构建用 `make cron` |
-| `adago_design` | `mcp_projects/adago_design/bin/adago-design.exe` | 设计体系 MCP（多体系 Token/组件 + 浏览器无限画布 + 截图回传）。走 `mcp-client` 插件：`adago-design mcp`（stdio，内嵌画布服务 127.0.0.1:8788）。`-Register -IncludeAdagoDesignMcp` 会写入 mcp.json；详见 `adago_design/README.md` |
+| `adago_design` | `mcp_projects/adago_design/bin/adago-design.exe` | 设计体系 MCP（多体系 Token/组件 + 无限画布 + 截图回传）。缺省 `adago-design.exe serve` 打开 **mygo 原生窗口**（内嵌 WebView 画布页，状态条/托盘/单实例），同端口暴露 HTTP MCP；`serve -browser` 回退系统浏览器，`mcp` 为 stdio 无窗口（`-window` 可同时开窗）。`-Register -IncludeAdagoDesignMcp` 会写入 mcp.json；详见 `adago_design/README.md` |
 
 `computer_use` 的 `.adago/mcp.json` 条目：
 
@@ -53,7 +53,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-mcp.ps1 [-Regi
 ## 前置条件
 
 - Go **1.27.3+**（两个模块的 `go.mod` 要求；脚本会触发工具链下载）。
-- Windows：`browser-use` 用 `-H windowsgui` 链接；`computer-use` 依赖 Win32，仅 Windows 可运行。
+- Windows：`browser-use`、`adago-design` 用 `-H windowsgui` 链接（无控制台；adago-design 日志写 `<data>\adago-design.log`，exe 图标由 `assets/icon.ico` + `rsrc_windows_amd64.syso` 提供）；`computer-use` 依赖 Win32，仅 Windows 可运行。
 - `computer_use` 依赖 `github.com/egoist/mygo v0.7.4`（已写入其 `go.mod` / `go.sum`）。
 
 单独的模块构建（调试用）：

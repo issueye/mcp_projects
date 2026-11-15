@@ -32,9 +32,12 @@ type Deps struct {
 	Tasks   *canvas.TaskQueue
 	BaseURL func() string
 	DataDir string
-	// AutoOpen 允许截图超时自动拉起浏览器打开画布并重试一次。
+	// AutoOpen 允许截图超时自动拉起画布并重试一次。
 	// 生产模式（main.go）开启；测试与 CI 保持 false，避免 go test 弹窗。
 	AutoOpen bool
+	// OpenCanvas 是「把画布露出来」的注入点：原生窗口模式下聚焦既有窗口，
+	// 无窗口时退回系统浏览器。nil 表示直接开浏览器。
+	OpenCanvas func(url string) error
 }
 
 // NewServer 创建配置好全部设计工具的 MCP 服务器。
@@ -42,7 +45,7 @@ func NewServer(d Deps) *mcp.Server {
 	server := mcp.NewServer(&mcp.Implementation{Name: serverName, Version: ServerVersion},
 		&mcp.ServerOptions{
 			Instructions: "这是设计体系 MCP（adago-design）：内置 Apple HIG、火山 Arco、抖音、小米 MIUI、Element Plus、" +
-				"Ant Design、TDesign、Material 3 八套设计体系的 Token 与组件库，并提供浏览器无限画布。" +
+				"Ant Design、TDesign、Material 3 八套设计体系的 Token 与组件库，并提供无限画布（缺省内嵌在原生窗口，`-browser` 用系统浏览器）。" +
 				"推荐流程：① project_create 建项目（已有项目用 project_list 查 ID）→ " +
 				"② design_artboard 定画板尺寸规范（iPhone 393×852 / Web 1440×900 等）；" +
 				"需要限制整块画布的比例时用 project_canvas（16:9 / 9:16 / 4:3 / 自定义宽高）→ " +
@@ -55,7 +58,7 @@ func NewServer(d Deps) *mcp.Server {
 				"否则会返回 project_required。" +
 				"硬规则：图标只能用 design_icons 的 SVG，禁止 emoji 与 ▾ › ✕ ◉ 等字符；" +
 				"字体必须来自 design_fonts 中 Commercial=true 的条目；每个预览都要声明画板。" +
-				"画布 URL 通过 canvas_url 获取；截图需要画布已在浏览器中打开。",
+				"画布 URL 通过 canvas_url 获取；截图需要画布页已打开（原生窗口或浏览器）。",
 		})
 	registerTools(server, d)
 	registerCatalogTools(server)
@@ -782,16 +785,20 @@ var (
 	autoOpenedURL string
 )
 
-// openCanvasPageOnce 每进程至多自动拉起一次画布页（避免每次截图超时都弹窗），
-// 返回给用户的提示文本。
-func openCanvasPageOnce(baseURL string) string {
+// openCanvasPageOnce 每进程至多自动拉起一次画布（避免每次截图超时都弹窗），
+// 返回给用户的提示文本。opener 为 nil 时退回系统浏览器。
+func openCanvasPageOnce(baseURL string, opener func(string) error) string {
 	autoOpenMu.Lock()
 	defer autoOpenMu.Unlock()
 	if autoOpenedURL == "" {
-		openbrowser.Open(baseURL)
+		if opener != nil {
+			_ = opener(baseURL)
+		} else {
+			_ = openbrowser.Open(baseURL)
+		}
 		autoOpenedURL = baseURL
 	}
-	return "已自动打开画布 " + baseURL + "；若浏览器未弹出，请手动打开后重试"
+	return "已自动打开画布 " + baseURL + "（原生窗口或浏览器）；若仍无响应，请手动打开后重试"
 }
 
 func screenshotTool(d Deps) mcp.ToolHandlerFor[screenshotIn, screenshotOut] {
@@ -819,7 +826,7 @@ func screenshotTool(d Deps) mcp.ToolHandlerFor[screenshotIn, screenshotOut] {
 		if res == nil && d.AutoOpen {
 			// 画布页没开（Agent 无人值守的常见形态）：自动拉起浏览器再等一轮。
 			// 每进程至多自动开一次 —— 画布真没开时连环弹窗只会更糟。
-			hint := openCanvasPageOnce(d.BaseURL())
+			hint := openCanvasPageOnce(d.BaseURL(), d.OpenCanvas)
 			res = d.Tasks.Wait(ctx, task.ID)
 			if res == nil {
 				return fail[screenshotOut]("capture_timeout", "画布页面未在时限内回传截图（已重试）", hint)
@@ -827,7 +834,7 @@ func screenshotTool(d Deps) mcp.ToolHandlerFor[screenshotIn, screenshotOut] {
 		}
 		if res == nil {
 			return fail[screenshotOut]("capture_timeout", "画布页面未在时限内回传截图",
-				"请先在浏览器打开画布 "+d.BaseURL()+"，再重试")
+				"请先打开画布 "+d.BaseURL()+"（原生窗口或浏览器），再重试")
 		}
 		if res.Error != "" {
 			return fail[screenshotOut]("capture_failed", res.Error, "检查节点是否仍在画布上")
@@ -865,7 +872,7 @@ func urlTool(d Deps) mcp.ToolHandlerFor[struct{}, canvasURLOut] {
 	return func(ctx context.Context, _ *mcp.CallToolRequest, _ struct{}) (*mcp.CallToolResult, canvasURLOut, error) {
 		url := d.BaseURL()
 		out := canvasURLOut{URL: url, NodeCount: len(d.Store.List())}
-		return textResult(fmt.Sprintf("无限画布地址: %s（浏览器打开后可用 canvas_screenshot 截图）", url)), out, nil
+		return textResult(fmt.Sprintf("无限画布地址: %s（画布页打开后可用 canvas_screenshot 截图：原生窗口或浏览器）", url)), out, nil
 	}
 }
 

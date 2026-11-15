@@ -1,4 +1,4 @@
-// Package openbrowser 以系统默认浏览器打开画布地址（尽力而为）。
+// Package openbrowser 以系统默认浏览器打开画布地址（原生窗口的回退路径）。
 package openbrowser
 
 import (
@@ -7,8 +7,8 @@ import (
 	"runtime"
 )
 
-// Open 尝试用默认浏览器打开 url；失败不报错（用户可手动打开）。
-func Open(url string) {
+// Open 尝试用默认浏览器打开 url，返回启动失败的原因（不阻塞、不等浏览器退出）。
+func Open(url string) error {
 	var cmd *exec.Cmd
 	switch runtime.GOOS {
 	case "windows":
@@ -29,7 +29,9 @@ func Open(url string) {
 			cmd = exec.Command(v, url)
 		}
 	}
-	if err := cmd.Start(); err == nil {
-		go func() { _ = cmd.Wait() }()
+	if err := cmd.Start(); err != nil {
+		return err
 	}
+	go func() { _ = cmd.Wait() }()
+	return nil
 }

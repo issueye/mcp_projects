@@ -1,0 +1,56 @@
+<div class="screen">
+  <header class="nb">
+    <div class="nb-brand">
+      <span class="nb-seal">D</span>
+      <span class="nb-name">adago-design</span>
+      <span class="nb-sub">canvas</span>
+    </div>
+    <span class="nb-vr"></span>
+    <div class="nb-pill warn"><span class="dot"></span><span class="k">未启动</span></div>
+    <div class="nb-grow"></div>
+    <div class="nb-pill">
+      <span class="dot"></span><span class="k">MCP</span><span class="sep2"></span>
+      <span class="mono">由其它实例提供</span>
+    </div>
+    <div class="nb-acts">
+      <span class="nb-ic is-disabled"><svg class="ic"><use href="#ds-ic-theme"/></svg></span>
+      <span class="nb-ic is-disabled"><svg class="ic"><use href="#ds-ic-refresh"/></svg></span>
+      <span class="nb-ic"><svg class="ic"><use href="#ds-ic-arrow-up-right"/></svg></span>
+      <span class="nb-ic is-disabled"><svg class="ic"><use href="#ds-ic-more"/></svg></span>
+    </div>
+    <div class="nb-wctl">
+      <i><svg class="wglyph" viewBox="0 0 10 10"><path d="M2 5h6"/></svg></i>
+      <i><svg class="wglyph" viewBox="0 0 10 10"><rect x="2.2" y="2.2" width="5.6" height="5.6"/></svg></i>
+      <i class="close"><svg class="wglyph" viewBox="0 0 10 10"><path d="M2.4 2.4l5.2 5.2M7.6 2.4L2.4 7.6"/></svg></i>
+    </div>
+  </header>
+
+  <div class="embed">
+    <div class="pg-veil">
+      <div class="grid"></div>
+      <div class="fault-card">
+        <div class="fault-mark"><svg class="ic" style="width:28px;height:28px"><use href="#ds-ic-warning"/></svg></div>
+        <h3>此数据目录已有实例在运行</h3>
+        <p>另一个 adago-design 进程正使用同一份数据目录，且它<b style="color:var(--ui-ink)">没有窗口</b>（通常以 <span class="mono" style="font-size:11px">serve -no-open</span> 或 <span class="mono" style="font-size:11px">mcp</span> 启动）。两个进程同时写 <span class="mono" style="font-size:11px">canvas.json</span> 会互相覆盖，所以本窗口不启动服务。</p>
+        <div class="fault-code">instance_exists · 已有实例无窗口</div>
+        <div class="fault-url">http://127.0.0.1:8788</div>
+        <div class="fault-acts">
+          <span class="btn primary"><svg class="ic ic14"><use href="#ds-ic-arrow-up-right"/></svg>在浏览器中打开</span>
+          <span class="btn ghost"><svg class="ic ic14"><use href="#ds-ic-folder"/></svg>打开数据目录</span>
+          <span class="btn ghost">关闭窗口</span>
+        </div>
+        <div class="fault-hint"><b>原生窗口需要独占数据目录。</b>关闭旧实例后重开即回到窗口形态；想并存请用 <span class="mono">-data</span> 指定另一目录。</div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="sb">
+    <span class="sb-g sb-warn"><span class="dot warn"></span>未启动画布服务</span>
+    <span class="sb-vr"></span>
+    <span class="sb-g">数据 <span class="mono">%APPDATA%\adago-design</span></span>
+    <span class="sb-vr"></span>
+    <span class="sb-g">已有实例 <span class="mono">127.0.0.1:8788</span></span>
+    <span class="sb-grow"></span>
+    <span class="sb-g">本窗口只提供入口，不写数据</span>
+  </footer>
+</div>

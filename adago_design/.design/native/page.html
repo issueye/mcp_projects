@@ -1,0 +1,202 @@
+<!-- 内嵌画布页 mock：结构、类名与产品 index.html 同一套（brand/主题按钮已按 embed=native 隐藏）。
+     世界坐标：纸张 (268,92) 起，卡片 A/B 完整、C 被右边缘裁切，示意「画布比窗口大」。 -->
+<div class="pg">
+  <div class="pg-grid"></div>
+
+  <div class="pg-paper">
+    <div class="pg-paper-label"><b>全部项目</b><span class="mono">4424 × 11219 随内容</span></div>
+    <div class="pg-proj-tag">默认项目（历史数据）<span class="n">2</span></div>
+
+    <svg class="pg-edges" viewBox="0 0 1600 1100" aria-hidden="true">
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0L10 5L0 10z" fill="var(--ui-ink-3)"></path>
+        </marker>
+      </defs>
+      <!-- A 右中 到 B 左中：世界坐标（纸张内） -->
+      <path d="M422 318 C 458 318, 464 318, 500 318" fill="none"
+            stroke="var(--ui-ink-3)" stroke-width="1.5" marker-end="url(#ah)"></path>
+      <g class="pg-edge-label">
+        <rect x="434" y="304" width="54" height="20" rx="10"></rect>
+        <text x="461" y="318" text-anchor="middle">下一步</text>
+      </g>
+    </svg>
+
+    <!-- 卡片 A · Apple -->
+    <article class="pg-node" style="left:32px;top:68px">
+      <header class="pg-node-head">
+        <span class="pg-node-tag">apple</span>
+        <span class="pg-node-title">iPhone 15 · 设置页</span>
+        <span class="pg-node-tag">移动端改版</span>
+        <span class="pg-node-btn"><svg class="ic ic12"><use href="#ds-ic-fit"/></svg></span>
+        <span class="pg-node-btn"><svg class="ic ic12"><use href="#ds-ic-close"/></svg></span>
+      </header>
+      <div class="pg-node-body">
+        <div class="mini mini-ios">
+          <div class="status"><span>9:41</span><span>5G</span></div>
+          <h4>设置</h4>
+          <div class="row2">
+            <div class="tile">屏幕使用时间<b>4h 12m</b></div>
+            <div class="tile">专注模式<b>工作</b></div>
+          </div>
+          <div class="grp">
+            <div class="r"><span class="ico" style="background:#007AFF">A</span>Apple 账户<span class="v"><i class="chev"></i></span></div>
+            <div class="r"><span class="ico" style="background:#34C759">W</span>无线局域网<span class="v">Office-5G<i class="chev"></i></span></div>
+            <div class="r"><span class="ico" style="background:#FF9500">B</span>蓝牙<span class="v">已开启<i class="chev"></i></span></div>
+          </div>
+          <div class="grp">
+            <div class="r"><span class="ico" style="background:#8E8E93">S</span>通知<span class="sw"></span></div>
+            <div class="r"><span class="ico" style="background:#FF3B30">F</span>专注模式<span class="v">工作<i class="chev"></i></span></div>
+            <div class="r"><span class="ico" style="background:#5856D6">T</span>屏幕使用时间<span class="v"><i class="chev"></i></span></div>
+          </div>
+          <div class="grp">
+            <div class="r"><span class="ico" style="background:#007AFF">G</span>通用<span class="v"><i class="chev"></i></span></div>
+            <div class="r"><span class="ico" style="background:#FF2D55">A</span>辅助功能<span class="v"><i class="chev"></i></span></div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- 卡片 B · 抖音 -->
+    <article class="pg-node" style="left:500px;top:68px">
+      <header class="pg-node-head">
+        <span class="pg-node-tag">douyin</span>
+        <span class="pg-node-title">推荐流 · 深色</span>
+        <span class="pg-node-tag">运营活动页</span>
+        <span class="pg-node-btn"><svg class="ic ic12"><use href="#ds-ic-fit"/></svg></span>
+        <span class="pg-node-btn"><svg class="ic ic12"><use href="#ds-ic-close"/></svg></span>
+      </header>
+      <div class="pg-node-body">
+        <div class="mini mini-dy">
+          <div class="top"><span>同城</span><b>推荐</b><span>关注</span></div>
+          <div class="feed" style="margin-top:8px">
+            <span class="play"></span>
+            <div class="rail"><i></i><i></i><i></i></div>
+            <div class="cap"><b>@山野厨房</b><br>凌晨四点的面案，第一笼出屉了。#城市夜宵</div>
+          </div>
+          <div class="tabbar">
+            <span>首页</span><span>朋友</span><span class="plus">+</span><span>消息</span><span>我</span>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- 卡片 C · Element Plus（被右边缘裁切） -->
+    <article class="pg-node" style="left:968px;top:68px">
+      <header class="pg-node-head">
+        <span class="pg-node-tag">element</span>
+        <span class="pg-node-title">表单 · 新建活动</span>
+        <span class="pg-node-tag">官网改版</span>
+        <span class="pg-node-btn"><svg class="ic ic12"><use href="#ds-ic-fit"/></svg></span>
+        <span class="pg-node-btn"><svg class="ic ic12"><use href="#ds-ic-close"/></svg></span>
+      </header>
+      <div class="pg-node-body">
+        <div class="mini mini-el">
+          <div class="hd">新建活动</div>
+          <div class="sub">Element Plus · 表单组件预览</div>
+          <div class="two">
+            <div class="fld"><div class="lbl">活动名称</div><div class="inp is-focus">国庆满减</div></div>
+            <div class="fld"><div class="lbl">活动类型</div><div class="inp">满减优惠</div></div>
+          </div>
+          <div class="fld"><div class="lbl">活动时间</div><div class="inp">2026-10-01 至 2026-10-07</div></div>
+          <div class="swrow"><span class="sw"></span><span>开启自动续期</span><span class="tag" style="margin-left:auto">推荐</span></div>
+          <div class="fld"><div class="lbl">适用范围</div>
+            <div class="inp">全店商品 · 12,480 件</div>
+          </div>
+          <div class="btn">创建活动</div>
+          <div class="btn ghost" style="margin-left:8px">保存草稿</div>
+          <div class="table">
+            <div class="tr head"><span>活动</span><span>状态</span><span>转化</span></div>
+            <div class="tr"><span>国庆满减</span><span>进行中</span><span>12.4%</span></div>
+            <div class="tr"><span>会员日</span><span>未开始</span><span>—</span></div>
+          </div>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <!-- 页面工具条：embed=native 下隐藏 .tb-brand 与 #btn-theme，左端交给画布控件 -->
+  <header class="pg-tb">
+    <div class="pg-grp">
+      <span class="pg-btn"><svg class="ic"><use href="#ds-ic-folder"/></svg></span>
+      <span class="pg-btn"><svg class="ic"><use href="#ds-ic-ratio"/></svg></span>
+      <span class="pg-btn"><svg class="ic"><use href="#ds-ic-center"/></svg></span>
+    </div>
+    <div class="pg-grp">
+      <span class="pg-btn"><svg class="ic"><use href="#ds-ic-minus"/></svg></span>
+      <span class="pg-zoom">62%</span>
+      <span class="pg-btn"><svg class="ic"><use href="#ds-ic-plus"/></svg></span>
+      <span class="pg-btn"><svg class="ic"><use href="#ds-ic-fit"/></svg></span>
+    </div>
+    <div class="pg-grp">
+      <span class="pg-btn"><svg class="ic"><use href="#ds-ic-note"/></svg></span>
+      <span class="pg-btn is-hover"><svg class="ic"><use href="#ds-ic-inspect"/></svg></span>
+      <span class="pg-btn"><svg class="ic"><use href="#ds-ic-trash"/></svg></span>
+    </div>
+    <div class="pg-grp">
+      <span class="pg-conn"><span class="dot"></span></span>
+    </div>
+  </header>
+
+  <!-- 左侧双浮窗 -->
+  <div class="pg-docks">
+    <aside class="pg-dock pg-dock--proj" style="height:302px">
+      <header class="pg-dock-head">
+        <svg class="ic ic14"><use href="#ds-ic-folder"/></svg>
+        项目
+        <span class="hint">4 个项目</span>
+        <span class="pg-dock-toggle"><svg class="ic ic14"><use href="#ds-ic-chevron-up"/></svg></span>
+      </header>
+      <div class="pg-dock-body">
+        <div class="pg-tree-head">
+          <span class="pg-tree-all is-active"><svg class="ic ic14"><use href="#ds-ic-chevron-down"/></svg>全部</span>
+          <span class="pg-tree-total">41</span>
+          <span class="pg-tree-more"><svg class="ic ic14"><use href="#ds-ic-more"/></svg></span>
+        </div>
+        <div class="pg-tree-new"><svg class="ic ic14"><use href="#ds-ic-plus"/></svg>新建项目<kbd>Shift N</kbd></div>
+        <div class="pg-tree-search"><svg class="ic ic14"><use href="#ds-ic-search"/></svg>搜索项目</div>
+        <div class="pg-row is-hover"><span class="caret is-open"><svg class="ic ic12"><use href="#ds-ic-chevron-right"/></svg></span><svg class="ic ic14"><use href="#ds-ic-folder"/></svg><span class="nm">默认项目（历史数据）</span><span class="ct">2</span></div>
+        <div class="pg-child"><svg class="ic ic12"><use href="#ds-ic-note"/></svg>旧设计稿A</div>
+        <div class="pg-child"><svg class="ic ic12"><use href="#ds-ic-note"/></svg>旧设计稿B</div>
+        <div class="pg-row"><span class="caret"><svg class="ic ic12"><use href="#ds-ic-chevron-right"/></svg></span><svg class="ic ic14"><use href="#ds-ic-folder"/></svg><span class="nm">移动端改版</span><span class="ct">12</span></div>
+        <div class="pg-row"><span class="caret"><svg class="ic ic12"><use href="#ds-ic-chevron-right"/></svg></span><svg class="ic ic14"><use href="#ds-ic-folder"/></svg><span class="nm">运营活动页</span><span class="ct">20</span></div>
+        <div class="pg-row"><span class="caret"><svg class="ic ic12"><use href="#ds-ic-chevron-right"/></svg></span><svg class="ic ic14"><use href="#ds-ic-folder"/></svg><span class="nm">官网改版</span><span class="ct">7</span></div>
+      </div>
+    </aside>
+
+    <aside class="pg-dock pg-dock--sys">
+      <header class="pg-dock-head">
+        <svg class="ic ic14"><use href="#ds-ic-grid"/></svg>
+        设计体系
+        <span class="hint">Token · 组件</span>
+        <span class="pg-dock-toggle"><svg class="ic ic14"><use href="#ds-ic-chevron-up"/></svg></span>
+      </header>
+      <div class="pg-dock-body" style="padding:4px 8px 8px">
+        <div class="pg-sys"><div><div class="nm">Apple HIG</div><div class="vd">iOS · 22 组件</div></div>
+          <div class="sev"><span class="pg-chip">light</span><span class="pg-chip">dark</span></div>
+          <div class="swatches"><i class="sw" style="background:#007AFF"></i><i class="sw" style="background:#34C759"></i><i class="sw" style="background:#FF9500"></i></div>
+        </div>
+        <div class="pg-sys"><div><div class="nm">火山 Arco</div><div class="vd">字节 · 22 组件</div></div>
+          <div class="sev"><span class="pg-chip">light</span><span class="pg-chip">dark</span></div>
+          <div class="swatches"><i class="sw" style="background:#165DFF"></i><i class="sw" style="background:#00B42A"></i><i class="sw" style="background:#FF7D00"></i></div>
+        </div>
+        <div class="pg-sys"><div><div class="nm">抖音</div><div class="vd">Douyin · 22 组件</div></div>
+          <div class="sev"><span class="pg-chip">light</span><span class="pg-chip">dark</span></div>
+          <div class="swatches"><i class="sw" style="background:#FE2C55"></i><i class="sw" style="background:#25F4EE"></i><i class="sw" style="background:#161823"></i></div>
+        </div>
+        <div class="pg-sys"><div><div class="nm">小米 MIUI</div><div class="vd">Xiaomi · 22 组件</div></div>
+          <div class="sev"><span class="pg-chip">light</span><span class="pg-chip">dark</span></div>
+          <div class="swatches"><i class="sw" style="background:#FF6900"></i><i class="sw" style="background:#3482FF"></i><i class="sw" style="background:#00C853"></i></div>
+        </div>
+        <div class="pg-sys"><div><div class="nm">Element Plus</div><div class="vd">饿了么 · 22 组件</div></div>
+          <div class="sev"><span class="pg-chip">light</span><span class="pg-chip">dark</span></div>
+          <div class="swatches"><i class="sw" style="background:#409EFF"></i><i class="sw" style="background:#67C23A"></i><i class="sw" style="background:#E6A23C"></i></div>
+        </div>
+        <div class="pg-sys"><div><div class="nm">Ant Design</div><div class="vd">蚂蚁 · 22 组件</div></div>
+          <div class="sev"><span class="pg-chip">light</span><span class="pg-chip">dark</span></div>
+          <div class="swatches"><i class="sw" style="background:#1677FF"></i><i class="sw" style="background:#52C41A"></i><i class="sw" style="background:#FAAD14"></i></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
