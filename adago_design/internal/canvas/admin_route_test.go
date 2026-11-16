@@ -305,6 +305,136 @@ func TestIconAdminRoutes(t *testing.T) {
 	}
 }
 
+// fakeLogos / fakeFonts 只验证 Logo 工作台的路由/状态码/错误码映射。
+type fakeLogos struct{}
+
+func (fakeLogos) LogoSummaries() any {
+	return []map[string]any{{"id": "probe-logo", "name": "Probe", "brand": "Probe", "layout": "horizontal"}}
+}
+func (fakeLogos) LogoDetail(id string) (any, error) {
+	if id != "probe-logo" {
+		return nil, &AdminError{Code: "unknown_logo", Message: "不存在"}
+	}
+	return map[string]any{"logo": map[string]any{"id": id}, "doc": map[string]any{"brand": "Probe"},
+		"variants": map[string]any{"positive": "<svg/>"}, "spec": map[string]any{"minWidth": 24}}, nil
+}
+func (fakeLogos) CreateLogo(in LogoInput) (any, error) {
+	if in.Name == "" {
+		return nil, &AdminError{Code: "invalid_logo", Message: "name required"}
+	}
+	return map[string]any{"id": "created", "name": in.Name}, nil
+}
+func (fakeLogos) UpdateLogo(id string, in LogoInput) (any, error) {
+	if id == "missing" {
+		return nil, &AdminError{Code: "unknown_logo", Message: "不存在"}
+	}
+	return map[string]any{"id": id}, nil
+}
+func (fakeLogos) RemoveLogo(id string) error {
+	if id == "missing" {
+		return &AdminError{Code: "unknown_logo", Message: "不存在"}
+	}
+	return nil
+}
+func (fakeLogos) LogoExport(id, variant string) (string, string, error) {
+	if id != "probe-logo" {
+		return "", "", &AdminError{Code: "unknown_logo", Message: "不存在"}
+	}
+	return `<svg xmlns="http://www.w3.org/2000/svg"></svg>`, id + "-" + variant + ".svg", nil
+}
+func (fakeLogos) LogoCanvas(id, variant string) (string, int, int, error) {
+	if id != "probe-logo" {
+		return "", 0, 0, &AdminError{Code: "unknown_logo", Message: "不存在"}
+	}
+	return "<!DOCTYPE html><html></html>", 320, 96, nil
+}
+
+type fakeFonts struct{}
+
+func (fakeFonts) FontCatalog() any {
+	return []map[string]any{{"id": "inter", "family": "Inter", "commercial": true}}
+}
+
+func TestLogoAdminRoutes(t *testing.T) {
+	srv, ts := newTestServer(t)
+	srv.Logos = fakeLogos{}
+	srv.Fonts = fakeFonts{}
+
+	res, data := doJSON(t, "GET", ts.URL+"/api/catalog/logos", nil)
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("logos list = %d", res.StatusCode)
+	}
+	if list, _ := data["logos"].([]any); len(list) != 1 {
+		t.Fatalf("logos list body = %v", data)
+	}
+	res, data = doJSON(t, "GET", ts.URL+"/api/catalog/logos/probe-logo", nil)
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("logo detail = %d", res.StatusCode)
+	}
+	if _, ok := data["variants"].(map[string]any); !ok {
+		t.Fatalf("logo detail 缺少 variants: %v", data)
+	}
+	res, _ = doJSON(t, "GET", ts.URL+"/api/catalog/logos/nope", nil)
+	if res.StatusCode != http.StatusNotFound {
+		t.Fatalf("未知 Logo = %d", res.StatusCode)
+	}
+
+	res, _ = doJSON(t, "POST", ts.URL+"/api/catalog/logos", map[string]any{"doc": map[string]any{}})
+	if res.StatusCode != http.StatusBadRequest {
+		t.Fatalf("create 缺 name = %d", res.StatusCode)
+	}
+	res, _ = doJSON(t, "POST", ts.URL+"/api/catalog/logos", map[string]any{"name": "Probe", "doc": map[string]any{}})
+	if res.StatusCode != http.StatusCreated {
+		t.Fatalf("create = %d", res.StatusCode)
+	}
+	res, _ = doJSON(t, "PUT", ts.URL+"/api/catalog/logos/probe-logo", map[string]any{"doc": map[string]any{}})
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("update = %d", res.StatusCode)
+	}
+
+	// 导出：不是 JSON，而是 SVG 附件
+	res, _ = doJSON(t, "GET", ts.URL+"/api/catalog/logos/probe-logo/export?variant=positive", nil)
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("export = %d", res.StatusCode)
+	}
+	if ct := res.Header.Get("Content-Type"); ct == "" || ct[:13] != "image/svg+xml" {
+		t.Fatalf("export content-type = %q", ct)
+	}
+	if cd := res.Header.Get("Content-Disposition"); cd == "" {
+		t.Fatal("export 缺少 Content-Disposition")
+	}
+
+	res, data = doJSON(t, "GET", ts.URL+"/api/catalog/logos/probe-logo/canvas?variant=inverse", nil)
+	if res.StatusCode != http.StatusOK || data["width"] != float64(320) {
+		t.Fatalf("canvas = %d %v", res.StatusCode, data)
+	}
+
+	res, data = doJSON(t, "GET", ts.URL+"/api/catalog/fonts", nil)
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("fonts = %d", res.StatusCode)
+	}
+	if list, _ := data["fonts"].([]any); len(list) != 1 {
+		t.Fatalf("fonts body = %v", data)
+	}
+
+	res, _ = doJSON(t, "DELETE", ts.URL+"/api/catalog/logos/probe-logo", nil)
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("delete = %d", res.StatusCode)
+	}
+}
+
+func TestLogoAdminNotMounted(t *testing.T) {
+	_, ts := newTestServer(t)
+	res, _ := doJSON(t, "GET", ts.URL+"/api/catalog/logos", nil)
+	if res.StatusCode != http.StatusNotImplemented {
+		t.Fatalf("未装配 Logo = %d", res.StatusCode)
+	}
+	res, _ = doJSON(t, "GET", ts.URL+"/api/catalog/fonts", nil)
+	if res.StatusCode != http.StatusNotImplemented {
+		t.Fatalf("未装配字体 = %d", res.StatusCode)
+	}
+}
+
 func TestIconAdminNotMounted(t *testing.T) {
 	_, ts := newTestServer(t)
 	res, _ := doJSON(t, "GET", ts.URL+"/api/catalog/icons", nil)

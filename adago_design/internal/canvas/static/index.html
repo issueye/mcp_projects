@@ -72,6 +72,7 @@
     </div>
     <div class="tb-spacer"></div>
     <span id="conn" class="conn conn--ok" data-tip="已连接" aria-label="连接状态：已连接" role="status"><i class="dot"></i></span>
+    <button id="logos-open" data-tip="品牌 Logo：设计 / 变体 / 规范 / 导出" aria-label="品牌 Logo 工作台" aria-haspopup="dialog"><svg class="ds-icon ds-icon--16" aria-hidden="true"><use href="#ds-ic-star"/></svg></button>
     <button id="icons-open" data-tip="图标库：浏览 SVG 图标 / 新增 / 停用 / 编辑" aria-label="图标库" aria-haspopup="dialog"><svg class="ds-icon ds-icon--16" aria-hidden="true"><use href="#ds-ic-grid"/></svg></button>
     <button id="btn-theme" data-tip="切换界面主题" aria-label="切换界面主题"><svg class="ds-icon ds-icon--16" aria-hidden="true"><use href="#ds-ic-theme"/></svg></button>
   </header>
@@ -299,6 +300,38 @@
           </div>
           <div id="icons-right" class="sysm-right"></div>
         </div>
+      </div>
+    </div>
+  </div>
+  <!-- 品牌 Logo 工作台：资产列表 + 三变体预览 + 检查器/设计表单 + 标记选择浮层。 -->
+  <div id="logos-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="logos-title">
+    <div class="modal__mask" data-logos-close></div>
+    <div class="modal__box modal__box--logos">
+      <div class="lgm">
+        <header class="lgm-head">
+          <span class="lgm-title" id="logos-title">品牌 Logo</span>
+          <span class="sysm-count" id="logos-count">0</span>
+          <label class="sysm-search">
+            <svg class="ds-icon ds-icon--14" aria-hidden="true"><use href="#ds-ic-search"/></svg>
+            <input id="logos-search" type="search" placeholder="搜索名称、品牌或体系" autocomplete="off" aria-label="搜索 Logo">
+          </label>
+          <button id="logo-new" class="btn btn--primary">
+            <svg class="ds-icon ds-icon--14" aria-hidden="true"><use href="#ds-ic-plus"/></svg>新建 Logo
+          </button>
+          <button class="modal__x" data-logos-close title="关闭" aria-label="关闭品牌 Logo 工作台">
+            <svg class="ds-icon ds-icon--14" aria-hidden="true"><use href="#ds-ic-close"/></svg>
+          </button>
+        </header>
+        <div class="lgm-body">
+          <aside class="lgm-left" aria-label="Logo 资产列表">
+            <div id="logo-rows" class="lgm-list"></div>
+          </aside>
+          <main class="lgm-main">
+            <section class="lgm-stage" id="logo-stage" aria-label="Logo 预览"></section>
+            <aside class="lgm-panel" id="logo-panel" aria-label="Logo 属性"></aside>
+          </main>
+        </div>
+        <div id="logo-markpick" class="lgm-markpick hidden" role="dialog" aria-label="选择标记图标"></div>
       </div>
     </div>
   </div>

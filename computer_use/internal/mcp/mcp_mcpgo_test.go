@@ -13,10 +13,10 @@ import (
 	mcpgo "github.com/mark3labs/mcp-go/mcp"
 )
 
-// newInProcessClient 用 mcp-go 的进程内传输连接 newMCPServer，不经过 stdio。
+// newInProcessClient 用 mcp-go 的进程内传输连接 NewServer，不经过 stdio。
 func newInProcessClient(t *testing.T, s *Server) *client.Client {
 	t.Helper()
-	c, err := client.NewInProcessClient(newMCPServer(s))
+	c, err := client.NewInProcessClient(NewServer(s))
 	if err != nil {
 		t.Fatalf("NewInProcessClient: %v", err)
 	}

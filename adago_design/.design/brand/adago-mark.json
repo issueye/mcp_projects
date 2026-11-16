@@ -1,0 +1,25 @@
+{
+  "createdAt": "2026-11-16T08:16:04.5387096Z",
+  "doc": {
+    "background": "transparent",
+    "casing": "none",
+    "clearSpace": 0.5,
+    "color": "#16171A",
+    "font": "inter",
+    "fontSize": 36,
+    "gap": 16,
+    "layout": "mark",
+    "mark": {
+      "icon": "adago-page",
+      "kind": "icon"
+    },
+    "markSize": 128,
+    "taglineSize": 14,
+    "version": 1,
+    "weight": 700
+  },
+  "id": "adago-mark",
+  "name": "adago-mark",
+  "note": "Mark-only · paper page + ink dot",
+  "updatedAt": "2026-11-16T08:16:04.5387096Z"
+}

@@ -42,7 +42,7 @@ func newTestService(result string) (*Service, *fakeApp) {
 
 func newInProcessClient(t *testing.T, svc *Service) *client.Client {
 	t.Helper()
-	c, err := client.NewInProcessClient(newServer(svc))
+	c, err := client.NewInProcessClient(NewServer(svc))
 	if err != nil {
 		t.Fatalf("NewInProcessClient: %v", err)
 	}
@@ -200,7 +200,7 @@ func TestCallToolStructuredAndErrors(t *testing.T) {
 // 模拟 ada-go mcp-client 的请求顺序（initialize → initialized → tools/list → call）。
 func TestHTTPStreamableTransport(t *testing.T) {
 	svc, _ := newTestService(`{"ok":true,"data":{"active":"t1"}}`)
-	ts := httptest.NewServer(newHTTPMux(newServer(svc)))
+	ts := httptest.NewServer(NewHTTPHandler(NewServer(svc)))
 	defer ts.Close()
 
 	resp, err := http.Get(ts.URL + "/healthz")

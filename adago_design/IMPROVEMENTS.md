@@ -23,7 +23,7 @@ internal/design              设计数据层：Token / 组件 / 皮肤 CSS / 整
   spec.go / audit.go         字面值扫描 / WCAG 走查
 internal/canvas              画布层：Store（内存+持久化）/ HTTP API / 截图任务队列 / 导出
   static/{index.html,css,js} 画布 UI（vanilla JS，870 行 canvas.js 混装 4 类职责）
-internal/mcpserver           23 个 MCP 工具（stdio）
+internal/mcp           23 个 MCP 工具（stdio）
 ```
 
 ### 0.2 关键事实（改动的约束条件）
@@ -180,7 +180,7 @@ window.icon = (n, size, cls) => `<svg class="ds-icon ds-icon--${size||20} ${cls|
 |---|---|
 | `query?`（名/别名/分组模糊匹配）、`group?`、`format?=name\|svg` | `[{name, group, tags, svg}]` |
 
-同时在 `mcpserver.NewServer` 的 `Instructions`（`server.go:39-44`）追加硬规则：
+同时在 `mcp.NewServer` 的 `Instructions`（`server.go:39-44`）追加硬规则：
 
 > 生成任何界面 HTML 时必须用 `design_icons` 取 SVG 图标，**不得使用 emoji 或 `▾ › ✕ ◉` 等字符符号**作为图标。
 
@@ -198,7 +198,7 @@ window.icon = (n, size, cls) => `<svg class="ds-icon ds-icon--${size||20} ${cls|
 | `internal/design/screens.go` | 同上 |
 | `internal/canvas/static/icons.js` | 新增（生成物） |
 | `internal/canvas/static/index.html` / `canvas.js` | 引入 icons.js、注入 sprite |
-| `internal/mcpserver/server.go` | 注册 `design_icons`；Instructions 补规则 |
+| `internal/mcp/server.go` | 注册 `design_icons`；Instructions 补规则 |
 | `NOTICE` | 新增：路径来源与许可 |
 
 ### 1.5 验收
@@ -221,7 +221,7 @@ window.icon = (n, size, cls) => `<svg class="ds-icon ds-icon--${size||20} ${cls|
 | `components.go:164` | `.ds-page{max-width:560px;margin:0 auto;padding:…}` | 560 与移动端 390 冲突，「画板」概念不存在 |
 | `store.go:197-210` | 默认 `420×320`，frame `600×400` | 又一个独立来源 |
 | `server.go(canvas):434-463` | 预览宽度直接取自 `ComposePreview` 返回值 | 三处宽度来源互不知情 |
-| `mcpserver/server.go:465-466` | `canvas_add` 默认 420×320 | 第四个来源 |
+| `mcp/server.go:465-466` | `canvas_add` 默认 420×320 | 第四个来源 |
 
 后果：① 节点高度普遍偏大/偏小 → iframe 内出现滚动条（`scrolling="auto"`），设计稿被裁切；② 同一个模板在 `design_screen` 与侧栏「添加预览」两条路径下尺寸不一致；③ 检查模式的「到画板四边距离」（`canvas.js:742-747`）量的是 `doc.body`，而 body 宽度 = 节点宽度 = 魔法数，量出来的边距没有设计含义。
 
@@ -368,7 +368,7 @@ async function autoFitHeight(id, iframe) {
 | `internal/canvas/server.go` | `addNodeIn` / `catalogPreviewIn` 接受 `artboard` |
 | `internal/canvas/export.go` | 导出板标注画板尺寸，frame 宽取画板宽 |
 | `internal/canvas/static/canvas.js` | `autoFitHeight`；检查面板「到画板」改口径 |
-| `internal/mcpserver/server.go` | 新 `design_artboard`；三个工具加 `artboard` 入参 |
+| `internal/mcp/server.go` | 新 `design_artboard`；三个工具加 `artboard` 入参 |
 | `internal/design/audit.go` | 新检查项 |
 | `README.md` / `DESIGN.md` | 流程与工具表同步 |
 
@@ -514,7 +514,7 @@ var DefaultStacks = map[string]string{
 | `internal/design/derive.go` | 派生体系字族策略 |
 | `internal/canvas/static/canvas.css` | `body{font-family}` 统一 |
 | `internal/design/audit.go` / `canvas/export.go` | 板面字族统一 |
-| `internal/mcpserver/server.go` | 新 `design_fonts`；`design_tokens` 出参补许可字段 |
+| `internal/mcp/server.go` | 新 `design_fonts`；`design_tokens` 出参补许可字段 |
 | `NOTICE` | 字体许可汇总表（名称/协议/可商用/可嵌入/需署名） |
 
 ### 3.5 验收
@@ -762,7 +762,7 @@ function onPointerUp(e){
 | `149` | `♥ 2.1k` `💬 486` `↗ 分享` | `heart` `comment` `share` |
 | `153` | `🔍` | `search` |
 
-**D. MCP 文本输出（`mcpserver/server.go:190,429`）**
+**D. MCP 文本输出（`mcp/server.go:190,429`）**
 
 `❌ [code] msg`、`⚠️ 无效组件已跳过` —— 这是给 LLM 读的文本，不是界面。保留亦可，但建议统一为 `[ERROR]` / `[WARN]` 前缀，避免模型把 emoji 学进它生成的 HTML 里（已有实践表明会传染）。
 
@@ -805,7 +805,7 @@ function onPointerUp(e){
 | `internal/design/screens.go` | 9 处（3 个 tabbar + feed 操作行 + 搜索） |
 | `internal/design/style.go` | `.ds-icon` 段；修 `.ds-checkbox__box` / `.ds-tabbar__icon` / `.ds-alert__icon` |
 | `internal/design/audit.go` + `spec.go` | 「图标与符号一致性」检查 |
-| `internal/mcpserver/server.go` | 错误/警告前缀改 ASCII（可选） |
+| `internal/mcp/server.go` | 错误/警告前缀改 ASCII（可选） |
 | `README.md` / `DESIGN.md` | `🔍 检查` → `inspect 检查`（文档层同步） |
 
 ### 5.5 验收
@@ -1136,16 +1136,16 @@ staticcheck ./...
 | # | 问题 | 改动 | 落点 |
 |---|---|---|---|
 | 1 | `canvas_add` 任意 HTML 无消毒：外链 `<img>`/样式表真实加载 → 跨域资源污染 `foreignObject` 光栅化 → **整张截图失败** | 入库统一注入 CSP（`default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:`）：外链被浏览器阻断（画不出，不再 taint），内联样式不受影响；`Store.Add/Update/loadAll` 三处接线，旧快照装载自愈。**不做**字符串手术剥 `<script>`/改写 `src` —— script 本被 sandbox 挡住，外链被 CSP 挡住，正则改写 HTML 易碎 | `canvas/sanitize.go`（新） |
-| 2 | 截图强依赖「画布已在浏览器打开」：Agent 无人值守时 `capture_timeout` 高频 | 超时自动 `openbrowser` 拉起画布 + 再等一轮；每进程至多自动开一次（避免连环弹窗）；`Deps.AutoOpen` 开关，`mcp` 子命令开启、测试/CI 关闭（go test 不弹窗） | `mcpserver/server.go`、`main.go` |
-| 3 | `design_audit` 只审计体系 StyleSheet，Agent 要的是「我刚摆的这张稿有什么问题」 | 新增 `AuditNodeHTML`：节点级走查（外链资源 fail / emoji 与字符图标 fail / 画板契约 warn / 节点内 font-family 商用判定 warn）；`design_audit` 增加 `node_id` 入参（优先于 system；与 system 均缺报 bad_request） | `design/nodeaudit.go`（新）、`mcpserver/server.go` |
-| 4 | `design_tokens` 全量输出体量大（usage 说明 + hover/container 变体 + 阴影动效） | `brief=true`（仅 category=all）：关键语义色的值、字阶 size/weight、间距/圆角阶梯；省略 usage、变体色、阴影、动效 —— 概览后再按类目取全量 | `mcpserver/server.go` `briefTokens` |
+| 2 | 截图强依赖「画布已在浏览器打开」：Agent 无人值守时 `capture_timeout` 高频 | 超时自动 `openbrowser` 拉起画布 + 再等一轮；每进程至多自动开一次（避免连环弹窗）；`Deps.AutoOpen` 开关，`mcp` 子命令开启、测试/CI 关闭（go test 不弹窗） | `mcp/server.go`、`main.go` |
+| 3 | `design_audit` 只审计体系 StyleSheet，Agent 要的是「我刚摆的这张稿有什么问题」 | 新增 `AuditNodeHTML`：节点级走查（外链资源 fail / emoji 与字符图标 fail / 画板契约 warn / 节点内 font-family 商用判定 warn）；`design_audit` 增加 `node_id` 入参（优先于 system；与 system 均缺报 bad_request） | `design/nodeaudit.go`（新）、`mcp/server.go` |
+| 4 | `design_tokens` 全量输出体量大（usage 说明 + hover/container 变体 + 阴影动效） | `brief=true`（仅 category=all）：关键语义色的值、字阶 size/weight、间距/圆角阶梯；省略 usage、变体色、阴影、动效 —— 概览后再按类目取全量 | `mcp/server.go` `briefTokens` |
 
 ### 10.2 验证
 
 - `GOWORK=off go vet ./... && go test ./...` 全模块绿；新增
   `canvas/sanitize_test.go`（注入位置/幂等/Add·Update·旧快照自愈）、
   `design/nodeaudit_test.go`（干净满分 / 外链与 emoji fail / 画板三态 / 字族判定）、
-  `mcpserver/enhance3_test.go`（节点级走查契约含报错路径、brief/全量双形态）。
+  `mcp/enhance3_test.go`（节点级走查契约含报错路径、brief/全量双形态）。
 - 真机冒烟：外链资源节点入库带 CSP；设计预览入库带 CSP 且结构完好
   （`ds-page`/`ds-btn` 全数在位）。
 - 浏览器实测（IAB）：外链图卡片 `img` 未加载（被 CSP 阻断），
@@ -1205,7 +1205,7 @@ staticcheck ./...
 | 3 | ES 模块在 Windows 上可能被注册表映射成 `text/plain` 而被浏览器拒绝 | 静态资源显式写 `Content-Type`（js/mjs/css）+ `TestStaticModuleMIME` 回归 | `canvas/server.go` |
 | 4 | 关系计算用 AABB：旋转元素尺寸虚高 √2、框是轴对齐的、滚动出界的元素仍会画到卡片外；iframe 原点用常数 `HEAD_H`，有系统性 ~1px 漂移 | **四边形几何**：`geometry.js` 提供凸四边形距离/相交/包含（Sutherland–Hodgman）；`inspect.js` 按「AABB 中心 + 累积线性变换」重建旋转四边形（skew/裁剪时降级并标注近似）；iframe 原点改为实测 `getBoundingClientRect` 差值；滚出可视区/被裁剪的元素跳过标注；旋转场景只报边界距离与交集面积，不编造 ±1px 对齐 | `static/js/geometry.js`、`static/inspect.js` |
 | 5 | `IMPROVEMENTS §7.2` 承诺过 `relation_test` 但从未落地 | `internal/canvas/testdata/geometry.test.mjs`（8 组用例）+ `geometry_test.go` 代理执行，node 缺席时 skip | `canvas/testdata/`、`canvas/geometry_test.go` |
-| 6 | 画板切换不迁移尺寸，旧节点会与画板契约不一致（`nodeaudit` 会告警） | **显式重同步**：`canvas.ResyncArtboards` + MCP `canvas_resync_artboards` + `POST /api/artboards/resync`。组件只纠正宽度（高度由客户端实测），整页稿取 `BodyHeight`；未知画板逐条上报；有变化时合并为**一条** undo 记录。实现沿用依赖倒置：`Store.ArtboardSize` 由 `app.ArtboardSizeResolver` 注入，canvas 仍不引用 design | `canvas/artboard_resync.go`、`project_http.go`、`app/app.go`、`mcpserver/projects.go` |
+| 6 | 画板切换不迁移尺寸，旧节点会与画板契约不一致（`nodeaudit` 会告警） | **显式重同步**：`canvas.ResyncArtboards` + MCP `canvas_resync_artboards` + `POST /api/artboards/resync`。组件只纠正宽度（高度由客户端实测），整页稿取 `BodyHeight`；未知画板逐条上报；有变化时合并为**一条** undo 记录。实现沿用依赖倒置：`Store.ArtboardSize` 由 `app.ArtboardSizeResolver` 注入，canvas 仍不引用 design | `canvas/artboard_resync.go`、`project_http.go`、`app/app.go`、`mcp/projects.go` |
 | 7 | 根仓 CI 的 `adago-design` job 没有 staticcheck 与生成物漂移门禁 | job 增加 `go run staticcheck@latest ./...`（现编同代，避开旧预编译二进制问题）与 `go generate + git diff --exit-code` | `.github/workflows/ci.yml` |
 
 ### 12.2 验证

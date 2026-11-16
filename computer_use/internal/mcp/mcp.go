@@ -8,7 +8,6 @@ package mcp
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -41,11 +40,11 @@ const instructions = "Controls a Windows desktop and draws a mask over it: scree
 
 // Serve runs the MCP server over the given streams until the input ends.
 func (s *Server) Serve(in io.Reader, out io.Writer) error {
-	return server.NewStdioServer(newMCPServer(s)).Listen(context.Background(), in, out)
+	return server.NewStdioServer(NewServer(s)).Listen(context.Background(), in, out)
 }
 
-// newMCPServer registers every tool of toolList with the mcp-go server.
-func newMCPServer(s *Server) *server.MCPServer {
+// NewServer registers every tool of toolList with the mcp-go server.
+func NewServer(s *Server) *server.MCPServer {
 	srv := server.NewMCPServer("computer-use", s.version,
 		server.WithInstructions(instructions),
 		server.WithRecovery(),
@@ -61,19 +60,22 @@ func newMCPServer(s *Server) *server.MCPServer {
 			continue
 		}
 		toolName := name
-		srv.AddTool(mcpgo.NewToolWithRawSchema(toolName, desc, schema),
-			func(ctx context.Context, req mcpgo.CallToolRequest) (*mcpgo.CallToolResult, error) {
-				args, err := json.Marshal(req.Params.Arguments)
-				if err != nil || len(args) == 0 || string(args) == "null" {
-					args = []byte(`{}`)
-				}
-				res, err := s.callTool(ctx, toolName, args)
-				if err != nil {
-					// 工具失败走 isError 内容，让模型看到并自纠。
-					return mcpgo.NewToolResultError(err.Error()), nil
-				}
-				return res, nil
-			})
+		registerRawTool(srv, &Tool{
+			Name:        toolName,
+			Description: desc,
+			Schema:      schema,
+		}, func(ctx context.Context, req mcpgo.CallToolRequest) (*mcpgo.CallToolResult, error) {
+			args, err := json.Marshal(req.Params.Arguments)
+			if err != nil || len(args) == 0 || string(args) == "null" {
+				args = []byte(`{}`)
+			}
+			res, err := s.callTool(ctx, toolName, args)
+			if err != nil {
+				// 工具失败走 isError 内容，让模型看到并自纠。
+				return toolErrorf("%s", err.Error()), nil
+			}
+			return res, nil
+		})
 	}
 	return srv
 }
@@ -154,7 +156,7 @@ func (s *Server) callTool(ctx context.Context, name string, args json.RawMessage
 		if meta == "null" || meta == "" {
 			meta = "{}"
 		}
-		return mcpgo.NewToolResultImage(
+		return imageResultBase64(
 			"The image is "+mediaWord(out.MediaType)+". Coordinates are physical pixels of the desktop:\n"+meta,
 			out.Image, out.MediaType,
 		), nil
@@ -164,9 +166,9 @@ func (s *Server) callTool(ctx context.Context, name string, args json.RawMessage
 		if err != nil {
 			return nil, err
 		}
-		return mcpgo.NewToolResultImage(
+		return imageResult(
 			"The mask as the user sees it on the first display.",
-			base64.StdEncoding.EncodeToString(png), "image/png",
+			png, "image/png",
 		), nil
 
 	case "screen_info":
@@ -174,14 +176,14 @@ func (s *Server) callTool(ctx context.Context, name string, args json.RawMessage
 		if err != nil {
 			return nil, err
 		}
-		return textResult(raw), nil
+		return textResult(string(raw)), nil
 
 	case "list_windows":
 		raw, err := s.doBytes(ctx, "GET", "/v1/windows", nil)
 		if err != nil {
 			return nil, err
 		}
-		return textResult(raw), nil
+		return textResult(string(raw)), nil
 
 	case "clipboard":
 		switch getStr("op") {
@@ -191,13 +193,13 @@ func (s *Server) callTool(ctx context.Context, name string, args json.RawMessage
 			if err != nil {
 				return nil, err
 			}
-			return textResult(raw), nil
+			return textResult(string(raw)), nil
 		default:
 			raw, err := s.doBytes(ctx, "GET", "/v1/clipboard", nil)
 			if err != nil {
 				return nil, err
 			}
-			return textResult(raw), nil
+			return textResult(string(raw)), nil
 		}
 
 	case "pause", "resume":
@@ -205,21 +207,21 @@ func (s *Server) callTool(ctx context.Context, name string, args json.RawMessage
 		if err != nil {
 			return nil, err
 		}
-		return textResult(raw), nil
+		return textResult(string(raw)), nil
 
 	case "mask":
 		raw, err := s.doBytes(ctx, "POST", "/v1/mask", a)
 		if err != nil {
 			return nil, err
 		}
-		return textResult(raw), nil
+		return textResult(string(raw)), nil
 
 	case "clear_mask":
 		raw, err := s.doBytes(ctx, "POST", "/v1/mask/clear", nil)
 		if err != nil {
 			return nil, err
 		}
-		return textResult(raw), nil
+		return textResult(string(raw)), nil
 
 	case "outline_window":
 		action := map[string]any{"type": "outline"}
@@ -232,7 +234,7 @@ func (s *Server) callTool(ctx context.Context, name string, args json.RawMessage
 		if err != nil {
 			return nil, err
 		}
-		return textResult(raw), nil
+		return textResult(string(raw)), nil
 
 	case "batch":
 		acts, _ := a["actions"].([]any)
@@ -249,14 +251,14 @@ func (s *Server) callTool(ctx context.Context, name string, args json.RawMessage
 		if err != nil {
 			return nil, err
 		}
-		return textResult(raw), nil
+		return textResult(string(raw)), nil
 
 	case "run_script":
 		raw, err := s.doBytes(ctx, "POST", "/v1/script", a)
 		if err != nil {
 			return nil, err
 		}
-		return textResult(raw), nil
+		return textResult(string(raw)), nil
 
 	case "record_start":
 		body := map[string]any{}
@@ -267,21 +269,21 @@ func (s *Server) callTool(ctx context.Context, name string, args json.RawMessage
 		if err != nil {
 			return nil, err
 		}
-		return textResult(raw), nil
+		return textResult(string(raw)), nil
 
 	case "record_stop":
 		raw, err := s.doBytes(ctx, "POST", "/v1/record/stop", nil)
 		if err != nil {
 			return nil, err
 		}
-		return textResult(raw), nil
+		return textResult(string(raw)), nil
 
 	case "list_macros":
 		raw, err := s.doBytes(ctx, "GET", "/v1/macros", nil)
 		if err != nil {
 			return nil, err
 		}
-		return textResult(raw), nil
+		return textResult(string(raw)), nil
 
 	case "run_macro":
 		macroName := getStr("name")
@@ -296,7 +298,7 @@ func (s *Server) callTool(ctx context.Context, name string, args json.RawMessage
 		if err != nil {
 			return nil, err
 		}
-		return textResult(raw), nil
+		return textResult(string(raw)), nil
 
 	case "macro_script":
 		macroName := getStr("name")
@@ -307,7 +309,7 @@ func (s *Server) callTool(ctx context.Context, name string, args json.RawMessage
 		if err != nil {
 			return nil, err
 		}
-		return textResult(raw), nil
+		return textResult(string(raw)), nil
 
 	case "delete_macro":
 		macroName := getStr("name")
@@ -318,7 +320,7 @@ func (s *Server) callTool(ctx context.Context, name string, args json.RawMessage
 		if err != nil {
 			return nil, err
 		}
-		return textResult(raw), nil
+		return textResult(string(raw)), nil
 
 	case "click", "move", "drag", "scroll", "type", "key", "focus_window", "wait":
 		// The tools are named as an agent reads them; the actions are named
@@ -335,7 +337,7 @@ func (s *Server) callTool(ctx context.Context, name string, args json.RawMessage
 		if err != nil {
 			return nil, err
 		}
-		return textResult(raw), nil
+		return textResult(string(raw)), nil
 	}
 	return nil, fmt.Errorf("unknown tool %q", name)
 }
@@ -345,10 +347,6 @@ func mediaWord(mt string) string {
 		return "a JPEG"
 	}
 	return "a PNG"
-}
-
-func textResult(raw []byte) *mcpgo.CallToolResult {
-	return mcpgo.NewToolResultText(string(raw))
 }
 
 func (s *Server) request(ctx context.Context, method, path string, body any) (*http.Response, error) {

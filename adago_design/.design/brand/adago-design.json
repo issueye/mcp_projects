@@ -1,0 +1,30 @@
+{
+  "createdAt": "2026-11-16T08:14:35.0293829Z",
+  "doc": {
+    "background": "transparent",
+    "brand": "adago",
+    "casing": "none",
+    "clearSpace": 0.5,
+    "color": "#16171A",
+    "font": "inter",
+    "fontSize": 34,
+    "gap": 16,
+    "layout": "horizontal",
+    "letterSpacing": -0.4,
+    "mark": {
+      "icon": "adago-page",
+      "kind": "icon"
+    },
+    "markSize": 52,
+    "tagline": "design system",
+    "taglineSize": 11,
+    "taglineWidth": 66.42,
+    "version": 1,
+    "weight": 700,
+    "wordmarkWidth": 83.4
+  },
+  "id": "adago-design",
+  "name": "adago-design",
+  "note": "Primary horizontal lockup · paper page + ink dot",
+  "updatedAt": "2026-11-16T08:14:35.0293829Z"
+}

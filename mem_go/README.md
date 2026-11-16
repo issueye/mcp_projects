@@ -11,7 +11,7 @@ MCP 客户端（ZCode / Claude / Cursor）
         │  stdio (JSON-RPC 2.0, MCP 协议)
         ▼
 ┌───────────────────────────── memmcp ─────────────────────────────┐
-│  internal/mcpserver          7 个 MCP 工具（store/search/list/…） │
+│  internal/mcp          7 个 MCP 工具（store/search/list/…） │
 │  internal/memory                                                   │
 │    ├─ Engine        语义去重 · 综合重排 · 过滤 · 统计               │
 │    └─ Embedder      OpenAI 兼容嵌入 ｜ 离线哈希回退                 │
@@ -152,6 +152,6 @@ go test ./...
 mem_go/
 ├── cmd/memmcp/           # 入口：环境解析、嵌入器装配、stdio 服务
 ├── internal/memory/      # 记忆引擎（类型 / 嵌入器 / 引擎）
-├── internal/mcpserver/   # MCP 工具注册与装配
-└── go.mod                # 依赖 govector v0.1.10 与官方 MCP SDK
+├── internal/mcp/   # MCP 工具注册与装配
+└── go.mod                # 依赖 govector v0.1.10 与 mark3labs/mcp-go
 ```

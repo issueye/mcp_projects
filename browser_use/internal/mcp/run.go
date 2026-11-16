@@ -1,6 +1,7 @@
 package mcp
 
 import (
+	"context"
 	"crypto/subtle"
 	"flag"
 	"fmt"
@@ -28,7 +29,7 @@ func Run(args []string) int {
 
 func runStdio() int {
 	svc := NewService()
-	if err := server.ServeStdio(newServer(svc)); err != nil {
+	if err := server.NewStdioServer(NewServer(svc)).Listen(context.Background(), os.Stdin, os.Stdout); err != nil {
 		fmt.Fprintln(os.Stderr, "browser-use mcp:", err)
 		return 1
 	}
@@ -36,8 +37,8 @@ func runStdio() int {
 	return 0
 }
 
-// newHTTPMux mounts the stateless Streamable HTTP transport and a health probe.
-func newHTTPMux(s *server.MCPServer) http.Handler {
+// NewHTTPHandler mounts the stateless Streamable HTTP transport and a health probe.
+func NewHTTPHandler(s *server.MCPServer) http.Handler {
 	streamable := server.NewStreamableHTTPServer(s,
 		server.WithEndpointPath("/mcp"),
 		server.WithStateLess(true),
@@ -76,7 +77,7 @@ func withToken(h http.Handler, token string) http.Handler {
 
 func runHTTP(port int, token string) int {
 	svc := NewService()
-	mux := withToken(newHTTPMux(newServer(svc)), token)
+	mux := withToken(NewHTTPHandler(NewServer(svc)), token)
 
 	addr := fmt.Sprintf("127.0.0.1:%d", port)
 	ln, err := net.Listen("tcp", addr)

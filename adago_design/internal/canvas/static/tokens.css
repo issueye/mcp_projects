@@ -159,6 +159,19 @@
   --ui-icd-dark-bg: #1B1C20;     /* 暗底检查（与主题无关，恒为深色） */
   --ui-icd-dark-ink: #F4F1E9;
 
+  /* ---------- 品牌 Logo 工作台 ---------- */
+  --ui-lgm-w: 1120px;            /* 工作台弹层宽度 */
+  --ui-lgm-h: 720px;             /* 工作台弹层高度 */
+  --ui-lgm-left-w: 264px;        /* 资产列表 */
+  --ui-lgm-panel-w: 320px;       /* 检查器/表单 */
+  --ui-lgm-row-h: 64px;          /* 列表行 */
+  --ui-lgm-mark-cell: 36px;      /* 标记格 */
+  --ui-lgm-preview-h: 300px;     /* 详情预览区高 */
+  --ui-lgm-size-tile-h: 72px;    /* 光学尺寸格高 */
+  --ui-lgm-markpick-w: 430px;    /* 标记选择浮层宽 */
+  --ui-lgm-markpick-h: 320px;    /* 标记选择浮层高 */
+  --ui-lgm-guide-inset: 6px;     /* 安全空间参考线内缩 */
+
   --ui-ask-w: 420px;
   --ui-toast-max-w: 560px;
   --ui-empty-max-w: 440px;

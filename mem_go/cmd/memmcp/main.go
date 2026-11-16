@@ -14,9 +14,9 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/mark3labs/mcp-go/server"
 
-	"mem_go/internal/mcpserver"
+	"mem_go/internal/mcp"
 	"mem_go/internal/memory"
 )
 
@@ -63,8 +63,8 @@ func main() {
 	defer engine.Close()
 	log.Printf("记忆库已就绪: db=%s embedder=%s dim=%d", dbPath, embedder.Name(), embedder.Dim())
 
-	server := mcpserver.NewServer(engine)
-	if err := server.Run(ctx, &mcp.StdioTransport{}); err != nil {
+	srv := mcp.NewServer(engine)
+	if err := server.NewStdioServer(srv).Listen(ctx, os.Stdin, os.Stdout); err != nil {
 		log.Printf("服务器退出: %v", err)
 	}
 }

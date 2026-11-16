@@ -104,6 +104,12 @@ func Start(ctx context.Context, cfg *config.Config, opts ...Option) (*Server, er
 	if err := design.LoadIconSettings(cfg.DataDir); err != nil {
 		log.Printf("图标设置加载失败: %v", err)
 	}
+	// 品牌 Logo 资产（logos/*.json）。标记可能引用自定义图标，所以放在图标之后。
+	if n, err := design.LoadLogos(cfg.DataDir); err != nil {
+		log.Printf("Logo 资产加载失败: %v", err)
+	} else if n > 0 {
+		log.Printf("已加载 %d 个品牌 Logo", n)
+	}
 	store, err := canvas.OpenStore(cfg.DataDir)
 	if err != nil {
 		return nil, fmt.Errorf("open store: %w", err)
@@ -118,6 +124,8 @@ func Start(ctx context.Context, cfg *config.Config, opts ...Option) (*Server, er
 	canvasSrv.Catalog = Catalog{DataDir: cfg.DataDir}
 	canvasSrv.Admin = Catalog{DataDir: cfg.DataDir}
 	canvasSrv.Icons = Catalog{DataDir: cfg.DataDir}
+	canvasSrv.Logos = Catalog{DataDir: cfg.DataDir}
+	canvasSrv.Fonts = Catalog{DataDir: cfg.DataDir}
 	canvasSrv.Theme = canvas.NormalizeTheme(cfg.Theme)
 	canvasSrv.DataDir = cfg.DataDir
 	canvasSrv.PDF = so.pdf

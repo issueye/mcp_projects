@@ -15,9 +15,9 @@ import (
 
 const instructions = "Local native browser for agents. Use snapshot before click, script for multi-step flows, and network to inspect fetch/XHR JSON APIs."
 
-// newServer builds the MCP server and registers every control tool with its
+// NewServer builds the MCP server and registers every control tool with its
 // existing JSON Schema (raw schema, no reflection).
-func newServer(svc *Service) *server.MCPServer {
+func NewServer(svc *Service) *server.MCPServer {
 	// 与应用同源的配置，只读一次：MCP 是独立进程，读同一份 config.json，
 	// Script.MaxTimeoutMS 等预算因此与应用端一致。
 	cfg := config.Load()
@@ -27,10 +27,13 @@ func newServer(svc *Service) *server.MCPServer {
 	)
 	for _, t := range control.Tools {
 		tool := t
-		s.AddTool(mcpgo.NewToolWithRawSchema(tool.Name, tool.Description, tool.Schema),
-			func(ctx context.Context, req mcpgo.CallToolRequest) (*mcpgo.CallToolResult, error) {
-				return handleToolCall(ctx, svc, cfg, tool.Name, req)
-			})
+		registerRawTool(s, &Tool{
+			Name:        tool.Name,
+			Description: tool.Description,
+			Schema:      tool.Schema,
+		}, func(ctx context.Context, req mcpgo.CallToolRequest) (*mcpgo.CallToolResult, error) {
+			return handleToolCall(ctx, svc, cfg, tool.Name, req)
+		})
 	}
 	return s
 }

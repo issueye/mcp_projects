@@ -12,10 +12,10 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 )
 
-// HTTPHandler returns the stateless Streamable HTTP handler: /mcp for MCP and
+// NewHTTPHandler returns the stateless Streamable HTTP handler: /mcp for MCP and
 // /healthz for a liveness probe.
-func (s *Server) HTTPHandler() http.Handler {
-	streamable := server.NewStreamableHTTPServer(newMCPServer(s),
+func NewHTTPHandler(s *Server) http.Handler {
+	streamable := server.NewStreamableHTTPServer(NewServer(s),
 		server.WithEndpointPath("/mcp"),
 		server.WithStateLess(true),
 	)
@@ -27,6 +27,9 @@ func (s *Server) HTTPHandler() http.Handler {
 	})
 	return mux
 }
+
+// HTTPHandler 保留方法形式，内部复用 NewHTTPHandler。
+func (s *Server) HTTPHandler() http.Handler { return NewHTTPHandler(s) }
 
 // ServeHTTP serves Streamable HTTP on addr until the server stops.
 func (s *Server) ServeHTTP(addr string) error {

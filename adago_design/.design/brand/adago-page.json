@@ -1,0 +1,40 @@
+{
+  "builtin": false,
+  "design": {
+    "version": 1,
+    "grid": 24,
+    "strokeWidth": 1.8,
+    "cap": "round",
+    "join": "round",
+    "shapes": [
+      {
+        "type": "path",
+        "d": "M4 6a2 2 0 0 1 2-2h7l7 7v7a2 2 0 0 1-2 2h-12a2 2 0 0 1-2-2z"
+      },
+      {
+        "type": "path",
+        "d": "M13 4v7h7"
+      },
+      {
+        "type": "circle",
+        "cx": 11.5,
+        "cy": 15,
+        "r": 2.2,
+        "fill": true,
+        "stroke": false
+      }
+    ]
+  },
+  "designed": true,
+  "editable": true,
+  "group": "nav",
+  "imported": false,
+  "name": "adago-page",
+  "tags": [
+    "brand",
+    "logo",
+    "mark",
+    "page",
+    "inkwell"
+  ]
+}

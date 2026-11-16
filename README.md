@@ -3,6 +3,11 @@
 本目录下的模块都是**自包含 Go module**（各自有 `go.mod`，不参与根模块），
 由 ada-go 以独立进程方式启动。构建统一走仓库根目录的脚本：
 
+> 四个 MCP 服务（`adago_design` / `browser_use` / `computer_use` / `mem_go`）统一使用
+> `github.com/mark3labs/mcp-go`，并遵循同一套 `internal/mcp` 目录约定：
+> `NewServer` 装配、`toolset.go` 里的 `Tool` / `registerMCPTool` / `registerRawTool`、
+> `textResult` / `imageResult` / `toolError` 结果 helper。
+
 ```powershell
 # 只构建两个二进制
 .\scripts\build-mcp.cmd
@@ -33,7 +38,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-mcp.ps1 [-Regi
 | `browser_use` | `mcp_projects/browser_use/bin/browser-use.exe` | 官方插件 `browser-use` 自动按这个路径查找可执行文件；也可用 `BROWSER_USE_EXE` 覆盖。无需 MCP 配置 |
 | `computer_use` | `mcp_projects/computer_use/bin/computer-use.exe` | 走 `mcp-client` 插件：`computer-use mcp --spawn`（stdio），或 `computer-use mcp --http --port 8767`（Streamable HTTP）。`-Register` 会写入 `.adago/mcp.json` 或 `~/.adago/mcp.json` |
 | `cron` | `mcp_projects/cron/bin/cron.exe` | 网关按「可执行文件同目录」启动；桌面构建由 `desktop/main.cjs` 自动编译，单独构建用 `make cron` |
-| `adago_design` | `mcp_projects/adago_design/bin/adago-design.exe` | 设计体系 MCP（多体系 Token/组件 + 无限画布 + 截图回传 + 体系管理 + SVG 图标管理与 24 网格图标设计器）。缺省 `adago-design.exe serve` 打开 **mygo 原生窗口**（内嵌 WebView 画布页，状态条/托盘/单实例），同端口暴露 HTTP MCP；`serve -browser` 回退系统浏览器，`mcp` 为 stdio 无窗口（`-window` 可同时开窗）。`-Register -IncludeAdagoDesignMcp` 会写入 mcp.json；详见 `adago_design/README.md` |
+| `adago_design` | `mcp_projects/adago_design/bin/adago-design.exe` | 设计体系 MCP（多体系 Token/组件 + 无限画布 + 截图回传 + 体系管理 + SVG 图标管理与图标设计器 + 品牌 Logo 工作台）。缺省 `adago-design.exe serve` 打开 **mygo 原生窗口**（内嵌 WebView 画布页，状态条/托盘/单实例），同端口暴露 HTTP MCP；`serve -browser` 回退系统浏览器，`mcp` 为 stdio 无窗口（`-window` 可同时开窗）。`-Register -IncludeAdagoDesignMcp` 会写入 mcp.json；详见 `adago_design/README.md` |
 
 `computer_use` 的 `.adago/mcp.json` 条目：
 
@@ -64,4 +69,17 @@ GOWORK=off go build -o bin/browser-use.exe .
 cd ../computer_use
 GOWORK=off go build -o bin/computer-use.exe .
 ```
+
+## Skill 说明
+
+每个 MCP 服务都在模块内提供一份 Agent Skill（`SKILL.md`，YAML frontmatter +
+操作规范、工具速查与安全约束）：
+
+| 服务 | Skill |
+|---|---|
+| `adago_design` | [adago-design/SKILL.md](adago_design/.agents/skills/adago-design/SKILL.md) |
+| `browser_use` | [browser-use/SKILL.md](browser_use/.agents/skills/browser-use/SKILL.md) |
+| `computer_use` | [computer-use/SKILL.md](computer_use/.agents/skills/computer-use/SKILL.md) |
+| `mem_go` | [mem-go-memory/SKILL.md](mem_go/.agents/skills/mem-go-memory/SKILL.md) |
+
 

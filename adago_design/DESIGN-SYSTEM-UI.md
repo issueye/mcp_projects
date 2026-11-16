@@ -326,7 +326,7 @@ GOWORK=off go build ./... && GOWORK=off go vet ./... && GOWORK=off go test ./...
 ```bash
 GOWORK=off go build ./...   # ok
 GOWORK=off go vet ./...     # ok
-GOWORK=off go test ./...    # ok（canvas 3.8s / design 0.4s / mcpserver 18.6s）
+GOWORK=off go test ./...    # ok（canvas 3.8s / design 0.4s / mcp 18.6s）
 ```
 
 | 断言 | 结果 |
@@ -658,5 +658,58 @@ Esc 要排在 main.js 的全局 Esc 之前（模块求值顺序 + capture）。
   设计稿持久化在 `custom-icons/<name>.json`。
 - 门禁：`ui_tokens_test`（令牌/零字面值/零原生对话框）、`module_graph_test`（新模块从入口可达）、
   `canvas/admin_route_test`（design 路由）、`design/icondesign_test`（渲染/导入/持久化）、
-  `mcpserver/icons_test`（design 动作）。真机验证：ego-browser 画矩形+圆 → 保存 → 详情「可再设计」→
+  `mcp/icons_test`（design 动作）。真机验证：ego-browser 画矩形+圆 → 保存 → 详情「可再设计」→
   再打开编辑 → 撤销/重做 → 内置 close「以它为起点」另存。
+
+## 16. 品牌 Logo 工作台（2026-11-16）
+
+与图标库/图标设计器同级的新能力：一个 **1120×720** 弹层内完成「资产库 + 设计 + 规范 + 导出」。
+左侧是已保存 Logo，中间是三变体预览/编辑画板，右侧是检查器或表单；标记选择用浮层。
+
+### 16.1 结构与尺寸
+
+| 令牌 | 值 | 用途 |
+|---|---|---|
+| `--ui-lgm-w` | 1120 | 工作台宽度（视口 96vw、88vh 封顶） |
+| `--ui-lgm-h` | 720 | 工作台高度 |
+| `--ui-lgm-left-w` | 264 | 资产列表 |
+| `--ui-lgm-panel-w` | 320 | 检查器/表单 |
+| `--ui-lgm-row-h` | 64 | 列表行高（缩略 Logo + 名称 + 元信息） |
+| `--ui-lgm-mark-cell` | 36 | 标记格 / 缩略格 |
+| `--ui-lgm-preview-h` | 300 | 预览画布最小高 |
+| `--ui-lgm-size-tile-h` | 72 | 光学尺寸档格高（含 `px` 标签） |
+| `--ui-lgm-markpick-w/h` | 430 / 320 | 标记选择浮层 |
+| `--ui-lgm-guide-inset` | 6 | 安全空间参考线内缩 |
+
+### 16.2 组件与规则
+
+| 部件 | 规格 |
+|---|---|
+| 列表行 | 36 缩略格（服务端正形 SVG，`max-width/height:100%`）+ 名称 12/500 + `layout · system · 更新日期`；选中行 `subtle-strong` 底 + 左侧 2px 墨条 |
+| 变体标签 | 正形 / 反形 / 单色三枚；选中 `brand` 底；detail 与 edit 共用，切换同步大图与尺寸带 |
+| 稳定预览 | 服务端 SVG（`width/height/viewBox` 显式），CSS 以 `max-width/max-height:100%` 适配 stage；不依赖页面精灵 |
+| 光学尺寸带 | 64/40/24px 三档；每格左下 `px` 标签；宽度低于 spec.minWidth 时 `warn` 底 + 边框，tooltip 说明实际宽 |
+| 编辑预览 | HTML/CSS 锁排：`lgm-lockup--horizontal/stacked/mark/wordmark`，padding=安全空间，gap/字号/字距/颜色来自文档；安全空间开关加 `lgm-guide` 虚线框 |
+| 检查器（详情） | 资产元信息、安全空间/最小宽高/变体、字体授权、对比度警告、导出（SVG/PNG/复制）与摆上画布 |
+| 表单（编辑） | 资产（名称/备注/体系+应用主色）、品牌文字、标记（选择/自绘）、布局、字体（字重/字号/字距/大小写/副标字号）、组合（标记尺寸/间距/安全空间）、颜色与透明底 |
+| 标记选择浮层 | 搜索图标名/分组/别名；6 列图标格；底部「画新标记」直达图标设计器；选择后自动关闭 |
+| 错误 | 面板底部 `lgm-err`（保存失败/校验），同时 toast；文件/表单不改动画布其它状态 |
+
+### 16.3 状态与键盘
+
+| 状态 | 表达 |
+|---|---|
+| empty / detail / edit | 空态双「新建 Logo」；详情三变体；编辑实时预览 + 未保存标记 |
+| 未保存离开 | 关闭弹层/切换资产/新建/取消编辑都走 `uiConfirm`；保存成功直接回详情并定位新资产 |
+| 标记缺失 | 图标被删除时编辑预览显示「标记缺失」；服务端加载会把 Logo 降级为纯字标而非丢资产 |
+| 导出 | SVG 走 `/export` 附件；PNG 在浏览器 4× 光栅化（透明底）；SVG 字标为文本，提示转曲/授权 |
+| 键盘 | Esc 关闭标记浮层/关闭工作台（未保存先确认）、Tab 陷阱；Delete/Backspace/Ctrl+Z 在设计器内被拦截，不落到画布节点/历史 |
+
+### 16.4 接线与门禁
+
+- 文件：`static/js/logo-workbench.js`、`index.html`（`#logos-open` + `#logos-modal`）、`canvas.css` + `tokens.css`（§16.1 令牌）。
+- 数据：`GET /api/catalog/logos` / `{id}` / `{id}/canvas` / `{id}/export`，`/api/catalog/fonts`，`POST/PUT/DELETE /api/catalog/logos`。
+- 与画布的桥：`POST /api/nodes` 写入自包含 Logo HTML（`kind=component`，标签 `logo` / `logo:<id>` / `variant:*`）。
+- 门禁：`ui_tokens_test`（令牌/零字面值/零原生对话框）、`module_graph_test`（新模块从入口可达）、
+  `canvas/admin_route_test`（Logo/字体路由）、`design/logodoc_test` + `logos_manage_test`（布局/变体/规范/持久化）、
+  `mcp/logos_test`（design_logo 动作）。真机验证：新建 → 标记选择 → 横/竖排 → 保存 → 反形/单色 → SVG 导出 → 摆上画布。

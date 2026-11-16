@@ -209,6 +209,43 @@ JSON / 空态 / 视觉规范 / 实现契约）。
 
 错误码：`unknown_icon` / `icon_duplicate` / `icon_builtin_protected` / `invalid_icon`。
 
+## 品牌 Logo 工作台（设计 + 规范 + 交付）
+
+工具条上的 **品牌 Logo**（星形图标）打开 1120×720 工作台：左 264 = 资产列表，
+中 = 三变体预览 / 编辑画板，右 320 = 检查器或设计表单。
+
+| 能力 | 说明 |
+|---|---|
+| 资产库 | `<data>/logos/<id>.json`；列表按更新时间倒序，可搜索名称/品牌/体系 |
+| 组合 | 标记（图标库任意内置/自定义图标，或 MCP 的 `mark.design` 自绘几何）+ 字标 + 副标；横排 / 竖排 / 纯标记 / 纯字标 |
+| 设计 | 品牌名、副标、字体（登记字体 + 授权提示）、字重、字号/字距/大小写、标记尺寸、间距、安全空间倍数、品牌色、透明/自定底色 |
+| 变体 | 正形（品牌色）、反形（品牌色底 + 自动对比墨色）、单色（按底色自动黑/白）；实时切换 |
+| 预览 | 详情用服务端确定性 SVG；编辑用 HTML/CSS 锁排 + `canvas.measureText` 实测字宽，保存时回填 `wordmarkWidth/taglineWidth`，落库 SVG 与预览对位一致 |
+| 规范 | 安全空间（≥ 0.5×标记高度）、按「标记/字标 ≥16px」换算的最小宽/高、三变体清单、字体授权（可商用/可嵌入）、正/反形对比度警告 |
+| 导出 | SVG（服务端附件下载）、PNG（浏览器 4× 光栅化、透明底）、复制 SVG |
+| 摆上画布 | 生成自包含 HTML 节点（kind=component，标签 `logo`/`logo:<id>`/`variant:*`），归属当前项目 |
+| 标记自绘 | 「画新标记」直接打开图标设计器；保存后新图标自动回填为 Logo 标记（内联 SVG，不依赖页面精灵） |
+
+- 同一套能力也暴露给 Agent：MCP 工具 **`design_logo`**
+  （`list / get / preview / create / update / remove / spec / export / place`）。
+  `preview` 接受完整 `doc` 或 flat 字段（brand/tagline/markIcon/layout/font/color/...），返回三份 SVG + 规范；
+  `create/update` 落库；`place` 把已有 Logo 摆到项目画布；`export` 写 `<data>/logo-exports/<id>-<variant>.svg`。
+- HTTP：
+
+| 方法/路径 | 说明 |
+|---|---|
+| `GET /api/catalog/fonts` | 字体注册表（Logo 字体选择与授权标签） |
+| `GET /api/catalog/logos` | Logo 摘要（含正形 SVG 缩略） |
+| `GET /api/catalog/logos/{id}` | 完整详情：doc + 三变体 SVG + spec + 尺寸 |
+| `POST /api/catalog/logos` | 新增 `{name?, note?, system?, doc}` |
+| `PUT /api/catalog/logos/{id}` | 全量更新 `{name?, note?, system?, doc}` |
+| `DELETE /api/catalog/logos/{id}` | 移除资产（画布节点不回收） |
+| `GET /api/catalog/logos/{id}/export?variant=` | 附件下载 SVG |
+| `GET /api/catalog/logos/{id}/canvas?variant=` | 自包含 HTML + 宽高（摆画布用） |
+
+- Logo 的字标在 SVG 中保留为 `<text>`；生产交付前应转曲或确认字体授权（详情/规范会提示）。
+- 错误码：`unknown_logo` / `logo_duplicate` / `invalid_logo` / `logo_failed`。
+
 ## 画布界面（设计系统）
 
 画布工具蒙皮走**单色品牌 + 令牌单源**：纸面（浅色，缺省）× 墨纸（深色）两套主题，
@@ -334,6 +371,7 @@ mygo 单实例锁之后运行；命中「无窗口实例」时窗口进故障卡
 | `design_fonts` | **字体授权**：可商用 / 可嵌入 / 可再分发标记，各脚本默认字族栈，授权策略 |
 | `design_icons` | **图标库**：按名称/分组/别名检索（内置 + 自定义，停用隐藏），返回 `<use>` 引用或独立 `<svg>` |
 | `design_icon_manage` | SVG 图标管理与设计：`list/design/create/update/disable/enable/remove/reset`；`design` 动作接受 24 网格几何文档并返回确定性 SVG（也可从 name/svg 反推）；create/update 可带 `design` 落库为可再编辑图标；内置可停用/改分组别名、SVG 只读（可另存） |
+| `design_logo` | 品牌 Logo：`list/get/preview/create/update/remove/spec/export/place`；支持 flat 字段或完整 LogoDoc（标记图标/自绘几何、布局、字体、颜色、安全空间）；preview 返回三变体 SVG + 规范；create/place 可把 Logo 摆上项目画布 |
 | `design_systems` | 列出全部设计体系（含默认画板） |
 | `design_tokens` | 查询 Token（system/theme/category：color/type/spacing/radius/shadow/motion）；`brief=true` 精简输出：关键语义色的值、字阶尺寸/字重、间距与圆角阶梯，省略阴影/动效/变体色 |
 | `design_components` | 组件清单；指定 component 返回详情与 HTML 片段 |
@@ -590,7 +628,7 @@ nodes 捕获阶段接管 / CSS 光标规则）。
   （21 个，含 tabs/table/pagination）、图标库不变量、字体授权（全部体系可商用）、
   画板推导值、**渲染产物无 emoji/字符图标**、规格阶梯走查（CSS 字面值须落阶梯）、
   **节点级走查**（外链/符号/尺寸契约/字体授权，见 `nodeaudit_test.go`）。
-- `internal/mcpserver`：内存 MCP 会话走 `tools/list` + `tools/call` 契约，
+- `internal/mcp`：内存 MCP 会话走 `tools/list` + `tools/call` 契约，
   含 `design_icons` / `design_fonts` / `design_artboard` 与画板透传、
   `design_audit` 节点级走查与 `design_tokens` brief（`enhance3_test.go`）、
   `OpenCanvas` 注入点（`open_test.go`）、`design_system_manage` 契约

@@ -86,6 +86,31 @@ type IconInput struct {
 	Design json.RawMessage `json:"design,omitempty"`
 }
 
+// FontSource 是字体目录的可选能力（Logo 设计器的字体选择用）。
+type FontSource interface {
+	FontCatalog() any
+}
+
+// LogoInput 是 Logo 资产的新增 / 编辑入参。Doc 是 LogoDoc 原始 JSON。
+type LogoInput struct {
+	ID     string          `json:"id,omitempty"`
+	Name   string          `json:"name,omitempty"`
+	Note   string          `json:"note,omitempty"`
+	System string          `json:"system,omitempty"`
+	Doc    json.RawMessage `json:"doc"`
+}
+
+// LogoAdmin 是品牌 Logo 设计的可选能力：未注入时端点返回 501。
+type LogoAdmin interface {
+	LogoSummaries() any
+	LogoDetail(id string) (any, error)
+	CreateLogo(in LogoInput) (any, error)
+	UpdateLogo(id string, in LogoInput) (any, error)
+	RemoveLogo(id string) error
+	LogoExport(id, variant string) (svg, filename string, err error)
+	LogoCanvas(id, variant string) (html string, width, height int, err error)
+}
+
 // IconAdmin 是 SVG 图标管理的可选能力：未注入时管理端点返回 501。
 type IconAdmin interface {
 	IconSummariesAll() any
@@ -118,6 +143,10 @@ type Server struct {
 	Admin SystemAdmin
 	// Icons 可选：SVG 图标管理（停用/新增/编辑/移除）。为 nil 时管理端点 501。
 	Icons IconAdmin
+	// Logos 可选：品牌 Logo 工作台。为 nil 时 Logo 端点 501。
+	Logos LogoAdmin
+	// Fonts 可选：字体目录（Logo 字体选择）。为 nil 时 /api/catalog/fonts 501。
+	Fonts FontSource
 	// PDF 可选：项目设计文稿的 PDF 渲染能力。为 nil 时 PDF 端点 501，
 	// 页面退化为打印页（浏览器「另存为 PDF」）。
 	PDF PDFPrinter
@@ -195,6 +224,14 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/catalog/systems/{id}/state", s.handleSystemState)
 	mux.HandleFunc("POST /api/catalog/systems/{id}/reset", s.handleSystemReset)
 	mux.HandleFunc("DELETE /api/catalog/systems/{id}", s.handleDeleteSystem)
+	mux.HandleFunc("GET /api/catalog/fonts", s.handleCatalogFonts)
+	mux.HandleFunc("GET /api/catalog/logos", s.handleLogos)
+	mux.HandleFunc("GET /api/catalog/logos/{id}", s.handleLogoDetail)
+	mux.HandleFunc("POST /api/catalog/logos", s.handleCreateLogo)
+	mux.HandleFunc("PUT /api/catalog/logos/{id}", s.handleUpdateLogo)
+	mux.HandleFunc("DELETE /api/catalog/logos/{id}", s.handleDeleteLogo)
+	mux.HandleFunc("GET /api/catalog/logos/{id}/export", s.handleLogoExport)
+	mux.HandleFunc("GET /api/catalog/logos/{id}/canvas", s.handleLogoCanvas)
 	mux.HandleFunc("GET /api/catalog/icons", s.handleCatalogIcons)
 	mux.HandleFunc("GET /api/catalog/icons/{name}", s.handleCatalogIcon)
 	mux.HandleFunc("GET /api/catalog/icons/{name}/design", s.handleIconDesign)
@@ -846,12 +883,12 @@ func writeAdminErr(w http.ResponseWriter, err error) {
 	if errors.As(err, &ae) {
 		status := http.StatusInternalServerError
 		switch ae.Code {
-		case "unknown_system", "unknown_icon":
+		case "unknown_system", "unknown_icon", "unknown_logo":
 			status = http.StatusNotFound
 		case "system_duplicate", "system_builtin_protected",
-			"icon_duplicate", "icon_builtin_protected":
+			"icon_duplicate", "icon_builtin_protected", "logo_duplicate":
 			status = http.StatusConflict
-		case "invalid_system", "invalid_icon", "bad_request":
+		case "invalid_system", "invalid_icon", "invalid_logo", "bad_request":
 			status = http.StatusBadRequest
 		}
 		writeErr(w, status, APIError(ae.Code, ae.Message, ae.Hint))
@@ -1085,6 +1122,116 @@ func (s *Server) handleDeleteIcon(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"removed": r.PathValue("name")})
+}
+
+// ---------------- catalog fonts / logos ----------------
+
+func (s *Server) handleCatalogFonts(w http.ResponseWriter, r *http.Request) {
+	if s.Fonts == nil {
+		writeErr(w, http.StatusNotImplemented, APIError("no_catalog", "字体目录未装配", ""))
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"fonts": s.Fonts.FontCatalog()})
+}
+
+func (s *Server) handleLogos(w http.ResponseWriter, r *http.Request) {
+	if s.Logos == nil {
+		writeErr(w, http.StatusNotImplemented, APIError("no_admin", "Logo 工作台未装配", ""))
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"logos": s.Logos.LogoSummaries()})
+}
+
+func (s *Server) handleLogoDetail(w http.ResponseWriter, r *http.Request) {
+	if s.Logos == nil {
+		writeErr(w, http.StatusNotImplemented, APIError("no_admin", "Logo 工作台未装配", ""))
+		return
+	}
+	out, err := s.Logos.LogoDetail(r.PathValue("id"))
+	if err != nil {
+		writeAdminErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+
+func (s *Server) handleCreateLogo(w http.ResponseWriter, r *http.Request) {
+	if s.Logos == nil {
+		writeErr(w, http.StatusNotImplemented, APIError("no_admin", "Logo 工作台未装配", ""))
+		return
+	}
+	var in LogoInput
+	if !decodeBody(w, r, &in) {
+		return
+	}
+	out, err := s.Logos.CreateLogo(in)
+	if err != nil {
+		writeAdminErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, map[string]any{"logo": out})
+}
+
+func (s *Server) handleUpdateLogo(w http.ResponseWriter, r *http.Request) {
+	if s.Logos == nil {
+		writeErr(w, http.StatusNotImplemented, APIError("no_admin", "Logo 工作台未装配", ""))
+		return
+	}
+	var in LogoInput
+	if !decodeBody(w, r, &in) {
+		return
+	}
+	out, err := s.Logos.UpdateLogo(r.PathValue("id"), in)
+	if err != nil {
+		writeAdminErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"logo": out})
+}
+
+func (s *Server) handleDeleteLogo(w http.ResponseWriter, r *http.Request) {
+	if s.Logos == nil {
+		writeErr(w, http.StatusNotImplemented, APIError("no_admin", "Logo 工作台未装配", ""))
+		return
+	}
+	if err := s.Logos.RemoveLogo(r.PathValue("id")); err != nil {
+		writeAdminErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"removed": r.PathValue("id")})
+}
+
+func (s *Server) handleLogoExport(w http.ResponseWriter, r *http.Request) {
+	if s.Logos == nil {
+		writeErr(w, http.StatusNotImplemented, APIError("no_admin", "Logo 工作台未装配", ""))
+		return
+	}
+	svg, filename, err := s.Logos.LogoExport(r.PathValue("id"), r.URL.Query().Get("variant"))
+	if err != nil {
+		writeAdminErr(w, err)
+		return
+	}
+	w.Header().Set("Content-Type", "image/svg+xml; charset=utf-8")
+	w.Header().Set("Content-Disposition", `attachment; filename="`+filename+`"`)
+	w.Header().Set("Cache-Control", "no-store")
+	w.WriteHeader(http.StatusOK)
+	_, _ = io.WriteString(w, svg)
+}
+
+func (s *Server) handleLogoCanvas(w http.ResponseWriter, r *http.Request) {
+	if s.Logos == nil {
+		writeErr(w, http.StatusNotImplemented, APIError("no_admin", "Logo 工作台未装配", ""))
+		return
+	}
+	html, width, height, err := s.Logos.LogoCanvas(r.PathValue("id"), r.URL.Query().Get("variant"))
+	if err != nil {
+		writeAdminErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"html": html, "width": width, "height": height,
+		"variant": r.URL.Query().Get("variant"),
+	})
 }
 
 func (s *Server) handleCatalogSystem(w http.ResponseWriter, r *http.Request) {

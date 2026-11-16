@@ -141,9 +141,9 @@ func screenshotResult(raw json.RawMessage) (*mcpgo.CallToolResult, error) {
 	}
 	var res *mcpgo.CallToolResult
 	if shot.Data == "" {
-		res = mcpgo.NewToolResultText(text)
+		res = textResult(text)
 	} else {
-		res = mcpgo.NewToolResultImage(text, shot.Data, shot.MIMEType)
+		res = imageResultBase64(text, shot.Data, shot.MIMEType)
 	}
 	res.StructuredContent = meta
 	return res, nil
@@ -158,7 +158,7 @@ func dataResult(name string, raw json.RawMessage) *mcpgo.CallToolResult {
 	if json.Unmarshal(raw, &obj) == nil && obj != nil {
 		return mcpgo.NewToolResultStructured(obj, text)
 	}
-	return mcpgo.NewToolResultText(text)
+	return textResult(text)
 }
 
 // errorResult keeps tool failures visible to the model (isError=true) while

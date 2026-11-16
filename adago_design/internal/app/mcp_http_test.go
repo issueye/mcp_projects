@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"adagodesign/internal/config"
-	"adagodesign/internal/mcpserver"
+	"adagodesign/internal/mcp"
 )
 
 // HTTP MCP 端点契约：<BaseURL>/mcp 必须能握手并列出工具。
@@ -48,7 +48,7 @@ func postRPC(t *testing.T, url, body string) (*http.Response, []byte) {
 func TestHTTPMCPEndpointInitializeAndList(t *testing.T) {
 	cfg := &config.Config{Port: 0, DataDir: t.TempDir(), Theme: "light"}
 	srv, err := Start(context.Background(), cfg, WithMCP(func(s *Server) http.Handler {
-		return mcpserver.NewHTTPHandler(mcpserver.Deps{
+		return mcp.NewHTTPHandler(mcp.Deps{
 			Store:   s.Store(),
 			Tasks:   s.Tasks(),
 			BaseURL: func() string { return s.BaseURL },

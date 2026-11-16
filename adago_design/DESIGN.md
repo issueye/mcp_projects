@@ -7,7 +7,7 @@
 
 - 模块位置：`mcp_projects/adago_design`（自包含 Go module，`GOWORK=off` 构建）
 - 参考实现：`mcp_projects/browser_use`（单二进制多形态 + 回环 HTTP 控制面）、
-  `mcp_projects/mem_go`（官方 `modelcontextprotocol/go-sdk` 的工具注册模式）
+  `mcp_projects/mem_go`（`mark3labs/mcp-go` 的工具注册模式）
 
 ## 1. 目标与非目标
 
@@ -20,7 +20,7 @@
 3. **无限画布**：浏览器打开 `http://127.0.0.1:<port>/`，画布支持平移/缩放/
    节点拖拽/框选/主题切换；节点是沙箱 iframe 渲染的预览卡片。
 4. **MCP 工具**：Agent 通过 stdio MCP 读写画布、查询 Token、生成预览、截图回传。
-5. **零外部依赖运行**：纯 Go 标准库 + 官方 MCP SDK；不依赖 chromedp/CDP；
+5. **零外部依赖运行**：纯 Go 标准库 + mark3labs/mcp-go；不依赖 chromedp/CDP；
    截图由已打开的画布页面自己完成（`foreignObject` 序列化渲染）。
 
 ### 非目标（有意不做）
@@ -36,7 +36,7 @@
 ┌────────────┐  stdio (MCP)   ┌───────────────────────────────────────┐
 │  AI Agent  │◄──────────────►│  adago-design.exe                     │
 └────────────┘                │  ┌─────────┐  ┌─────────────────────┐ │
-                              │  │mcpserver│  │ canvas HTTP (loopback)│ │
+                              │  │mcp│  │ canvas HTTP (loopback)│ │
                               │  └────┬────┘  └─────────┬───────────┘ │
                               │       │   ┌─────────┐   │             │
                               │       └──►│ design  │◄──┘             │
@@ -62,8 +62,8 @@
   `POST /mcp`（Streamable HTTP，无状态：每请求一个临时会话，响应
   `application/json`，不用 SSE、不设 `Mcp-Session-Id`；`GET`/`DELETE` 回 405）。
   装配点写在 `app.Start(..., app.WithMCP(factory))`：`app` 不 import
-  `mcpserver`（后者的测试引用 `app`，反向依赖会让测试包成环），所以由
-  `main.go` 注入 `mcpserver.NewHTTPHandler(deps)`，再经 `canvas.Server.MCP`
+  `mcp`（后者的测试引用 `app`，反向依赖会让测试包成环），所以由
+  `main.go` 注入 `mcp.NewHTTPHandler(deps)`，再经 `canvas.Server.MCP`
   字段挂到 mux（按方法逐个注册，避免与 `GET /` 兜底路由冲突）。
   Agent 因此可以直接连 URL，不必 spawn 子进程，也不与已运行的画布服务抢
   「同数据目录唯一实例」。
@@ -229,6 +229,45 @@ type IconShape struct {
   新增/编辑在 `POST/PUT` 的 `design` 字段；MCP：`design_icon_manage` 的 `design` 动作
   （文档 → SVG 预览、已有图标/SVG → 文档），`create/update` 可直接带 `design` 落库。
 
+### 3.8 品牌 Logo（LogoDoc）
+
+图标解决「工具符号」，Logo 解决「品牌标识」：标记（图标/自绘几何）+ 字标 + 副标
++ 三变体 + 安全空间/最小尺寸。实现：`internal/design/logodoc.go`、`logos_manage.go`。
+
+```go
+type LogoDoc struct {
+    Brand, Tagline string
+    Layout         string        // horizontal | stacked | mark | wordmark
+    Mark           LogoMark      // kind=icon|shapes|none; icon / *IconDoc
+    MarkSize, Gap  float64
+    FontID         string; FontSize float64; Weight int
+    LetterSpacing, TaglineSize, ClearSpace float64
+    Casing         string        // none | upper
+    Color, Background string     // #RRGGBB / transparent
+    WordmarkWidth, TaglineWidth float64 // 浏览器实测/估算字宽
+}
+
+type Logo struct {
+    ID, Name, Note, System string
+    Doc LogoDoc
+    CreatedAt, UpdatedAt time.Time
+}
+```
+
+| 规则 | 说明 |
+|---|---|
+| 布局 | 服务端 `LogoLayoutMetrics` 统一算尺寸：横排=标记+间距+字宽；竖排=标记+间距+文字块；纯标记/纯字标另算；四周安全空间 = `clearSpace × 标记高度` |
+| 渲染 | `LogoSVG` 输出带 width/height/viewBox 的确定性 SVG；标记来自 `Icon.Body`/`IconDocBody`，字标保留 `<text>` + 字体栈 |
+| 变体 | `positive` 品牌色/指定底；`inverse` 品牌色底 + 自动对比墨色；`mono` 单色（按底色黑/白） |
+| 字宽 | 浏览器实测回填 `WordmarkWidth/TaglineWidth`；MCP 未提供时按字符类别估算，保证 SVG 与编辑预览对位 |
+| 规范 | `LogoDocSpec`：最小宽/高（按「标记/字标 ≥16px」换算）、安全空间、三变体、字体授权、正/反形对比度警告 |
+| 持久化 | `<data>/logos/<id>.json`（完整 Logo + LogoDoc + 时间）；tmp→rename；启动 `LoadLogos` |
+| 降级 | 标记引用的自定义图标被删除时，加载会把 Logo 降级为纯字标资产而不是丢弃 |
+| 安全 | 标记复用图标校验；字体必须在注册表；颜色只接受 `#RRGGBB` / transparent；尺寸/字重/布局白名单 |
+| 交付 | SVG 附件导出、PNG 由浏览器 4× 光栅化；画布节点是自包含 SVG HTML，不回收已摆节点 |
+
+- UI 规范见 DESIGN-SYSTEM-UI.md §16；MCP 为 `design_logo`（list/get/preview/create/update/remove/spec/export/place）。
+
 ## 4. 无限画布（internal/canvas + static/）
 
 ### 4.1 数据模型
@@ -335,6 +374,14 @@ type Node struct {
 | `POST /api/catalog/icons/{name}/state` | `{disabled:true\|false}` 停用/启用 |
 | `POST /api/catalog/icons/{name}/reset` | 内置图标恢复默认分组/别名并启用 |
 | `DELETE /api/catalog/icons/{name}` | 移除自定义图标；内置 409 `icon_builtin_protected` |
+| `GET /api/catalog/fonts` | 字体注册表（Logo 字体选择/授权标签） |
+| `GET /api/catalog/logos` | Logo 摘要（含正形 SVG） |
+| `GET /api/catalog/logos/{id}` | Logo 详情（doc + 三变体 + spec + 尺寸） |
+| `POST /api/catalog/logos` | 新增 `{name?,note?,system?,doc}` |
+| `PUT /api/catalog/logos/{id}` | 全量更新（Name 空沿用，Note/System 全量替换） |
+| `DELETE /api/catalog/logos/{id}` | 移除 Logo 资产 |
+| `GET /api/catalog/logos/{id}/export?variant=` | 附件下载 SVG |
+| `GET /api/catalog/logos/{id}/canvas?variant=` | 自包含 HTML + 宽高（摆画布） |
 | `POST /api/catalog/preview` | 生成组件预览节点 `{project,system,components[],theme,title?,artboard?}` |
 
 ### 4.3 截图链路（无 CDP 方案）
@@ -596,8 +643,8 @@ style-src 'unsafe-inline'; img-src data:; font-src data:`）—— `canvas_add`
 真机验证（2026-11-16）：混排项目 A4 纵向 5 页 616 KB（约 1.7s），桌面项目 A4
 横向 4 页 369 KB；PDF 中文可复制可搜索；空项目 / 只有分组框均 409。
 
-## 5. MCP 工具（internal/mcpserver）
-SDK：`github.com/modelcontextprotocol/go-sdk v1.8.0`（与 mem-go 一致）。
+## 5. MCP 工具（internal/mcp）
+SDK：`github.com/mark3labs/mcp-go v0.52.0`（与 mem-go 一致）。
 服务器名 `adago-design`；Instructions 指引：先 `design_systems` 再
 `design_tokens`/`design_components`，产出用 `design_preview`（`addToCanvas`）
 或 `canvas_add` 摆放，`canvas_screenshot` 回看效果。
@@ -633,6 +680,7 @@ SDK：`github.com/modelcontextprotocol/go-sdk v1.8.0`（与 mem-go 一致）。
 | `design_register` | `name`, `tokens_json`, `dark_json?`, `base_system?` | 自定义体系注册（结构兜底 + 持久化） |
 | `design_system_manage` | `action`(list/create/update/disable/enable/remove/reset), `id?`, `name?`, `vendor?`, `family?`, `base?`, `primary?`, `description?`, `summary?`, `json?` | 体系管理：停用只影响选择面；内置可停用/改显示信息不可删；自定义可整体改 JSON/移除 |
 | `design_icon_manage` | `action`(list/design/create/update/disable/enable/remove/reset), `name?`, `group?`, `tags?`, `svg?`, `design?`, `query?` | 图标管理与设计：`design` 动作把几何文档渲染成确定性 SVG（也可从 name/svg 反推）；create/update 可带 `design`；停用只影响 `design_icons`/检索；内置可停用/改分组别名、SVG 只读不可删（可另存） |
+| `design_logo` | `action`(list/get/preview/create/update/remove/spec/export/place), `id?`, `name?`, `note?`, `system?`, `doc?`, `brand?`, `tagline?`, `markIcon?`, `layout?`, `font?`, `weight?`, `color?`, `background?`, `markSize?`, `fontSize?`, `gap?`, `letterSpacing?`, `taglineSize?`, `clearSpace?`, `variant?`, `project?`, `addToCanvas?` | 品牌 Logo：flat 字段或 LogoDoc；preview 返回三变体 SVG + 规范；create 可自动摆画布；spec 安全空间/最小宽度/字体授权；export 写 SVG 文件；place 摆已有 Logo |
 | `design_audit` | `system`（体系走查）, `theme?`, `addToCanvas?=true`；或 `nodeID`（节点级走查，优先） | 体系级：WCAG 对比度/字号/阶梯走查评分 + 报告节点；节点级：外链资源 / 图标与符号 / 尺寸契约 / 字体授权（`AuditNodeHTML`） |
 | `canvas_connect` | `from`, `to`, `label?` | 节点间贝塞尔连线（SVG，持久化） |
 | `canvas_group` | `title`, `node_ids[]`, `padding?` | 分组框（垫底虚线框，自动包住成员） |
@@ -721,7 +769,7 @@ func ExpandIcons(s string) string        // 展开模板里的 {{icon:name:size}
 
 ## 6. 错误与日志
 
-- 错误码常量集中在 `canvas` / `mcpserver` 包，`canvas.Error{Code, Message, Hint}`。
+- 错误码常量集中在 `canvas` / `mcp` 包，`canvas.Error{Code, Message, Hint}`。
 - 日志：stdlib `log`，前缀 `[adago-design] `；stdio 模式下日志只走 stderr，
   不污染 JSON-RPC 管道。
 - panic 兜底：MCP 服务器开 `WithRecovery`（SDK 选项），HTTP handler recover → 500。
@@ -766,7 +814,7 @@ stdio JSON-RPC 走继承管道不受影响）。日志写 `<data>/adago-design.l
   **设计文稿**（`print_test.go`）：纸张方向、节点排序与 frame 过滤、封面/概览/索引
   页码、索引分页、HTML 转义、非法主色、文件名与 Content-Disposition、`/print`
   与 `/api/projects/{id}/pdf` 的 200/404/409/501/502 全路径。
-- `internal/mcpserver`：内存 transport 走 `initialize` + `tools/list` +
+- `internal/mcp`：内存 transport 走 `initialize` + `tools/list` +
   `tools/call`（design_tokens、design_preview、canvas_add、canvas_screenshot
   超时路径），断言结果结构；目录类工具与画板透传单测；
   `design_audit` 节点级走查（脏稿 fail 明细 / 净稿满分 / 缺参报错）与
@@ -790,7 +838,7 @@ stdio JSON-RPC 走继承管道不受影响）。日志写 `<data>/adago-design.l
 - `internal/app`：`systems_test.go` 走 Catalog 管理集成（摘要/停用/新增/编辑/
   JSON/移除/错误码）；`icons_test.go` 走图标 Catalog 集成（新增/详情/停用/
   内置保护/移除/错误码）。
-- `internal/mcpserver`：`systems_test.go` 走 `design_system_manage` 契约
+- `internal/mcp`：`systems_test.go` 走 `design_system_manage` 契约
   （list/create/disable→design_systems 隐藏/design_tokens 拒绝/enable/
   内置保护/remove）；`icons_test.go` 走 `design_icon_manage` 契约
   （create→design_icons 可检索/disable 后隐藏/enable/内置保护/非法 SVG/remove）。

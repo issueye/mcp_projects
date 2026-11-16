@@ -24,11 +24,11 @@ import (
 	"adagodesign/internal/app"
 	"adagodesign/internal/applog"
 	"adagodesign/internal/config"
-	"adagodesign/internal/mcpserver"
+	"adagodesign/internal/mcp"
 	"adagodesign/internal/native"
 	"adagodesign/internal/openbrowser"
 
-	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/mark3labs/mcp-go/server"
 )
 
 func main() {
@@ -184,7 +184,7 @@ func runHeadlessServe(ctx context.Context, cfg *config.Config, openBrowser bool)
 func withHTTPMCP(cfg *config.Config, focus func() bool) app.Option {
 	return app.WithMCP(func(s *app.Server) http.Handler {
 		log.Printf("MCP(HTTP) 已就绪: %s/mcp", s.BaseURL)
-		return mcpserver.NewHTTPHandler(mcpserver.Deps{
+		return mcp.NewHTTPHandler(mcp.Deps{
 			Store:    s.Store(),
 			Tasks:    s.Tasks(),
 			BaseURL:  func() string { return s.BaseURL },
@@ -238,16 +238,16 @@ func runMCP(args []string) error {
 		}
 	}()
 
-	deps := mcpserver.Deps{
+	deps := mcp.Deps{
 		Store:    srv.Store(),
 		Tasks:    srv.Tasks(),
 		BaseURL:  func() string { return srv.BaseURL },
 		DataDir:  cfg.DataDir,
 		AutoOpen: true, // 截图超时自动拉起画布并重试一次（无窗口时用浏览器）
 	}
-	server := mcpserver.NewServer(deps)
+	mcpSrv := mcp.NewServer(deps)
 	log.Printf("MCP(stdio) 已就绪，画布: %s", srv.BaseURL)
-	runErr := server.Run(ctx, &mcp.StdioTransport{})
+	runErr := server.NewStdioServer(mcpSrv).Listen(ctx, os.Stdin, os.Stdout)
 	stop()
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
@@ -278,7 +278,7 @@ func runMCPWindow(ctx context.Context, cfg *config.Config) error {
 		_ = srv.Stop(stopCtx)
 	})
 
-	deps := mcpserver.Deps{
+	deps := mcp.Deps{
 		Store:      srv.Store(),
 		Tasks:      srv.Tasks(),
 		BaseURL:    func() string { return srv.BaseURL },
@@ -286,10 +286,10 @@ func runMCPWindow(ctx context.Context, cfg *config.Config) error {
 		AutoOpen:   true,
 		OpenCanvas: func(url string) error { sh.Focus(); return nil },
 	}
-	server := mcpserver.NewServer(deps)
+	mcpSrv := mcp.NewServer(deps)
 	mcpCtx, cancelMCP := context.WithCancel(ctx)
 	go func() {
-		runErr := server.Run(mcpCtx, &mcp.StdioTransport{})
+		runErr := server.NewStdioServer(mcpSrv).Listen(mcpCtx, os.Stdin, os.Stdout)
 		if runErr != nil {
 			log.Printf("MCP(stdio) 结束: %v", runErr)
 		}

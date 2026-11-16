@@ -22,6 +22,7 @@ import { taskLoop } from "./capture.js";
 import { publishNativeState } from "./native.js";
 import { isSystemManagerOpen, closeSystemManager } from "./systems-admin.js";
 import { isIconManagerOpen, closeIconManager } from "./icons-admin.js";
+import "./logo-workbench.js"; // 副作用导入：品牌 Logo 工作台入口与 Esc 处理
 import "./keyboard.js"; // 副作用导入：全局快捷键（Del/F/0/Ctrl+Z）与空格临时平移模式
 import { INS } from "../inspect.js";
 

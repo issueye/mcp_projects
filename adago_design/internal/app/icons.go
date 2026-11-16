@@ -54,6 +54,7 @@ func iconSummary(ic design.Icon) map[string]any {
 		"svg":        design.IconInline(ic.Name, 24),
 		"usage":      design.IconUsage(ic.Name),
 		"designed":   ic.Designed,
+		"filled":     ic.Filled,
 	}
 }
 

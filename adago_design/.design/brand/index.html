@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>adago design · 品牌 Logo</title>
+<style>
+  :root{
+    --ink:#16171A; --ink-2:#57544C; --ink-3:#6E6A60;
+    --paper:#FBF8F1; --paper-2:#F2EDE2; --line:#DCD5C6; --line-2:#C9C0AC;
+    --font:"Inter","Noto Sans SC",system-ui,"PingFang SC","Microsoft YaHei",sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);line-height:1.6}
+  .wrap{max-width:1120px;margin:0 auto;padding:56px 32px 72px}
+  .top{display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line);padding-bottom:18px}
+  .top .word{font-weight:700;letter-spacing:-.02em}
+  .top .meta{margin-left:auto;color:var(--ink-3);font-family:var(--mono);font-size:12px}
+  .hero{display:grid;grid-template-columns:1.2fr .8fr;gap:32px;align-items:end;padding:64px 0 48px}
+  .hero h1{margin:0 0 14px;font-size:44px;line-height:1.15;letter-spacing:-.03em}
+  .hero p{margin:0;color:var(--ink-2);max-width:44ch;font-size:15px}
+  .hero img{width:100%;max-width:420px;display:block}
+  .dark{background:var(--ink);color:var(--paper);border-radius:14px;padding:48px;
+    display:flex;align-items:center;justify-content:space-between;gap:32px}
+  .dark img{width:300px;display:block}
+  .dark small{color:#B9B5AA;font-family:var(--mono);font-size:12px}
+  section{padding:48px 0;border-bottom:1px solid var(--line)}
+  .sec-title{display:flex;align-items:center;gap:12px;margin-bottom:24px;
+    font-family:var(--mono);font-size:12px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em}
+  .sec-title .line{flex:1;height:1px;background:var(--line)}
+  .variants{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .card{border:1px solid var(--line);border-radius:12px;padding:24px;min-height:170px;
+    display:flex;flex-direction:column;justify-content:space-between;background:#fff}
+  .card.dark{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .card img{width:100%;max-width:220px;display:block}
+  .card b{font-size:13px}
+  .card small{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+  .card.dark small{color:#B9B5AA}
+  .marks{display:flex;align-items:flex-end;gap:40px;flex-wrap:wrap}
+  .mark-row{display:flex;flex-direction:column;gap:10px;align-items:center}
+  .mark-row img{display:block}
+  .mark-row small{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+  .mark-row .m1{width:96px}.mark-row .m2{width:64px}.mark-row .m3{width:40px}.mark-row .m4{width:24px}
+  .sizes{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;padding-top:8px}
+  .sizes img{display:block}
+  .sizes .s1{width:162px}.sizes .s2{width:81px}.sizes .s3{width:49px}
+  .sizes span{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:8px;display:block}
+  .spec{display:grid;grid-template-columns:repeat(2,1fr);gap:2px;background:var(--line);
+    border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .kv{background:var(--paper);padding:16px 20px}
+  .kv .k{font-family:var(--mono);font-size:11px;color:var(--ink-3);text-transform:uppercase}
+  .kv .v{margin-top:4px;font-size:14px}
+  .note{color:var(--ink-2);font-size:14px;max-width:70ch}
+  .swatches{display:flex;gap:12px;flex-wrap:wrap}
+  .sw{border:1px solid var(--line);border-radius:10px;padding:16px;min-width:150px}
+  .sw i{display:block;width:100%;height:48px;border-radius:6px;border:1px solid var(--line);margin-bottom:10px}
+  .sw b{font-family:var(--mono);font-size:12px;font-weight:500}
+  .sw small{display:block;color:var(--ink-3);font-size:12px}
+  footer{padding-top:28px;color:var(--ink-3);font-family:var(--mono);font-size:11px}
+  @media(max-width:860px){.hero{grid-template-columns:1fr}.variants{grid-template-columns:1fr}.dark{flex-direction:column;align-items:flex-start}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <span class="word">adago design</span>
+    <span class="meta">brand logo · 2026-11-16</span>
+  </div>
+
+  <div class="hero">
+    <div>
+      <h1>一张纸，<br>一个落笔的墨点。</h1>
+      <p>adago design 的新标识：右上折角是画板/文档，左下墨点是落笔的 Inkwell。
+        延续 Black Swan 纸墨单色，在纸面、墨面与单色印刷里都保持同一个表情。</p>
+    </div>
+    <img src="adago-logo.svg" alt="adago design 横排 Logo">
+  </div>
+
+  <div class="dark">
+    <img src="adago-logo-inverse.svg" alt="adago design 反形 Logo">
+    <small>inverse · ink ground</small>
+  </div>
+
+  <section>
+    <div class="sec-title">variants <span class="line"></span></div>
+    <div class="variants">
+      <div class="card"><img src="adago-logo.svg" alt="正形"><b>正形</b><small>paper / ink</small></div>
+      <div class="card dark"><img src="adago-logo-inverse.svg" alt="反形"><b>反形</b><small>ink / paper</small></div>
+      <div class="card"><img src="adago-logo-mono.svg" alt="单色"><b>单色</b><small>one color / print</small></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-title">mark <span class="line"></span></div>
+    <div class="marks">
+      <div class="mark-row"><img class="m1" src="adago-mark.svg" alt="标记"><small>96</small></div>
+      <div class="mark-row"><img class="m2" src="adago-mark.svg" alt="标记"><small>64</small></div>
+      <div class="mark-row"><img class="m3" src="adago-mark.svg" alt="标记"><small>40</small></div>
+      <div class="mark-row"><img class="m4" src="adago-mark.svg" alt="标记"><small>24</small></div>
+      <div class="mark-row"><img style="width:96px" src="adago-mark-inverse.svg" alt="反形标记"><small>inverse</small></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-title">sizes <span class="line"></span></div>
+    <div class="sizes">
+      <div><img class="s1" src="adago-logo.svg" alt="162"><span>162 × 83</span></div>
+      <div><img class="s2" src="adago-logo.svg" alt="81"><span>81 × 42</span></div>
+      <div><img class="s3" src="adago-logo.svg" alt="49"><span>49 × 25</span></div>
+    </div>
+    <p class="note" style="margin-top:24px">数字最小宽度 72px；再小请改用 mark-only 变体。</p>
+  </section>
+
+  <section>
+    <div class="sec-title">spec <span class="line"></span></div>
+    <div class="spec">
+      <div class="kv"><div class="k">mark</div><div class="v">24 grid · 1.8 stroke · round cap/join</div></div>
+      <div class="kv"><div class="k">wordmark</div><div class="v">Inter 700 · 34px · tracking -0.4</div></div>
+      <div class="kv"><div class="k">clear space</div><div class="v">≥ 0.5× mark height (26px @1x)</div></div>
+      <div class="kv"><div class="k">min width</div><div class="v">72px digital · mark-only below</div></div>
+      <div class="kv"><div class="k">font</div><div class="v">Inter · SIL OFL 1.1 · commercial + embeddable</div></div>
+      <div class="kv"><div class="k">contrast</div><div class="v">16.9:1 positive · 16.2:1 inverse</div></div>
+    </div>
+    <div class="swatches" style="margin-top:24px">
+      <div class="sw"><i style="background:#16171A"></i><b>#16171A</b><small>ink · brand</small></div>
+      <div class="sw"><i style="background:#FBF8F1"></i><b>#FBF8F1</b><small>paper · ground</small></div>
+      <div class="sw"><i style="background:#F6F3EC"></i><b>#F6F3EC</b><small>paper ink · inverse</small></div>
+    </div>
+    <p class="note" style="margin-top:24px">字标在 SVG 中保留为文本；生产交付前建议转曲，或确认 Inter 已安装/嵌入。
+      反形标记 <code>adago-mark-inverse</code> 可作应用图标候选（1024×1024）。</p>
+  </section>
+
+  <footer>adago design · generated with the built-in Logo workbench · 2026</footer>
+</div>
+</body>
+</html>
