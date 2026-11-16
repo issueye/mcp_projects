@@ -241,7 +241,9 @@ type LogoDoc struct {
     Mark           LogoMark      // kind=icon|shapes|none; icon / *IconDoc
     MarkSize, Gap  float64
     FontID         string; FontSize float64; Weight int
-    LetterSpacing, TaglineSize, ClearSpace float64
+    TaglineSize, TaglineSpacing, TaglineGap float64
+    TaglineWeight int
+    LetterSpacing, ClearSpace float64
     Casing         string        // none | upper
     Color, Background string     // #RRGGBB / transparent
     WordmarkWidth, TaglineWidth float64 // 浏览器实测/估算字宽
@@ -256,10 +258,10 @@ type Logo struct {
 
 | 规则 | 说明 |
 |---|---|
-| 布局 | 服务端 `LogoLayoutMetrics` 统一算尺寸：横排=标记+间距+字宽；竖排=标记+间距+文字块；纯标记/纯字标另算；四周安全空间 = `clearSpace × 标记高度` |
+| 布局 | 服务端 `LogoLayoutMetrics` 统一算尺寸：横排=标记+间距+字宽；竖排=标记+间距+文字块；纯标记/纯字标另算；横排标记对齐字标视觉中线（不再被副标拉低）；副标字距按 0.12em、行盒间距按 0.2em 自动补齐；四周安全空间 = `clearSpace × 标记高度` |
 | 渲染 | `LogoSVG` 输出带 width/height/viewBox 的确定性 SVG；标记来自 `Icon.Body`/`IconDocBody`，字标保留 `<text>` + 字体栈 |
 | 变体 | `positive` 品牌色/指定底；`inverse` 品牌色底 + 自动对比墨色；`mono` 单色（按底色黑/白） |
-| 字宽 | 浏览器实测回填 `WordmarkWidth/TaglineWidth`；MCP 未提供时按字符类别估算，保证 SVG 与编辑预览对位 |
+| 字宽 | 浏览器实测回填 `WordmarkWidth/TaglineWidth`；MCP 未提供时按 Inter 字形分档估算（并随字重微调），避免少算整块字宽导致右侧留白被吃掉 |
 | 规范 | `LogoDocSpec`：最小宽/高（按「标记/字标 ≥16px」换算）、安全空间、三变体、字体授权、正/反形对比度警告 |
 | 持久化 | `<data>/logos/<id>.json`（完整 Logo + LogoDoc + 时间）；tmp→rename；启动 `LoadLogos` |
 | 降级 | 标记引用的自定义图标被删除时，加载会把 Logo 降级为纯字标资产而不是丢弃 |
@@ -680,7 +682,7 @@ SDK：`github.com/mark3labs/mcp-go v0.52.0`（与 mem-go 一致）。
 | `design_register` | `name`, `tokens_json`, `dark_json?`, `base_system?` | 自定义体系注册（结构兜底 + 持久化） |
 | `design_system_manage` | `action`(list/create/update/disable/enable/remove/reset), `id?`, `name?`, `vendor?`, `family?`, `base?`, `primary?`, `description?`, `summary?`, `json?` | 体系管理：停用只影响选择面；内置可停用/改显示信息不可删；自定义可整体改 JSON/移除 |
 | `design_icon_manage` | `action`(list/design/create/update/disable/enable/remove/reset), `name?`, `group?`, `tags?`, `svg?`, `design?`, `query?` | 图标管理与设计：`design` 动作把几何文档渲染成确定性 SVG（也可从 name/svg 反推）；create/update 可带 `design`；停用只影响 `design_icons`/检索；内置可停用/改分组别名、SVG 只读不可删（可另存） |
-| `design_logo` | `action`(list/get/preview/create/update/remove/spec/export/place), `id?`, `name?`, `note?`, `system?`, `doc?`, `brand?`, `tagline?`, `markIcon?`, `layout?`, `font?`, `weight?`, `color?`, `background?`, `markSize?`, `fontSize?`, `gap?`, `letterSpacing?`, `taglineSize?`, `clearSpace?`, `variant?`, `project?`, `addToCanvas?` | 品牌 Logo：flat 字段或 LogoDoc；preview 返回三变体 SVG + 规范；create 可自动摆画布；spec 安全空间/最小宽度/字体授权；export 写 SVG 文件；place 摆已有 Logo |
+| `design_logo` | `action`(list/get/preview/create/update/remove/spec/export/place), `id?`, `name?`, `note?`, `system?`, `doc?`, `brand?`, `tagline?`, `markIcon?`, `layout?`, `font?`, `weight?`, `color?`, `background?`, `markSize?`, `fontSize?`, `gap?`, `letterSpacing?`, `taglineSize?`, `taglineWeight?`, `taglineSpacing?`, `taglineGap?`, `clearSpace?`, `variant?`, `project?`, `addToCanvas?` | 品牌 Logo：flat 字段或 LogoDoc；preview 返回三变体 SVG + 规范；create 可自动摆画布；spec 安全空间/最小宽度/字体授权；export 写 SVG 文件；place 摆已有 Logo |
 | `design_audit` | `system`（体系走查）, `theme?`, `addToCanvas?=true`；或 `nodeID`（节点级走查，优先） | 体系级：WCAG 对比度/字号/阶梯走查评分 + 报告节点；节点级：外链资源 / 图标与符号 / 尺寸契约 / 字体授权（`AuditNodeHTML`） |
 | `canvas_connect` | `from`, `to`, `label?` | 节点间贝塞尔连线（SVG，持久化） |
 | `canvas_group` | `title`, `node_ids[]`, `padding?` | 分组框（垫底虚线框，自动包住成员） |

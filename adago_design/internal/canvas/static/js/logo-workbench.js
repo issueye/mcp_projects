@@ -24,6 +24,13 @@ const LAYOUTS = [
   ["mark", "纯标记"],
   ["wordmark", "纯字标"],
 ];
+// 四个可直接套用的比例预设：先给一个稳定的起点，再让用户微调。
+const PRESETS = [
+  { id: "classic", label: "经典横排", values: { layout: "horizontal", fontSize: 40, markSize: 44, gap: 12, taglineSize: 12, taglineWeight: 500, taglineSpacing: 1.4, taglineGap: 8 } },
+  { id: "word", label: "字标主导", values: { layout: "horizontal", fontSize: 48, markSize: 36, gap: 14, taglineSize: 13, taglineWeight: 500, taglineSpacing: 1.6, taglineGap: 9 } },
+  { id: "mark", label: "图形主导", values: { layout: "stacked", fontSize: 36, markSize: 56, gap: 16, taglineSize: 12, taglineWeight: 500, taglineSpacing: 1.4, taglineGap: 8 } },
+  { id: "center", label: "居中竖排", values: { layout: "stacked", fontSize: 36, markSize: 44, gap: 18, taglineSize: 11, taglineWeight: 500, taglineSpacing: 1.3, taglineGap: 7 } },
+];
 const VARIANT_LABELS = { positive: "正形", inverse: "反形", mono: "单色" };
 const VARIANT_ORDER = ["positive", "inverse", "mono"];
 
@@ -128,8 +135,9 @@ function defaultDoc() {
     version: 1, brand: "", tagline: "",
     layout: "horizontal",
     mark: { kind: "icon", icon: markIcon },
-    markSize: 40, gap: 16,
-    font: font.id, fontSize: 36, weight, taglineSize: 14,
+    markSize: 44, gap: 12,
+    font: font.id, fontSize: 40, weight, taglineSize: 12, taglineWeight: 500,
+    taglineSpacing: 1.4, taglineGap: 8,
     letterSpacing: 0, casing: "none",
     color, background: "transparent", clearSpace: 0.5,
   };
@@ -144,14 +152,34 @@ function measureText(text, size, weight, family, spacing) {
   return Math.round(w * 100) / 100;
 }
 
+// ---- 副标排印：与服务端 logodoc.go 的 0.12em / 0.2em 默认值保持一致 ----
+function withLogoDefaults(doc) {
+  if (!doc) return doc;
+  if (!doc.taglineWeight) doc.taglineWeight = 500;
+  if (!doc.taglineSpacing) doc.taglineSpacing = Math.round(doc.taglineSize * 0.12 * 100) / 100;
+  if (!doc.taglineGap) doc.taglineGap = Math.round(doc.fontSize * 0.2 * 100) / 100;
+  return doc;
+}
+function taglineWeightOf(doc) {
+  return Number(doc.taglineWeight) || 500;
+}
+function taglineSpacingOf(doc) {
+  return Number(doc.taglineSpacing) || Math.round(doc.taglineSize * 0.12 * 100) / 100;
+}
+function taglineGapOf(doc) {
+  return Number(doc.taglineGap) || Math.round(doc.fontSize * 0.2 * 100) / 100;
+}
+
 function applyMeasurements(doc) {
   if (!doc) return;
   const font = fontById(doc.font);
   const family = fontStack(font);
   const brand = doc.casing === "upper" ? String(doc.brand || "").toUpperCase() : String(doc.brand || "");
   doc.wordmarkWidth = measureText(brand, doc.fontSize, doc.weight, family, doc.letterSpacing);
+  const tWeight = taglineWeightOf(doc);
+  const tSpacing = taglineSpacingOf(doc);
   doc.taglineWidth = doc.tagline
-    ? measureText(doc.tagline, doc.taglineSize, 400, family, doc.letterSpacing * 0.6) : 0;
+    ? measureText(doc.tagline, doc.taglineSize, tWeight, family, tSpacing) : 0;
 }
 
 function logoMetrics(doc) {
@@ -160,20 +188,60 @@ function logoMetrics(doc) {
   const markSize = hasMark ? doc.markSize : 0;
   const hasTagline = !!doc.tagline && doc.layout !== "mark";
   const wordH = Math.round(doc.fontSize * 1.15 * 100) / 100;
-  const tagH = hasTagline ? Math.round(doc.taglineSize * 1.2 * 100) / 100 : 0;
-  const textH = wordH + tagH;
+  const tagGap = hasTagline ? taglineGapOf(doc) : 0;
+  const tagH = hasTagline ? Math.round(doc.taglineSize * 1.15 * 100) / 100 : 0;
+  const textH = wordH + tagGap + tagH;
   const textW = Math.max(doc.wordmarkWidth || 0, doc.taglineWidth || 0);
   const base = hasMark ? doc.markSize : doc.fontSize;
   const pad = Math.round(doc.clearSpace * base * 100) / 100;
-  let contentW = 0, contentH = 0;
+  let contentW = 0, contentH = 0, markTop = 0, textTop = 0;
   switch (doc.layout) {
-    case "horizontal": contentW = markSize + doc.gap + textW; contentH = Math.max(markSize, textH); break;
-    case "stacked": contentW = Math.max(markSize, textW); contentH = markSize + doc.gap + textH; break;
-    case "mark": contentW = contentH = markSize; break;
-    case "wordmark": contentW = textW; contentH = textH; break;
-    default: contentW = markSize + doc.gap + textW; contentH = Math.max(markSize, textH);
+    case "horizontal": {
+      contentW = markSize + doc.gap + textW;
+      contentH = Math.max(markSize, textH);
+      textTop = (contentH - textH) / 2;
+      markTop = textTop + (wordH - markSize) / 2;
+      if (markTop < 0) { contentH += -markTop; textTop += -markTop; markTop = 0; }
+      if (markTop + markSize > contentH) contentH = markTop + markSize;
+      break;
+    }
+    case "stacked":
+      contentW = Math.max(markSize, textW);
+      contentH = markSize + doc.gap + textH;
+      markTop = 0; textTop = markSize + doc.gap;
+      break;
+    case "mark":
+      contentW = contentH = markSize;
+      break;
+    case "wordmark":
+      contentW = textW; contentH = textH;
+      break;
+    default:
+      contentW = markSize + doc.gap + textW; contentH = Math.max(markSize, textH);
   }
-  return { width: contentW + pad * 2, height: contentH + pad * 2, contentW, contentH, markSize, textW, textH, wordH, tagH, pad, hasMark, hasTagline };
+  return { width: contentW + pad * 2, height: contentH + pad * 2, contentW, contentH,
+    markSize, textW, textH, wordH, tagH, tagGap, pad, hasMark, hasTagline, markTop, textTop };
+}
+
+function layoutPositions(doc, m) {
+  let markX = 0, markY = 0, textX = 0, textY = 0;
+  switch (doc.layout) {
+    case "horizontal":
+      markX = 0; markY = m.markTop;
+      textX = m.markSize + doc.gap; textY = m.textTop;
+      break;
+    case "stacked":
+      markX = (m.contentW - m.markSize) / 2; markY = 0;
+      textX = 0; textY = m.textTop;
+      break;
+    case "mark":
+      markX = (m.contentW - m.markSize) / 2; markY = (m.contentH - m.markSize) / 2;
+      break;
+    case "wordmark":
+      textX = 0; textY = 0;
+      break;
+  }
+  return { markX, markY, textX, textY };
 }
 
 function variantColors(doc, variant) {
@@ -215,29 +283,40 @@ function textHTML(doc, ink, scale) {
   const fsize = doc.fontSize * scale;
   const tsize = doc.taglineSize * scale;
   const ls = doc.letterSpacing * scale;
-  const gap = doc.tagline ? Math.max(2, doc.fontSize * 0.18) * scale : 0;
+  const tls = taglineSpacingOf(doc) * scale;
+  const tGap = taglineGapOf(doc) * scale;
+  const centered = doc.layout === "stacked" || doc.layout === "wordmark";
   const word = `<span class="lgm-word" style="font-family:${family};font-size:${fsize}px;` +
     `font-weight:${doc.weight};letter-spacing:${ls}px;color:${ink}">${esc(brand)}</span>`;
   const tag = doc.tagline
-    ? `<span class="lgm-tag" style="font-family:${family};font-size:${tsize}px;font-weight:400;` +
-      `letter-spacing:${ls * 0.6}px;color:${ink}">${esc(doc.tagline)}</span>` : "";
-  return `<div class="lgm-wordmark" style="gap:${gap}px">${word}${tag}</div>`;
+    ? `<span class="lgm-tag" style="font-family:${family};font-size:${tsize}px;font-weight:${taglineWeightOf(doc)};` +
+      `letter-spacing:${tls}px;margin-top:${tGap}px;opacity:1;color:${ink}">${esc(doc.tagline)}</span>` : "";
+  return `<div class="lgm-wordmark" style="line-height:1.15;align-items:${centered ? "center" : "flex-start"}">${word}${tag}</div>`;
 }
 
 function logoPreviewHTML(doc, variant, scale, guide) {
   const m = logoMetrics(doc);
   if (!m) return "";
   const colors = variantColors(doc, variant);
-  const size = m.markSize * scale;
-  const gap = doc.layout === "horizontal" ? doc.gap * scale : (doc.layout === "stacked" ? doc.gap * scale : 0);
-  const pad = m.pad * scale;
-  const mark = markHTML(doc, colors.ink, size);
+  const pos = layoutPositions(doc, m);
+  const markSize = m.markSize * scale;
+  const mark = m.hasMark ? markHTML(doc, colors.ink, markSize) : "";
   const text = textHTML(doc, colors.ink, scale);
+  const pad = m.pad * scale;
+  const centeredLayout = doc.layout === "stacked" || doc.layout === "wordmark";
+  const textLeft = centeredLayout ? 0 : pos.textX * scale;
+  const textWidth = centeredLayout ? m.contentW * scale : Math.max(m.textW, doc.wordmarkWidth || 0) * scale;
   const bg = colors.bg === "transparent" ? "transparent" : colors.bg;
-  const content = doc.layout === "mark" ? mark : (doc.layout === "wordmark" ? text : mark + text);
+  const markEl = m.hasMark
+    ? `<div style="position:absolute;left:${pos.markX * scale}px;top:${pos.markY * scale}px;` +
+      `width:${markSize}px;height:${markSize}px">${mark}</div>` : "";
+  const textEl = text
+    ? `<div style="position:absolute;left:${textLeft}px;top:${pos.textY * scale}px;width:${textWidth}px;` +
+      `text-align:${centeredLayout ? "center" : "left"}">${text}</div>` : "";
   return `<div class="lgm-lockup lgm-lockup--${doc.layout}${guide ? " lgm-guide" : ""}" ` +
     `style="padding:${pad}px;background:${bg};color:${colors.ink}">` +
-    `<div class="lgm-lockup__content" style="gap:${gap}px">${content}</div></div>`;
+    `<div class="lgm-lockup__content" style="position:relative;display:block;` +
+    `width:${m.contentW * scale}px;height:${m.contentH * scale}px">${markEl}${textEl}</div></div>`;
 }
 
 // ---------------- 弹层 ----------------
@@ -492,6 +571,13 @@ function weightSelect(doc) {
     opts.map((w) => `<option value="${w}"${w === doc.weight ? " selected" : ""}>${w}</option>`).join("") + `</select>`;
 }
 
+function taglineWeightSelect(doc) {
+  const opts = weightOptions(fontById(doc.font));
+  const current = Number(doc.taglineWeight) || 500;
+  return `<select class="lgm-input" data-lg="taglineWeight" aria-label="副标字重">` +
+    opts.map((w) => `<option value="${w}"${w === current ? " selected" : ""}>${w}</option>`).join("") + `</select>`;
+}
+
 function numField(label, field, value, step) {
   return `<label class="lgm-field">${label}<input class="lgm-num" type="number" step="${step || 0.5}" ` +
     `data-lg="${field}" value="${Number(value || 0)}"></label>`;
@@ -573,6 +659,18 @@ function renderEditPanel() {
   if (posContrast < 3) localWarn.push(`正形对比度 ${posContrast.toFixed(2)} < 3.0，考虑换品牌色/底色`);
   if (!doc.brand && doc.layout !== "mark") localWarn.push("字标为空，组合布局只剩标记");
   if (!isHex(doc.color)) localWarn.push("品牌色不是 #RRGGBB");
+  if (doc.layout !== "wordmark" && doc.fontSize > 0) {
+    const markRatio = doc.markSize / doc.fontSize;
+    if (markRatio < 0.6 || markRatio > 1.8) localWarn.push(`标记/字标比例 ${markRatio.toFixed(2)} 失衡，建议 0.9–1.3`);
+    if (doc.layout === "horizontal" || doc.layout === "stacked") {
+      const gapRatio = doc.gap / doc.fontSize;
+      if (gapRatio < 0.15 || gapRatio > 0.75) localWarn.push(`标记间距 ${gapRatio.toFixed(2)}em 偏离常规，建议 0.25–0.5em`);
+    }
+  }
+  if (doc.tagline && doc.layout !== "mark" && doc.fontSize > 0) {
+    const tagRatio = doc.taglineSize / doc.fontSize;
+    if (tagRatio < 0.18 || tagRatio > 0.45) localWarn.push(`副标/字标比例 ${tagRatio.toFixed(2)} 失衡，建议 0.25–0.35`);
+  }
 
   pane().innerHTML =
     `<section class="lgm-sec"><div class="lgm-sec-head">资产</div>
@@ -585,6 +683,9 @@ function renderEditPanel() {
       <label class="lgm-field">品牌名<input class="lgm-input" data-lg="brand" maxlength="64" value="${esc(doc.brand)}" placeholder="Acme Cloud"></label>
       <label class="lgm-field">副标（可选）<input class="lgm-input" data-lg="tagline" maxlength="120" value="${esc(doc.tagline)}" placeholder="design system"></label>
       <label class="lgm-field">布局<select class="lgm-input" data-lg="layout">${layoutOptions(doc.layout)}</select></label>
+      <div class="lgm-acts" style="margin-top:4px">${PRESETS.map((p) =>
+        `<button class="lgm-mini" data-lg-act="preset" data-preset="${p.id}">${esc(p.label)}</button>`).join("")}</div>
+      <span class="lgm-mark-hint">预设只调整布局与字号比例，不改变标记和品牌色。</span>
     </section>
     <section class="lgm-sec"><div class="lgm-sec-head">标记</div>${markSection(doc)}</section>
     <section class="lgm-sec"><div class="lgm-sec-head">字体</div>
@@ -599,6 +700,9 @@ function renderEditPanel() {
         ${numField("字号", "fontSize", doc.fontSize, 1)}
         ${numField("字距", "letterSpacing", doc.letterSpacing, 0.5)}
         ${numField("副标字号", "taglineSize", doc.taglineSize, 1)}
+        <label class="lgm-field">副标字重${taglineWeightSelect(doc)}</label>
+        ${numField("副标字距", "taglineSpacing", doc.taglineSpacing, 0.1)}
+        ${numField("副标间距", "taglineGap", doc.taglineGap, 0.5)}
       </div>
     </section>
     <section class="lgm-sec"><div class="lgm-sec-head">组合与留白</div>
@@ -644,7 +748,7 @@ function startEdit() {
   if (!L.detail) return;
   L.mode = "edit";
   L.editing = L.detail.logo.id;
-  L.doc = clone(L.detail.doc);
+  L.doc = withLogoDefaults(clone(L.detail.doc));
   L.name = L.detail.logo.name || "";
   L.note = L.detail.logo.note || "";
   L.system = L.detail.logo.system || "";
@@ -913,20 +1017,38 @@ function updateField(field, el) {
   if (field === "note") { L.note = el.value; L.dirty = true; return; }
   if (field === "system") { L.system = el.value; L.dirty = true; return; }
   if (field === "brand") { L.doc.brand = el.value; }
-  else if (field === "tagline") { L.doc.tagline = el.value; }
+  else if (field === "tagline") {
+    L.doc.tagline = el.value;
+    if (el.value) {
+      if (!L.doc.taglineSpacing) L.doc.taglineSpacing = Math.round(L.doc.taglineSize * 0.12 * 100) / 100;
+      if (!L.doc.taglineGap) L.doc.taglineGap = Math.round(L.doc.fontSize * 0.2 * 100) / 100;
+    }
+  }
   else if (field === "layout") { L.doc.layout = el.value; }
   else if (field === "font") { L.doc.font = el.value; }
   else if (field === "weight") { L.doc.weight = Number(el.value); }
+  else if (field === "taglineWeight") { L.doc.taglineWeight = Number(el.value); }
   else if (field === "casing") { L.doc.casing = el.value; }
   else if (field === "color") { L.doc.color = String(el.value || "").toLowerCase(); }
   else if (field === "background") { L.doc.background = String(el.value || "").toLowerCase(); }
   else if (field === "fontSize" || field === "markSize" || field === "gap" || field === "taglineSize" ||
-    field === "letterSpacing" || field === "clearSpace") {
+    field === "letterSpacing" || field === "clearSpace" || field === "taglineSpacing" || field === "taglineGap") {
     const v = Number(el.value);
     if (Number.isFinite(v)) L.doc[field] = v;
   }
   L.dirty = true;
   applyMeasurements(L.doc);
+}
+
+function applyPreset(id) {
+  if (!L.doc) return;
+  const p = PRESETS.find((x) => x.id === id);
+  if (!p) return;
+  Object.assign(L.doc, p.values);
+  L.dirty = true;
+  applyMeasurements(L.doc);
+  renderStage();
+  renderPanel();
 }
 
 $("logo-rows").addEventListener("click", async (ev) => {
@@ -1012,6 +1134,7 @@ pane().addEventListener("click", (ev) => {
       case "place": placeOnCanvas(); break;
       case "pick-mark": openMarkPicker(); break;
       case "draw-mark": drawMark(); break;
+      case "preset": applyPreset(act.dataset.preset); break;
       case "apply-system": {
         const sys = currentSystem();
         if (!sys) { toast("没有可用的设计体系", true); break; }

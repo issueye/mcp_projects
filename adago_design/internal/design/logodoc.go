@@ -33,20 +33,24 @@ const (
 	LogoVariantInverse  = "inverse"  // 反白 / 品牌色底
 	LogoVariantMono     = "mono"     // 单色（黑/白按底色）
 
-	LogoDefaultVersion     = 1
-	LogoDefaultColor       = "#16171A"
-	LogoDefaultFont        = "inter"
-	LogoDefaultFontSize    = 36.0
-	LogoDefaultMarkSize    = 40.0
-	LogoDefaultGap         = 16.0
-	LogoDefaultTaglineSize = 14.0
-	LogoDefaultClearSpace  = 0.5
-	LogoMinMarkSize        = 8.0
-	LogoMaxMarkSize        = 512.0
-	LogoMinFontSize        = 8.0
-	LogoMaxFontSize        = 256.0
-	LogoMaxBrandRunes      = 64
-	LogoMaxTaglineRunes    = 120
+	LogoDefaultVersion       = 1
+	LogoDefaultColor         = "#16171A"
+	LogoDefaultFont          = "inter"
+	LogoDefaultFontSize      = 40.0
+	LogoDefaultMarkSize      = 44.0
+	LogoDefaultGap           = 12.0
+	LogoDefaultTaglineSize   = 12.0
+	LogoDefaultTaglineWeight = 500
+	LogoDefaultClearSpace    = 0.5
+	// 副标排印默认值：字距按 0.12em 自动推算，与字标的垂直间距按 0.2em 自动推算。
+	LogoTaglineSpacingEm = 0.12
+	LogoTaglineGapEm     = 0.20
+	LogoMinMarkSize      = 8.0
+	LogoMaxMarkSize      = 512.0
+	LogoMinFontSize      = 8.0
+	LogoMaxFontSize      = 256.0
+	LogoMaxBrandRunes    = 64
+	LogoMaxTaglineRunes  = 120
 )
 
 var (
@@ -78,14 +82,17 @@ type LogoDoc struct {
 	Layout string   `json:"layout,omitempty"`
 	Mark   LogoMark `json:"mark,omitempty"`
 
-	MarkSize      float64 `json:"markSize,omitempty"` // px @1x
-	Gap           float64 `json:"gap,omitempty"`      // 标记与文字的间距
-	FontID        string  `json:"font,omitempty"`     // design 字体注册表 ID
-	FontSize      float64 `json:"fontSize,omitempty"` // px @1x
-	Weight        int     `json:"weight,omitempty"`   // 100–900
-	TaglineSize   float64 `json:"taglineSize,omitempty"`
-	LetterSpacing float64 `json:"letterSpacing,omitempty"` // px
-	Casing        string  `json:"casing,omitempty"`        // none | upper
+	MarkSize       float64 `json:"markSize,omitempty"` // px @1x
+	Gap            float64 `json:"gap,omitempty"`      // 标记与文字的间距
+	FontID         string  `json:"font,omitempty"`     // design 字体注册表 ID
+	FontSize       float64 `json:"fontSize,omitempty"` // px @1x
+	Weight         int     `json:"weight,omitempty"`   // 100–900
+	TaglineSize    float64 `json:"taglineSize,omitempty"`
+	TaglineWeight  int     `json:"taglineWeight,omitempty"`  // 100–900，默认 500
+	TaglineSpacing float64 `json:"taglineSpacing,omitempty"` // px；缺省按 0.12em 推算
+	TaglineGap     float64 `json:"taglineGap,omitempty"`     // px；字标与副标的行盒间距，缺省按 0.2em 推算
+	LetterSpacing  float64 `json:"letterSpacing,omitempty"`  // px
+	Casing         string  `json:"casing,omitempty"`         // none | upper
 
 	Color      string  `json:"color,omitempty"`      // 正形品牌色 #RRGGBB
 	Background string  `json:"background,omitempty"` // transparent | #RRGGBB
@@ -103,7 +110,7 @@ func DefaultLogoDoc() LogoDoc {
 		Mark:     LogoMark{Kind: "icon", Icon: "star"},
 		MarkSize: LogoDefaultMarkSize, Gap: LogoDefaultGap,
 		FontID: LogoDefaultFont, FontSize: LogoDefaultFontSize,
-		Weight: 700, TaglineSize: LogoDefaultTaglineSize,
+		Weight: 700, TaglineSize: LogoDefaultTaglineSize, TaglineWeight: LogoDefaultTaglineWeight,
 		Casing: "none", Color: LogoDefaultColor,
 		Background: "transparent", ClearSpace: LogoDefaultClearSpace,
 	}
@@ -153,10 +160,29 @@ func NormalizeLogoDoc(doc LogoDoc) (LogoDoc, error) {
 		return LogoDoc{}, fmt.Errorf("%w: fontSize 必须在 %g–%g", ErrLogoInvalid, LogoMinFontSize, LogoMaxFontSize)
 	}
 	if doc.TaglineSize == 0 {
-		doc.TaglineSize = math.Max(10, doc.FontSize*0.38)
+		doc.TaglineSize = math.Max(10, doc.FontSize*0.30)
 	}
 	if doc.TaglineSize < 6 || doc.TaglineSize > 128 {
 		return LogoDoc{}, fmt.Errorf("%w: taglineSize 必须在 6–128", ErrLogoInvalid)
+	}
+	if doc.TaglineWeight == 0 {
+		doc.TaglineWeight = LogoDefaultTaglineWeight
+	}
+	if doc.TaglineWeight < 100 || doc.TaglineWeight > 900 || doc.TaglineWeight%100 != 0 {
+		return LogoDoc{}, fmt.Errorf("%w: taglineWeight 必须是 100–900 的百位整数", ErrLogoInvalid)
+	}
+	// 副标字距与字标间距都按 em 自动推算；显式值优先，便于字标优先/图形优先等预设微调。
+	if doc.Tagline != "" && doc.TaglineSpacing == 0 {
+		doc.TaglineSpacing = math.Round(doc.TaglineSize*LogoTaglineSpacingEm*100) / 100
+	}
+	if doc.TaglineSpacing < 0 || doc.TaglineSpacing > 50 {
+		return LogoDoc{}, fmt.Errorf("%w: taglineSpacing 必须在 0–50", ErrLogoInvalid)
+	}
+	if doc.Tagline != "" && doc.TaglineGap == 0 {
+		doc.TaglineGap = math.Round(doc.FontSize*LogoTaglineGapEm*100) / 100
+	}
+	if doc.TaglineGap < 0 || doc.TaglineGap > 256 {
+		return LogoDoc{}, fmt.Errorf("%w: taglineGap 必须在 0–256", ErrLogoInvalid)
 	}
 	if doc.LetterSpacing < -20 || doc.LetterSpacing > 50 {
 		return LogoDoc{}, fmt.Errorf("%w: letterSpacing 必须在 -20–50", ErrLogoInvalid)
@@ -255,10 +281,10 @@ func NormalizeLogoDoc(doc LogoDoc) (LogoDoc, error) {
 		return LogoDoc{}, fmt.Errorf("%w: 纯字标布局需要品牌名", ErrLogoInvalid)
 	}
 	if doc.WordmarkWidth == 0 && doc.Brand != "" {
-		doc.WordmarkWidth = estimateLogoTextWidth(logoCasedText(doc), doc.FontSize, doc.LetterSpacing)
+		doc.WordmarkWidth = estimateLogoTextWidth(logoCasedText(doc), doc.FontSize, doc.LetterSpacing, doc.Weight)
 	}
 	if doc.TaglineWidth == 0 && doc.Tagline != "" {
-		doc.TaglineWidth = estimateLogoTextWidth(doc.Tagline, doc.TaglineSize, doc.LetterSpacing*0.6)
+		doc.TaglineWidth = estimateLogoTextWidth(doc.Tagline, doc.TaglineSize, doc.TaglineSpacing, doc.TaglineWeight)
 	}
 	return doc, nil
 }
@@ -281,32 +307,52 @@ func logoCasedText(doc LogoDoc) string {
 	return doc.Brand
 }
 
+// logoGlyphWidths 是 Inter 的无浏览器近似字宽（em）。之前统一按 0.5em 估算
+// 拉丁小写，会让字标宽度少算 10–20%，导出的 SVG 右侧留白被吃掉、锁排看起来
+// 偏窄。这里按常见字形给出分档值，再按字重做小幅放大。
+var logoGlyphWidths = map[rune]float64{
+	'a': 0.56, 'b': 0.60, 'c': 0.56, 'd': 0.60, 'e': 0.56, 'f': 0.34,
+	'g': 0.60, 'h': 0.60, 'i': 0.26, 'j': 0.28, 'k': 0.54, 'l': 0.26,
+	'm': 0.88, 'n': 0.60, 'o': 0.60, 'p': 0.60, 'q': 0.60, 'r': 0.40,
+	's': 0.52, 't': 0.36, 'u': 0.60, 'v': 0.54, 'w': 0.80, 'x': 0.52,
+	'y': 0.52, 'z': 0.50,
+	'A': 0.68, 'B': 0.68, 'C': 0.74, 'D': 0.72, 'E': 0.60, 'F': 0.58,
+	'G': 0.74, 'H': 0.74, 'I': 0.30, 'J': 0.50, 'K': 0.68, 'L': 0.56,
+	'M': 0.88, 'N': 0.74, 'O': 0.76, 'P': 0.66, 'Q': 0.76, 'R': 0.68,
+	'S': 0.62, 'T': 0.60, 'U': 0.72, 'V': 0.68, 'W': 0.96, 'X': 0.68,
+	'Y': 0.64, 'Z': 0.62,
+	'0': 0.62, '1': 0.44, '2': 0.58, '3': 0.58, '4': 0.60, '5': 0.58,
+	'6': 0.58, '7': 0.56, '8': 0.60, '9': 0.60,
+	' ': 0.26, '.': 0.26, ',': 0.26, ':': 0.26, ';': 0.26, '-': 0.36,
+	'_': 0.52, '/': 0.36, '\\': 0.36, '|': 0.22, '!': 0.26, '?': 0.50,
+	'\'': 0.20, '"': 0.36, '(': 0.36, ')': 0.36, '&': 0.68, '%': 0.84,
+	'@': 0.86, '#': 0.62, '+': 0.62, '*': 0.46, '=': 0.62,
+}
+
 // estimateLogoTextWidth 是无浏览器字体度量时的保守估算：
-// 中文/全角按 1em，拉丁按字宽经验值，另加 letter-spacing。
-func estimateLogoTextWidth(text string, size, spacing float64) float64 {
+// 中文/全角按 1em，拉丁按 Inter 的字形近似值，另按字重和 letter-spacing 修正。
+func estimateLogoTextWidth(text string, size, spacing float64, weight int) float64 {
+	if text == "" || size <= 0 {
+		return 0
+	}
 	var w float64
 	for _, r := range text {
 		switch {
 		case r >= 0x2E80:
 			w += 1.0
-		case r == ' ':
-			w += 0.30
-		case r >= '0' && r <= '9':
-			w += 0.55
-		case r >= 'A' && r <= 'Z':
-			w += 0.62
-		case r >= 'a' && r <= 'z':
-			w += 0.50
-		case strings.ContainsRune(".,:;'|!il", r):
-			w += 0.28
 		default:
-			w += 0.55
+			if v, ok := logoGlyphWidths[r]; ok {
+				w += v
+			} else {
+				w += 0.55
+			}
 		}
 	}
-	if text == "" {
-		return 0
+	factor := 1.0
+	if weight > 400 {
+		factor = 1 + float64(weight-400)/400*0.04
 	}
-	w *= size
+	w *= size * factor
 	w += spacing * float64(len([]rune(text))-1)
 	return math.Round(w*100) / 100
 }
@@ -322,9 +368,14 @@ type LogoMetrics struct {
 	TextHeight     float64
 	WordmarkHeight float64
 	TaglineHeight  float64
-	HasMark        bool
-	HasTagline     bool
-	WordmarkText   string
+	TaglineGap     float64
+	// MarkTop / TextTop 是相对内容区（不含安全空间）的纵向起点，
+	// 横排时按字标的视觉中线对齐标记，而不是按「字标+副标」整块居中。
+	MarkTop      float64
+	TextTop      float64
+	HasMark      bool
+	HasTagline   bool
+	WordmarkText string
 }
 
 // LogoLayoutMetrics 计算布局尺寸；供 SVG、HTML、规范共用。
@@ -341,9 +392,10 @@ func LogoLayoutMetrics(doc LogoDoc) (LogoMetrics, error) {
 	}
 	m.WordmarkHeight = math.Round(doc.FontSize*1.15*100) / 100
 	if m.HasTagline {
-		m.TaglineHeight = math.Round(doc.TaglineSize*1.2*100) / 100
+		m.TaglineGap = math.Round(doc.TaglineGap*100) / 100
+		m.TaglineHeight = math.Round(doc.TaglineSize*1.15*100) / 100
 	}
-	m.TextHeight = m.WordmarkHeight + m.TaglineHeight
+	m.TextHeight = m.WordmarkHeight + m.TaglineGap + m.TaglineHeight
 	m.TextWidth = doc.WordmarkWidth
 	if doc.TaglineWidth > m.TextWidth {
 		m.TextWidth = doc.TaglineWidth
@@ -363,10 +415,25 @@ func LogoLayoutMetrics(doc LogoDoc) (LogoMetrics, error) {
 	switch doc.Layout {
 	case LogoLayoutHorizontal:
 		m.ContentWidth = m.MarkSize + doc.Gap + m.TextWidth
-		m.ContentHeight = math.Max(m.MarkSize, m.TextHeight)
+		// 先按整块文字居中，再把标记抬到字标行的视觉中线。
+		contentH := math.Max(m.MarkSize, m.TextHeight)
+		textTop := (contentH - m.TextHeight) / 2
+		markTop := textTop + (m.WordmarkHeight-m.MarkSize)/2
+		if markTop < 0 {
+			// 标记高于字标行：整体下移，保证内容仍在安全空间内。
+			contentH += -markTop
+			textTop += -markTop
+			markTop = 0
+		}
+		if markTop+m.MarkSize > contentH {
+			contentH = markTop + m.MarkSize
+		}
+		m.ContentHeight = contentH
+		m.MarkTop, m.TextTop = markTop, textTop
 	case LogoLayoutStacked:
 		m.ContentWidth = math.Max(m.MarkSize, m.TextWidth)
 		m.ContentHeight = m.MarkSize + doc.Gap + m.TextHeight
+		m.MarkTop, m.TextTop = 0, m.MarkSize+doc.Gap
 	case LogoLayoutMark:
 		m.ContentWidth, m.ContentHeight = m.MarkSize, m.MarkSize
 	case LogoLayoutWordmark:
@@ -430,6 +497,7 @@ func LogoDocSpec(doc LogoDoc) (LogoSpec, error) {
 		Usage: []string{
 			"最小宽度按「标记/字标 ≥16px」换算；更小尺寸请改用 mark-only 变体。",
 			"正形用于浅底，反形用于品牌色/深底，单色用于单套印刷与低色域场景。",
+			"副标默认 500 字重、0.12em 字距，与字标行盒间距 0.2em；可在设计器中微调。",
 			"导出 SVG 的字标仍是文本；交付生产前请转曲，或确认字体已授权/嵌入。",
 		},
 	}
@@ -450,6 +518,37 @@ func LogoDocSpec(doc LogoDoc) (LogoSpec, error) {
 	for _, v := range []string{LogoVariantPositive, LogoVariantInverse} {
 		if spec.Contrast[v] < 3.0 {
 			spec.Warnings = append(spec.Warnings, fmt.Sprintf("%s 变体对比度 %.2f < 3.0，请调整品牌色或底色", v, spec.Contrast[v]))
+		}
+	}
+	// 比例走查：比例失衡是「看起来丑」的主要原因，给出可执行的下一步建议。
+	if norm.FontSize > 0 && norm.Layout != LogoLayoutWordmark {
+		if markRatio := norm.MarkSize / norm.FontSize; markRatio < 0.6 || markRatio > 1.8 {
+			spec.Warnings = append(spec.Warnings, fmt.Sprintf(
+				"标记/字标比例 %.2f 失衡；建议 0.9–1.3，当前可设标记约 %.0fpx",
+				markRatio, norm.FontSize*1.1))
+		}
+	}
+	if norm.FontSize > 0 && (norm.Layout == LogoLayoutHorizontal || norm.Layout == LogoLayoutStacked) {
+		if gapRatio := norm.Gap / norm.FontSize; gapRatio < 0.15 || gapRatio > 0.75 {
+			adj := "近"
+			if gapRatio > 0.75 {
+				adj = "远"
+			}
+			spec.Warnings = append(spec.Warnings, fmt.Sprintf(
+				"标记与字标间距 %.2fem 过%s；建议 0.25–0.5em（约 %.0fpx）",
+				gapRatio, adj, norm.FontSize*0.35))
+		}
+	}
+	if norm.Tagline != "" && norm.Layout != LogoLayoutMark && norm.FontSize > 0 {
+		if ratio := norm.TaglineSize / norm.FontSize; ratio < 0.18 || ratio > 0.45 {
+			spec.Warnings = append(spec.Warnings, fmt.Sprintf(
+				"副标/字标比例 %.2f 失衡；建议 0.25–0.35（当前约 %.1fpx）", ratio, norm.FontSize*0.3))
+		}
+	}
+	if norm.FontSize > 0 && norm.LetterSpacing != 0 {
+		if ratio := norm.LetterSpacing / norm.FontSize; ratio < -0.08 || ratio > 0.15 {
+			spec.Warnings = append(spec.Warnings, fmt.Sprintf(
+				"字标字距 %.2fem 偏离常规；建议 -0.05–0.1em。", ratio))
 		}
 	}
 	if norm.Brand == "" && norm.Layout != LogoLayoutMark {
@@ -507,16 +606,13 @@ func LogoSVG(doc LogoDoc, variant string) (string, error) {
 	switch norm.Layout {
 	case LogoLayoutHorizontal:
 		textX := m.Pad + m.MarkSize + norm.Gap
-		top := m.Pad + (m.ContentHeight-m.TextHeight)/2
-		b.WriteString(logoTextElements(norm, m, ink, textX, top, m.TextWidth, "start"))
+		b.WriteString(logoTextElements(norm, m, ink, textX, m.Pad+m.TextTop, m.TextWidth, "start"))
 	case LogoLayoutStacked:
-		top := m.Pad + m.MarkSize + norm.Gap
-		b.WriteString(logoTextElements(norm, m, ink, m.Width/2, top, m.ContentWidth, "middle"))
+		b.WriteString(logoTextElements(norm, m, ink, m.Width/2, m.Pad+m.TextTop, m.ContentWidth, "middle"))
 	case LogoLayoutMark:
 		// 无字标
 	case LogoLayoutWordmark:
-		top := m.Pad + (m.ContentHeight-m.TextHeight)/2
-		b.WriteString(logoTextElements(norm, m, ink, m.Width/2, top, m.ContentWidth, "middle"))
+		b.WriteString(logoTextElements(norm, m, ink, m.Width/2, m.Pad+m.TextTop, m.ContentWidth, "middle"))
 	}
 	b.WriteString(`</svg>`)
 	return b.String(), nil
@@ -527,13 +623,13 @@ func logoMarkBox(doc LogoDoc, m LogoMetrics) (x, y, size float64) {
 	switch doc.Layout {
 	case LogoLayoutHorizontal:
 		x = m.Pad
-		y = m.Pad + (m.ContentHeight-m.MarkSize)/2
+		y = m.Pad + m.MarkTop
 	case LogoLayoutStacked:
 		x = m.Pad + (m.ContentWidth-m.MarkSize)/2
-		y = m.Pad
+		y = m.Pad + m.MarkTop
 	case LogoLayoutMark:
-		x = m.Pad
-		y = m.Pad
+		x = m.Pad + (m.ContentWidth-m.MarkSize)/2
+		y = m.Pad + (m.ContentHeight-m.MarkSize)/2
 	}
 	return
 }
@@ -552,9 +648,13 @@ func logoTextElements(doc LogoDoc, m LogoMetrics, ink string, x, top, width floa
 		b.WriteString(`>` + xmlEscape(logoCasedText(doc)) + `</text>`)
 	}
 	if m.HasTagline {
-		baseline := top + m.WordmarkHeight + doc.TaglineSize*0.82
-		fmt.Fprintf(&b, `<text x="%s" y="%s" text-anchor="%s" font-family="%s" font-size="%s" font-weight="400" fill="%s" opacity="0.82">%s</text>`,
-			fnum(x), fnum(baseline), anchor, xmlEscape(family), fnum(doc.TaglineSize), ink, xmlEscape(doc.Tagline))
+		baseline := top + m.WordmarkHeight + doc.TaglineGap + doc.TaglineSize*0.82
+		fmt.Fprintf(&b, `<text x="%s" y="%s" text-anchor="%s" font-family="%s" font-size="%s" font-weight="%d" fill="%s"`,
+			fnum(x), fnum(baseline), anchor, xmlEscape(family), fnum(doc.TaglineSize), doc.TaglineWeight, ink)
+		if doc.TaglineSpacing != 0 {
+			fmt.Fprintf(&b, ` letter-spacing="%s"`, fnum(doc.TaglineSpacing))
+		}
+		b.WriteString(`>` + xmlEscape(doc.Tagline) + `</text>`)
 	}
 	return b.String()
 }

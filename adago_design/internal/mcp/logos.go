@@ -27,22 +27,25 @@ type logoIn struct {
 	System string          `json:"system,omitempty" jsonschema:"设计体系 ID，用于默认品牌色"`
 	Doc    *design.LogoDoc `json:"doc,omitempty" jsonschema:"完整 Logo 设计文档；提供时优先于 flat 字段"`
 
-	Brand         string  `json:"brand,omitempty" jsonschema:"字标文本"`
-	Tagline       string  `json:"tagline,omitempty" jsonschema:"副标文本"`
-	MarkIcon      string  `json:"markIcon,omitempty" jsonschema:"标记图标名（design_icons 可检索）"`
-	Layout        string  `json:"layout,omitempty" jsonschema:"horizontal|stacked|mark|wordmark"`
-	Font          string  `json:"font,omitempty" jsonschema:"字体 ID（design_fonts 可查），默认 inter"`
-	Weight        int     `json:"weight,omitempty" jsonschema:"字重 400/500/600/700"`
-	Color         string  `json:"color,omitempty" jsonschema:"品牌色 #RRGGBB"`
-	Background    string  `json:"background,omitempty" jsonschema:"transparent 或 #RRGGBB"`
-	Casing        string  `json:"casing,omitempty" jsonschema:"none|upper"`
-	MarkSize      float64 `json:"markSize,omitempty" jsonschema:"标记尺寸 px（默认 40）"`
-	FontSize      float64 `json:"fontSize,omitempty" jsonschema:"字标字号 px（默认 36）"`
-	TaglineSize   float64 `json:"taglineSize,omitempty" jsonschema:"副标字号 px"`
-	Gap           float64 `json:"gap,omitempty" jsonschema:"标记与字标间距 px"`
-	LetterSpacing float64 `json:"letterSpacing,omitempty" jsonschema:"字距 px"`
-	ClearSpace    float64 `json:"clearSpace,omitempty" jsonschema:"安全空间倍数（默认 0.5）"`
-	WordmarkWidth float64 `json:"wordmarkWidth,omitempty" jsonschema:"浏览器实测字宽；缺省按字符估算"`
+	Brand          string  `json:"brand,omitempty" jsonschema:"字标文本"`
+	Tagline        string  `json:"tagline,omitempty" jsonschema:"副标文本"`
+	MarkIcon       string  `json:"markIcon,omitempty" jsonschema:"标记图标名（design_icons 可检索）"`
+	Layout         string  `json:"layout,omitempty" jsonschema:"horizontal|stacked|mark|wordmark"`
+	Font           string  `json:"font,omitempty" jsonschema:"字体 ID（design_fonts 可查），默认 inter"`
+	Weight         int     `json:"weight,omitempty" jsonschema:"字重 400/500/600/700"`
+	Color          string  `json:"color,omitempty" jsonschema:"品牌色 #RRGGBB"`
+	Background     string  `json:"background,omitempty" jsonschema:"transparent 或 #RRGGBB"`
+	Casing         string  `json:"casing,omitempty" jsonschema:"none|upper"`
+	MarkSize       float64 `json:"markSize,omitempty" jsonschema:"标记尺寸 px（默认 40）"`
+	FontSize       float64 `json:"fontSize,omitempty" jsonschema:"字标字号 px（默认 36）"`
+	TaglineSize    float64 `json:"taglineSize,omitempty" jsonschema:"副标字号 px（缺省 0.3×字标字号）"`
+	TaglineWeight  int     `json:"taglineWeight,omitempty" jsonschema:"副标字重 100–900（缺省 500）"`
+	TaglineSpacing float64 `json:"taglineSpacing,omitempty" jsonschema:"副标字距 px（缺省 0.12em 自动推算）"`
+	TaglineGap     float64 `json:"taglineGap,omitempty" jsonschema:"字标与副标的行盒间距 px（缺省 0.2em 自动推算）"`
+	Gap            float64 `json:"gap,omitempty" jsonschema:"标记与字标间距 px"`
+	LetterSpacing  float64 `json:"letterSpacing,omitempty" jsonschema:"字距 px"`
+	ClearSpace     float64 `json:"clearSpace,omitempty" jsonschema:"安全空间倍数（默认 0.5）"`
+	WordmarkWidth  float64 `json:"wordmarkWidth,omitempty" jsonschema:"浏览器实测字宽；缺省按字符估算"`
 
 	Variant     string `json:"variant,omitempty" jsonschema:"positive|inverse|mono，默认 positive"`
 	Project     string `json:"project,omitempty" jsonschema:"place 动作必填：目标项目 ID"`
@@ -294,6 +297,17 @@ func applyLogoFlatFields(doc *design.LogoDoc, in logoIn) {
 		doc.TaglineSize = in.TaglineSize
 		textChanged = true
 	}
+	if in.TaglineWeight != 0 {
+		doc.TaglineWeight = in.TaglineWeight
+		textChanged = true
+	}
+	if in.TaglineSpacing != 0 {
+		doc.TaglineSpacing = in.TaglineSpacing
+		textChanged = true
+	}
+	if in.TaglineGap != 0 {
+		doc.TaglineGap = in.TaglineGap
+	}
 	if in.Gap != 0 {
 		doc.Gap = in.Gap
 	}
@@ -369,4 +383,5 @@ func logoSpecWarnings(spec design.LogoSpec) string {
 }
 
 const logoDocHint = "LogoDoc: brand/tagline/layout(horizontal|stacked|mark|wordmark)/mark{kind:icon|shapes,icon,design}/" +
-	"markSize/gap/font/fontSize/weight/color/background/clearSpace；可直接传 doc，也可用 flat 字段生成"
+	"markSize/gap/font/fontSize/weight/taglineSize/taglineWeight/taglineSpacing/taglineGap/color/background/clearSpace；" +
+	"可直接传 doc，也可用 flat 字段生成"

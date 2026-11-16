@@ -3,6 +3,7 @@ package design
 import (
 	"encoding/json"
 	"errors"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -286,5 +287,131 @@ func TestLogoDegradesWhenMarkIconMissing(t *testing.T) {
 	l, ok := GetLogo("legacy-logo")
 	if !ok || l.Doc.Layout != LogoLayoutWordmark || l.Doc.Mark.Kind != "none" {
 		t.Fatalf("降级结果异常: %+v", l)
+	}
+}
+
+func TestLogoDocTaglineTypography(t *testing.T) {
+	doc := sampleLogoDoc()
+	doc.Layout = LogoLayoutHorizontal
+	doc.FontSize = 40
+	doc.MarkSize = 44
+	doc.Tagline = "AI AGENT"
+	doc.Casing = "upper"
+	doc.TaglineSize = 12
+	doc.TaglineWeight = 600
+	doc.TaglineSpacing = 1.5
+	doc.TaglineGap = 9
+
+	norm, err := NormalizeLogoDoc(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if norm.TaglineWeight != 600 || norm.TaglineSpacing != 1.5 || norm.TaglineGap != 9 {
+		t.Fatalf("副标排印参数未保留: %+v", norm)
+	}
+	m, err := LogoLayoutMetrics(norm)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := m.WordmarkHeight + 9 + m.TaglineHeight
+	if math.Abs(m.TextHeight-want) > 0.01 {
+		t.Fatalf("副标间距未计入高度: got %.2f want %.2f", m.TextHeight, want)
+	}
+	svg, err := LogoSVG(norm, LogoVariantPositive)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(svg, `font-weight="600"`) {
+		t.Fatal("副标字重未写入 SVG")
+	}
+	if !strings.Contains(svg, `letter-spacing="1.5"`) {
+		t.Fatal("副标字距未写入 SVG")
+	}
+	if !strings.Contains(svg, ">AI AGENT</text>") {
+		t.Fatal("副标文字缺失")
+	}
+
+	// 缺省时按 0.12em 字距 / 0.2em 间距自动补齐，taglineSize 按 0.3×字号
+	auto := doc
+	auto.TaglineSize = 0
+	auto.TaglineWeight = 0
+	auto.TaglineSpacing = 0
+	auto.TaglineGap = 0
+	normAuto, err := NormalizeLogoDoc(auto)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if math.Abs(normAuto.TaglineSize-12) > 0.01 {
+		t.Fatalf("副标默认字号应约为 0.3×字号，得到 %.2f", normAuto.TaglineSize)
+	}
+	if math.Abs(normAuto.TaglineSpacing-1.44) > 0.01 {
+		t.Fatalf("副标默认字距应约为 1.44，得到 %.2f", normAuto.TaglineSpacing)
+	}
+	if math.Abs(normAuto.TaglineGap-8) > 0.01 {
+		t.Fatalf("副标默认间距应约为 8，得到 %.2f", normAuto.TaglineGap)
+	}
+}
+
+func TestLogoDocOpticalMarkAlignment(t *testing.T) {
+	doc := sampleLogoDoc()
+	doc.Layout = LogoLayoutHorizontal
+	doc.FontSize = 40
+	doc.MarkSize = 44
+	doc.TaglineSize = 12
+	doc.Tagline = "AI AGENT"
+	doc.Casing = "upper"
+
+	m, err := LogoLayoutMetrics(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	markCenter := m.MarkTop + m.MarkSize/2
+	wordCenter := m.TextTop + m.WordmarkHeight/2
+	if math.Abs(markCenter-wordCenter) > 0.01 {
+		t.Fatalf("横排标记未对齐字标视觉中线: mark=%.2f word=%.2f", markCenter, wordCenter)
+	}
+	if m.MarkTop < 0 || m.TextTop < 0 {
+		t.Fatalf("内容越界: %+v", m)
+	}
+}
+
+func TestEstimateLogoTextWidth(t *testing.T) {
+	// 旧公式按 0.5em 估算得到 100；Inter 700 的 adago 约 120。
+	got := estimateLogoTextWidth("adago", 40, 0, 700)
+	if got < 108 || got > 132 {
+		t.Fatalf("字宽估算偏离实际: %.2f", got)
+	}
+}
+
+func TestLogoDocRatioWarnings(t *testing.T) {
+	doc := sampleLogoDoc()
+	doc.FontSize = 40
+	doc.MarkSize = 100
+	doc.Gap = 2
+	doc.Tagline = "AI AGENT"
+	doc.TaglineSize = 30
+	spec, err := LogoDocSpec(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	joined := strings.Join(spec.Warnings, "；")
+	for _, want := range []string{"标记/字标比例", "间距", "副标/字标比例"} {
+		if !strings.Contains(joined, want) {
+			t.Fatalf("比例走查缺少 %q：%s", want, joined)
+		}
+	}
+
+	good := doc
+	good.MarkSize = 44
+	good.Gap = 12
+	good.TaglineSize = 12
+	spec, err = LogoDocSpec(good)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, ratioWarning := range []string{"标记/字标比例", "间距", "副标/字标比例"} {
+		if strings.Contains(strings.Join(spec.Warnings, "；"), ratioWarning) {
+			t.Fatalf("合理比例不应报警 %q：%v", ratioWarning, spec.Warnings)
+		}
 	}
 }
