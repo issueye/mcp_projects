@@ -1,0 +1,101 @@
+<div class="doc narrow" style="min-height:1180px">
+  <div class="doc-h">
+    <div class="doc-mark">D</div>
+    <div>
+      <div class="doc-kicker">adago-design · 项目设计文稿 · 设计说明</div>
+      <div class="doc-title">把画布整理成一份可交付的文稿</div>
+    </div>
+    <div class="doc-meta"><span>A4 · 一稿一页</span><span>原生 / 浏览器</span><span>v1</span></div>
+  </div>
+
+  <p class="doc-lede">
+    项目已经能导出 JSON（换机器继续编辑）和 HTML（在浏览器里看整块画布），但没有第三种东西：
+    <b>可以发出去评审、归档、打印的交付物</b>。本次不新增设计能力，只把「项目里的稿」按阅读顺序
+    装订成一份多页 PDF：封面交代项目身份，概览汇总体系与构成，索引给出页码，一张稿一页。
+    原生窗口下直接下载文件；浏览器形态退化为打印页「另存为 PDF」。
+  </p>
+
+  <div class="doc-row">
+    <section class="doc-col wide">
+      <div class="doc-sec-h"><b>01 · 现状审计</b><span>为什么需要文稿</span></div>
+      <table class="spec">
+        <tr><th>现状</th><th>后果</th></tr>
+        <tr><td><b>JSON 导出</b>是工程文件</td><td>收件人要有 adago-design 才能打开；评审者只想要一份能翻的东西</td></tr>
+        <tr><td><b>canvas_export</b> 是一张 HTML 板</td><td>带坐标、可拖动，适合看画布；打印会连工具条/浮窗一起印，也没有页码</td></tr>
+        <tr><td>截图只能一张一张回传</td><td>多稿评审要来回切文件；顺序、项目身份、体系说明都散了</td></tr>
+        <tr><td>浏览器打印不可控</td><td>没有专用文稿页时，@page、分页、背景色都靠用户手调</td></tr>
+        <tr><td>桌面端没有 PDF 能力</td><td>原生窗口只能把画布交给浏览器或截图工具</td></tr>
+      </table>
+    </section>
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>02 · 目标与原则</b><span>本轮只做交付</span></div>
+      <ul class="doc-p" style="padding-left:16px;display:flex;flex-direction:column;gap:6px">
+        <li><b>一稿一页</b>：评审能按页批注，页码可引用。</li>
+        <li><b>按画布顺序</b>：上→下、左→右，不按创建时间。</li>
+        <li><b>项目身份前置</b>：封面 + 概览先交代项目、体系、构成。</li>
+        <li><b>不改数据</b>：只读节点元数据，不写盘、不迁移。</li>
+        <li><b>原生优先</b>：隐藏窗口 + WebView2 PrintToPDF，自动下载。</li>
+        <li><b>浏览器可退</b>：同一文稿页 + 打印对话框，不另做一套版式。</li>
+        <li><b>纸墨同源</b>：印刷色板与界面令牌同源，深色主题不影响文稿。</li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="doc-row">
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>03 · 文稿结构</b><span>页序 = 阅读顺序</span></div>
+      <table class="spec">
+        <tr><th>页</th><th>内容</th></tr>
+        <tr><td><b>1</b></td><td>封面：项目名 / 备注 / 设计稿 · 体系 · 分组框 · 文稿页计数 / 生成时间</td></tr>
+        <tr><td><b>2</b></td><td>概览：项目信息、设计体系、设计稿构成、文稿结构、项目备注</td></tr>
+        <tr><td><b>3..k</b></td><td>设计索引：# / 设计稿 / 体系 / 类型 / 画板 / 尺寸 / 文稿页；14 或 18 行分页</td></tr>
+        <tr><td><b>k+1..</b></td><td>逐稿页：编号 / 标题 / 体系 / 类型 / 画板 / 尺寸 / 等比预览 / 来源 / 页码</td></tr>
+      </table>
+      <p class="doc-p">页数 = 2 + 索引页数 + 设计稿数；空项目固定 3 页（封面 + 概览 + 空态）。
+        索引最后一列直接指向逐稿页，评审可以在 PDF 阅读器里按页码跳。</p>
+    </section>
+
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>04 · 设计图索引</b><span>6 张</span></div>
+      <table class="spec">
+        <tr><td><b>01</b></td><td>入口：项目 ⋯ 菜单 + 项目管理行 PDF + 三态反馈</td></tr>
+        <tr><td><b>02</b></td><td>流程：原生隐藏窗口 PrintToPDF / 浏览器打印页</td></tr>
+        <tr><td><b>03</b></td><td>封面：项目身份 + 四格统计 + 生成时间</td></tr>
+        <tr><td><b>04</b></td><td>内页：概览 / 索引 / 逐稿页 + 缩放标注</td></tr>
+        <tr><td><b>05</b></td><td>视觉规范：纸张 / 字号 / 色板 / 分页 / 方向</td></tr>
+        <tr><td><b>06</b></td><td>实现契约：路由 / 数据 / 状态 / 验收</td></tr>
+      </table>
+    </section>
+  </div>
+
+  <div class="doc-row">
+    <section class="doc-col wide">
+      <div class="doc-sec-h"><b>05 · 决策记录</b><span>有争议的点先定</span></div>
+      <ul class="doc-p" style="padding-left:16px;display:flex;flex-direction:column;gap:6px">
+        <li><b>PDF 还是 PPT？</b>PDF：评审/归档/打印通用，不需要对方装工具；不引入演示动画。</li>
+        <li><b>逐稿页 vs 缩略拼版？</b>逐稿页：一张稿占一页，能看清；缩略拼版只适合目录，不适合批注。</li>
+        <li><b>分组框要不要成页？</b>不要：它只是背板，单独成页会得到空白框，只在统计里出现。</li>
+        <li><b>纸张方向谁决定？</b>稿件宽高比多数票；平票取纵向（手机稿优先按 100% 印出）。</li>
+        <li><b>服务端光栅化还是原生打印？</b>原生 PrintToPDF：文字仍是矢量、可复制可搜索；不引入 Chromium 依赖。</li>
+        <li><b>浏览器怎么办？</b>同一文稿页 + <code>?print=1</code>；不自研第二套 PDF 版式，避免漂移。</li>
+        <li><b>文稿跟界面主题吗？</b>不跟：交付物固定纸面 + 墨封面，避免深色主题把打印变成整页黑底。</li>
+      </ul>
+    </section>
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>06 · 非目标</b><span>本轮不做</span></div>
+      <ul class="doc-p" style="padding-left:16px;display:flex;flex-direction:column;gap:6px">
+        <li>不做全部项目合并文稿（多封面/多目录另议）。</li>
+        <li>不做 PDF 内批注/评论（交给阅读器）。</li>
+        <li>不改 JSON 导入导出、数据格式与既有 API。</li>
+        <li>不做 MCP 工具（PDF 需要原生窗口，UI/HTTP 先跑通；后续按需开放）。</li>
+        <li>不做在线预览器、不做 Figma/InDesign 交换格式。</li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="doc-foot">
+    <div class="do"><b>做</b><span>一稿一页</span><span>封面概览索引</span><span>原生下载</span><span>打印回退</span></div>
+    <div class="dont"><b>不做</b><span>服务端光栅化</span><span>全部项目合并</span><span>第二套版式</span><span>数据迁移</span></div>
+    <div class="end">先设计 · 后实现 · 2026-11-16</div>
+  </div>
+</div>

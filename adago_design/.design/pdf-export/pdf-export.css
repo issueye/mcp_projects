@@ -1,0 +1,233 @@
+/* 项目设计文稿导出（PDF）· 设计稿专用样式
+ *
+ * 纸墨令牌与 .design/systems/kit.css 同源；本文件只服务静态设计稿：
+ *   - .pdfpage：按 A4 真实比例缩放的文稿页 mock（520×735 / compact 400×566）
+ *   - .anno / .annoline：设计标注（编号、引线、说明）
+ *   - .dockmini / .modalmini / .toastmini：入口与状态的界面裁剪
+ */
+
+/* ---------- 场景 ---------- */
+.pdfshot {
+  width: 1440px; height: 900px; position: relative; overflow: hidden;
+  background: var(--ui-canvas);
+  background-image: radial-gradient(color-mix(in srgb, var(--ui-ink-3) 14%, transparent) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+.pdfshot .scene-head { position: absolute; left: 48px; top: 38px; display: flex; flex-direction: column; gap: 6px; }
+.pdfshot .scene-kicker { font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: .12em; color: var(--ui-ink-3); text-transform: uppercase; }
+.pdfshot .scene-title { font-size: 24px; font-weight: 600; letter-spacing: -.02em; }
+.pdfshot .scene-sub { font-size: 12px; color: var(--ui-ink-2); max-width: 760px; line-height: 1.7; }
+.pdfshot .scene-note { position: absolute; left: 48px; bottom: 30px; font-size: 11px; color: var(--ui-ink-3); }
+.pdfshot .scene-note b { color: var(--ui-ink-2); font-weight: 500; }
+
+/* ---------- 文稿页 ---------- */
+.pdfpage {
+  position: relative; width: 520px; height: 735px; flex: none;
+  display: flex; flex-direction: column; padding: 30px 34px 22px;
+  background: #FBF8F1; color: #16171A; overflow: hidden;
+  box-shadow: 0 24px 60px rgba(22, 23, 26, .18);
+  font-family: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+.pdfpage.compact { width: 440px; height: 622px; padding: 24px 28px 18px; }
+.pdfpage.ink { background: #16171A; color: #F6F3EC; }
+.pagewrap { display: flex; flex-direction: column; gap: 8px; }
+.pdfpage .pg-label { display: none; }
+.pagewrap .pg-caption {
+  display: flex; justify-content: space-between; align-items: center;
+  width: 100%; font-family: "JetBrains Mono", monospace; font-size: 10px;
+  color: var(--ui-ink-3); letter-spacing: .02em;
+}
+
+/* 封面 */
+.pdfpage .pg-brandline { display: flex; align-items: center; gap: 10px; }
+.pdfpage .pg-mark {
+  width: 26px; height: 26px; border-radius: 7px; display: inline-flex;
+  align-items: center; justify-content: center; font-size: 14px; font-weight: 800;
+  background: #F6F3EC; color: #16171A;
+}
+.pdfpage .pg-brand { font-size: 13px; font-weight: 700; letter-spacing: .01em; }
+.pdfpage .pg-topkicker { margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 8px; letter-spacing: .16em; color: #BDB8AD; }
+.pdfpage .pg-cover-main { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 12px; }
+.pdfpage .pg-eyebrow { font-size: 9px; letter-spacing: .12em; color: #BDB8AD; text-transform: uppercase; }
+.pdfpage .pg-cover-title { font-size: 37px; line-height: 1.08; font-weight: 700; letter-spacing: -.02em; max-width: 92%; }
+.pdfpage .pg-cover-note { font-size: 12px; line-height: 1.75; color: #D8D3C8; max-width: 88%; }
+.pdfpage .pg-stats { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid rgba(246, 243, 236, .26); }
+.pdfpage .pg-stat { padding: 14px 0 11px; display: flex; flex-direction: column; gap: 4px; }
+.pdfpage .pg-stat:not(:last-child) { border-right: 1px solid rgba(246, 243, 236, .18); padding-right: 12px; }
+.pdfpage .pg-stat-k { font-size: 8px; letter-spacing: .12em; color: #BDB8AD; text-transform: uppercase; }
+.pdfpage .pg-stat-v { font-size: 22px; font-weight: 700; font-family: "JetBrains Mono", monospace; }
+.pdfpage .pg-cover-foot { display: flex; justify-content: space-between; margin-top: 18px; font-size: 8px; color: #9E998E; }
+
+/* 页头 / 页脚（内页） */
+.pdfpage .pg-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; padding-bottom: 9px; border-bottom: 1px solid #C9C0AC; margin-bottom: 16px; }
+.pdfpage .pg-head-left { display: flex; flex-direction: column; gap: 4px; }
+.pdfpage .pg-kicker { font-family: "JetBrains Mono", monospace; font-size: 8px; letter-spacing: .12em; color: #6E6A60; text-transform: uppercase; }
+.pdfpage .pg-title { font-size: 23px; font-weight: 700; letter-spacing: -.01em; line-height: 1.1; }
+.pdfpage .pg-proj { font-size: 9px; color: #57544C; text-align: right; max-width: 55%; }
+.pdfpage .pg-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: auto; padding-top: 8px; border-top: 1px solid #DCD5C6; font-size: 8px; color: #6E6A60; }
+.pdfpage.compact .pg-foot { padding-top: 6px; }
+.pdfpage .pg-foot .mono { font-family: "JetBrains Mono", monospace; }
+
+/* 概览 */
+.pdfpage .pg-ov { display: flex; flex-direction: column; gap: 11px; }
+.pdfpage .pg-ovtop { display: grid; grid-template-columns: 1.08fr .92fr; gap: 12px; align-items: start; }
+.pdfpage .pg-panel { border: 1px solid #DCD5C6; border-radius: 8px; background: #FFFDF8; padding: 12px 14px; display: flex; flex-direction: column; gap: 7px; }
+.pdfpage .pg-panel-h { font-size: 8px; letter-spacing: .12em; color: #6E6A60; text-transform: uppercase; }
+.pdfpage .pg-kv { display: grid; grid-template-columns: 62px 1fr; gap: 7px; font-size: 9.5px; padding: 4px 0; border-bottom: 1px dashed #DCD5C6; }
+.pdfpage .pg-kv:last-child { border-bottom: 0; }
+.pdfpage .pg-kv .k { color: #6E6A60; }
+.pdfpage .pg-kv .v { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pdfpage .pg-sysrow { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px dashed #DCD5C6; font-size: 9.5px; }
+.pdfpage .pg-sysrow:last-child { border-bottom: 0; }
+.pdfpage .pg-dot { width: 10px; height: 10px; border-radius: 3px; flex: none; background: #007AFF; }
+.pdfpage .pg-sysname { font-weight: 600; }
+.pdfpage .pg-sysmeta { margin-left: auto; color: #6E6A60; font-size: 8px; }
+.pdfpage .pg-syscount { font-family: "JetBrains Mono", monospace; color: #57544C; }
+.pdfpage .pg-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pdfpage .pg-chip { border: 1px solid #C9C0AC; border-radius: 999px; padding: 3px 8px; font-size: 8px; background: #FBF8F1; }
+.pdfpage .pg-chip b { font-weight: 600; margin-right: 3px; }
+.pdfpage .pg-flow { display: flex; flex-wrap: wrap; gap: 5px; font-size: 8px; color: #57544C; }
+.pdfpage .pg-step { background: #F2EDE2; border-radius: 4px; padding: 3px 6px; }
+.pdfpage .pg-step b { color: #6E6A60; font-family: "JetBrains Mono", monospace; margin-right: 3px; }
+.pdfpage .pg-arrow { color: #C9C0AC; }
+.pdfpage .pg-note { border: 1px solid #DCD5C6; border-radius: 8px; background: #FFFDF8; padding: 11px 14px; display: flex; flex-direction: column; gap: 6px; }
+.pdfpage .pg-note-text { font-size: 10px; line-height: 1.7; color: #57544C; }
+.pdfpage .pg-meta { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 8px; color: #6E6A60; border-top: 1px solid #DCD5C6; padding-top: 7px; }
+.pdfpage .pg-read { border-left: 3px solid #C9C0AC; padding-left: 9px; font-size: 8px; line-height: 1.7; color: #6E6A60; }
+
+/* 索引 */
+.pdfpage .pg-idx { width: 100%; border-collapse: collapse; font-size: 8.5px; table-layout: fixed; font-variant-numeric: tabular-nums; }
+.pdfpage .pg-idx th { text-align: left; font-size: 7.5px; letter-spacing: .06em; color: #6E6A60; text-transform: uppercase; border-bottom: 1px solid #C9C0AC; padding: 0 4px 5px; white-space: nowrap; }
+.pdfpage .pg-idx td { padding: 6px 4px; border-bottom: 1px solid #DCD5C6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pdfpage .pg-idx tr:nth-child(even) td { background: rgba(242, 237, 226, .5); }
+.pdfpage .pg-idx .c-no { width: 18px; color: #6E6A60; }
+.pdfpage .pg-idx .c-sys { width: 72px; }
+.pdfpage .pg-idx .c-kind { width: 44px; }
+.pdfpage .pg-idx .c-ab { width: 58px; color: #57544C; }
+.pdfpage .pg-idx .c-size { width: 60px; color: #57544C; }
+.pdfpage .pg-idx .c-page { width: 30px; text-align: right; color: #57544C; }
+.pdfpage .pg-idx .c-title { display: flex; align-items: center; gap: 4px; }
+.pdfpage .pg-index-note { margin-top: 10px; border-left: 3px solid #C9C0AC; padding-left: 8px; font-size: 8px; color: #6E6A60; }
+
+/* 逐稿页 */
+.pdfpage .pg-design-head { display: flex; align-items: flex-start; gap: 12px; padding-bottom: 9px; border-bottom: 1px solid #C9C0AC; margin-bottom: 11px; }
+.pdfpage .pg-design-no { font-size: 34px; font-weight: 700; line-height: .9; color: #6E6A60; font-family: "JetBrains Mono", monospace; }
+.pdfpage .pg-design-title { font-size: 19px; font-weight: 700; line-height: 1.15; }
+.pdfpage .pg-design-meta { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 5px; font-size: 8px; color: #57544C; }
+.pdfpage .pg-design-right { margin-left: auto; text-align: right; display: flex; flex-direction: column; gap: 3px; font-size: 8px; color: #6E6A60; white-space: nowrap; }
+.pdfpage .pg-stage {
+  flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 8px;
+  border: 1px solid #DCD5C6; border-radius: 7px; overflow: hidden;
+  background-color: #EDE8DC;
+  background-image: radial-gradient(#C9C0AC .9px, transparent .9px);
+  background-size: 16px 16px;
+}
+.pdfpage .pg-preview {
+  position: relative; flex: none; background: #FFF; border-radius: 5px; overflow: hidden;
+  box-shadow: 0 8px 24px rgba(22, 23, 26, .18);
+  display: flex; flex-direction: column;
+}
+.pdfpage .pg-preview.phone { width: 170px; height: 330px; }
+.pdfpage .pg-preview.desktop { width: 300px; height: 196px; }
+.pdfpage .pg-design-foot { display: flex; align-items: center; gap: 10px; margin-top: 9px; padding-top: 7px; border-top: 1px dashed #DCD5C6; font-size: 8px; color: #6E6A60; }
+.pdfpage .pg-design-foot .mono { font-family: "JetBrains Mono", monospace; }
+.pdfpage .pg-design-foot .grow { flex: 1; }
+
+/* 预览内容 mock（只表达信息层级，不冒充真实设计稿） */
+.mock { flex: 1; display: flex; flex-direction: column; gap: 7px; padding: 10px; background: #0B1220; }
+.mock.phone { padding: 9px; }
+.mock.phone .mock-hero { height: 96px; border-radius: 12px; background: linear-gradient(135deg, #FF7A59, #FF3B6B 55%, #7A5CFF); }
+.mock.phone .mock-row { height: 9px; border-radius: 4px; background: rgba(255, 255, 255, .28); }
+.mock.phone .mock-row.short { width: 62%; }
+.mock.phone .mock-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; flex: 1; }
+.mock.phone .mock-card { border-radius: 8px; background: #151E33; }
+.mock.phone .mock-bar { height: 28px; border-radius: 8px; background: #151E33; margin-top: auto; }
+.mock.desktop { background: #F5F2EA; }
+.mock.desktop .mock-nav { height: 14px; border-radius: 4px; background: #DCD5C6; }
+.mock.desktop .mock-hero { display: flex; gap: 8px; flex: 1; }
+.mock.desktop .mock-copy { flex: 1; display: flex; flex-direction: column; gap: 6px; justify-content: center; }
+.mock.desktop .mock-copy .mock-line { height: 10px; border-radius: 4px; background: #16171A; }
+.mock.desktop .mock-copy .mock-line.short { width: 62%; }
+.mock.desktop .mock-copy .mock-line.faint { height: 5px; background: #C9C0AC; }
+.mock.desktop .mock-art { width: 120px; border-radius: 10px; background: #FFFDF8; border: 1px solid #DCD5C6; }
+
+/* ---------- 标注 ---------- */
+.anno {
+  position: absolute; display: flex; align-items: flex-start; gap: 7px; max-width: 280px;
+  font-size: 11px; line-height: 1.6; color: var(--ui-ink-2);
+}
+.anno .n {
+  width: 20px; height: 20px; border-radius: 50%; flex: none; display: inline-flex;
+  align-items: center; justify-content: center; background: var(--ui-brand); color: var(--ui-on-brand);
+  font-family: "JetBrains Mono", monospace; font-size: 10px; font-weight: 700;
+}
+.anno b { color: var(--ui-ink); font-weight: 600; }
+.anno code { font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--ui-ink); }
+.annoline { position: absolute; border-top: 1px dashed var(--ui-ink-3); opacity: .55; }
+.annodot { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--ui-brand); }
+.crop { position: absolute; }
+.crop-label { display: inline-flex; align-items: center; gap: 6px; font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--ui-ink-3); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 8px; }
+.crop-label::before { content: ""; width: 14px; height: 1px; background: var(--ui-ink-3); }
+.statecard { background: var(--ui-surface); border: 1px solid var(--ui-line); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; box-shadow: var(--ui-shadow-2); }
+.statecard .t { font-size: 11px; font-weight: 600; }
+.statecard .d { font-size: 10px; line-height: 1.6; color: var(--ui-ink-2); }
+.ghost-card { position: absolute; background: var(--ui-elevated); border: 1px solid var(--ui-line); border-radius: 12px; opacity: .55; box-shadow: var(--ui-shadow-2); }
+
+/* ---------- 入口裁剪：项目面板 / 项目管理 / toast ---------- */
+.dockmini {
+  width: 300px; background: var(--ui-surface); border: 1px solid var(--ui-line);
+  border-radius: 12px; box-shadow: var(--ui-shadow-2); overflow: hidden;
+  font-family: var(--ui-font);
+}
+.dockmini-h { height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-bottom: 1px solid var(--ui-line); font-size: 13px; font-weight: 700; }
+.dockmini-h .hint { margin-left: auto; font-size: 10px; color: var(--ui-ink-3); font-weight: 400; }
+.dockmini-all { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px; font-size: 12px; font-weight: 600; }
+.dockmini-all .cnt { font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--ui-ink-3); font-weight: 400; }
+.dockmini-menu {
+  margin: 0 10px 10px; border: 1px solid var(--ui-line); border-radius: 8px;
+  background: var(--ui-elevated); box-shadow: var(--ui-shadow-2); padding: 4px;
+}
+.dockmini-item { display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 8px; border-radius: 5px; font-size: 12px; color: var(--ui-ink-2); }
+.dockmini-item.on { background: var(--ui-brand-soft); color: var(--ui-ink); font-weight: 600; }
+.dockmini-item .key { margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 9px; color: var(--ui-ink-3); }
+
+.modalmini {
+  width: 640px; background: var(--ui-elevated); border: 1px solid var(--ui-line);
+  border-radius: 12px; box-shadow: var(--ui-shadow-3); overflow: hidden; font-family: var(--ui-font);
+}
+.modalmini-h { display: flex; align-items: center; gap: 8px; height: 46px; padding: 0 16px; border-bottom: 1px solid var(--ui-line); font-size: 14px; font-weight: 700; }
+.modalmini-h .x { margin-left: auto; width: 26px; height: 26px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; color: var(--ui-ink-3); }
+.modalmini-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.modalmini-input { height: 32px; border: 1px solid var(--ui-line); border-radius: 6px; background: var(--ui-subtle); display: flex; align-items: center; padding: 0 10px; font-size: 11px; color: var(--ui-ink-3); }
+.modalmini-row { border: 1px solid var(--ui-line); border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; gap: 12px; background: var(--ui-surface); }
+.modalmini-row.on { border-color: var(--ui-ink); }
+.modalmini-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.modalmini-name { font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.modalmini-meta { font-size: 10px; color: var(--ui-ink-3); font-family: "JetBrains Mono", monospace; }
+.modalmini-acts { display: flex; gap: 6px; flex: none; }
+.modalmini-btn { height: 26px; padding: 0 9px; border: 1px solid var(--ui-line); border-radius: 5px; background: var(--ui-surface); display: inline-flex; align-items: center; font-size: 10px; color: var(--ui-ink-2); }
+.modalmini-btn.pdf { background: var(--ui-brand); border-color: var(--ui-brand); color: var(--ui-on-brand); font-weight: 600; }
+.modalmini-foot { border-top: 1px solid var(--ui-line); padding: 10px 16px; font-size: 10px; color: var(--ui-ink-3); }
+
+.toastmini { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 8px; background: var(--ui-brand); color: var(--ui-on-brand); font-size: 12px; box-shadow: var(--ui-shadow-2); }
+.toastmini .spinner { width: 12px; height: 12px; border-radius: 50%; border: 2px solid rgba(246, 243, 236, .35); border-top-color: var(--ui-on-brand); }
+.toastmini.err { background: var(--ui-danger-soft); color: var(--ui-danger-ink); }
+.toastmini.ok { background: var(--ui-success-soft); color: var(--ui-success-ink); }
+
+/* ---------- 流程卡 ---------- */
+.lane { flex: 1; min-width: 0; background: var(--ui-surface); border: 1px solid var(--ui-line); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+.lane-h { display: flex; align-items: baseline; gap: 8px; }
+.lane-h b { font-size: 14px; }
+.lane-h span { font-size: 10px; color: var(--ui-ink-3); font-family: "JetBrains Mono", monospace; }
+.lane-step { display: flex; align-items: flex-start; gap: 9px; }
+.lane-num { width: 20px; height: 20px; border-radius: 50%; flex: none; background: var(--ui-brand); color: var(--ui-on-brand); display: inline-flex; align-items: center; justify-content: center; font-family: "JetBrains Mono", monospace; font-size: 9px; font-weight: 700; }
+.lane-body { flex: 1; min-width: 0; padding-top: 1px; }
+.lane-t { font-size: 12px; font-weight: 600; }
+.lane-d { font-size: 11px; line-height: 1.65; color: var(--ui-ink-2); }
+.lane-d code { font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--ui-ink); }
+.lane-arrow { text-align: center; color: var(--ui-ink-3); font-size: 11px; line-height: 1; }
+.lane-badge { align-self: flex-start; display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 5px; background: var(--ui-brand-soft); font-size: 10px; color: var(--ui-ink-2); font-family: "JetBrains Mono", monospace; }
+
+/* doc 页脚：do/don't 标签之间留出可读间距（kit 里是纯 inline span） */
+.doc-foot .do span, .doc-foot .dont span { margin-left: 7px; }
+.doc-foot .do b, .doc-foot .dont b { margin-right: 2px; }

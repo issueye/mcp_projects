@@ -128,7 +128,7 @@ func runNativeServe(ctx context.Context, cfg *config.Config) error {
 		log.Printf("已有窗口在运行：已切换到该窗口")
 		return nil
 	}
-	srv, err := app.Start(ctx, cfg, withHTTPMCP(cfg, sh.Focus))
+	srv, err := app.Start(ctx, cfg, withHTTPMCP(cfg, sh.Focus), app.WithPDFPrinter(sh.PrintPDF))
 	if err != nil {
 		var ie *app.InstanceExistsError
 		if errors.As(err, &ie) {
@@ -267,7 +267,7 @@ func runMCPWindow(ctx context.Context, cfg *config.Config) error {
 	if !first {
 		return nil
 	}
-	srv, err := app.Start(ctx, cfg, withHTTPMCP(cfg, sh.Focus))
+	srv, err := app.Start(ctx, cfg, withHTTPMCP(cfg, sh.Focus), app.WithPDFPrinter(sh.PrintPDF))
 	if err != nil {
 		return err
 	}

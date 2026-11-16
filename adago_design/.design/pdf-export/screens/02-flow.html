@@ -1,0 +1,55 @@
+<div class="pdfshot">
+  <div class="scene-head">
+    <div class="scene-kicker">02 · PIPELINE</div>
+    <div class="scene-title">一条只读文稿页，两种运行形态</div>
+    <div class="scene-sub">
+      服务端只生成文稿 HTML（<code>canvas.PrintDocument</code>），不碰 PDF 容器；
+      原生形态用 WebView2 的 <code>PrintToPDF</code> 把这一页渲染成文件，
+      浏览器形态把同一页交给打印对话框。排版只有一份，避免两套版式漂移。
+    </div>
+  </div>
+
+  <div style="position:absolute;left:56px;top:210px;width:640px;display:flex;flex-direction:column;gap:9px">
+    <div class="lane">
+      <div class="lane-h"><b>原生窗口（缺省）</b><span>hidden window · WebView2 PrintToPDF</span></div>
+      <div class="lane-step"><span class="lane-num">1</span><div class="lane-body"><div class="lane-t">入口</div><div class="lane-d">项目 ⋯ 菜单 / 项目管理行 <code>PDF</code>；「全部」作用域先提示选项目</div></div></div>
+      <div class="lane-arrow">↓</div>
+      <div class="lane-step"><span class="lane-num">2</span><div class="lane-body"><div class="lane-t">POST /api/projects/{id}/pdf</div><div class="lane-d">前端 <code>fetch</code> 不走 JSON 解析；请求前 <code>toastStay</code> 常驻</div></div></div>
+      <div class="lane-arrow">↓</div>
+      <div class="lane-step"><span class="lane-num">3</span><div class="lane-body"><div class="lane-t">服务端校验 + 文稿计算</div><div class="lane-d">项目存在 → 过滤 frame → <code>PrintOrientation</code> → 45s context</div></div></div>
+      <div class="lane-arrow">↓</div>
+      <div class="lane-step"><span class="lane-num">4</span><div class="lane-body"><div class="lane-t">隐藏窗口加载文稿页</div><div class="lane-d"><code>Hidden+SkipTaskbar</code>，不抢焦点；主画布仍可编辑</div></div></div>
+      <div class="lane-arrow">↓</div>
+      <div class="lane-step"><span class="lane-num">5</span><div class="lane-body"><div class="lane-t">等就绪 → PrintToPDF</div><div class="lane-d"><code>data-print-ready</code>（全部 iframe + 字体 + 180ms）；A4 + 方向 + Background + 0 margin</div></div></div>
+      <div class="lane-arrow">↓</div>
+      <div class="lane-step"><span class="lane-num">6</span><div class="lane-body"><div class="lane-t">200 application/pdf</div><div class="lane-d">前端 Blob → <code>&lt;项目名&gt;-系统设计文稿-YYYYMMDD-HHmm.pdf</code> → 下载目录</div></div></div>
+      <div class="lane-badge">实测 5 页 616 KB · 约 1.7s</div>
+    </div>
+  </div>
+
+  <div style="position:absolute;left:730px;top:210px;width:640px;display:flex;flex-direction:column;gap:9px">
+    <div class="lane">
+      <div class="lane-h"><b>浏览器 / 无内嵌渲染器</b><span>print page · Save as PDF</span></div>
+      <div class="lane-step"><span class="lane-num">1</span><div class="lane-body"><div class="lane-t">同一入口</div><div class="lane-d"><code>isEmbedded() === false</code> 或原生返回 501 时走这条</div></div></div>
+      <div class="lane-arrow">↓</div>
+      <div class="lane-step"><span class="lane-num">2</span><div class="lane-body"><div class="lane-t">open /projects/{id}/print?print=1</div><div class="lane-d">新标签；同源只读页，<code>@page</code> 已按方向预设</div></div></div>
+      <div class="lane-arrow">↓</div>
+      <div class="lane-step"><span class="lane-num">3</span><div class="lane-body"><div class="lane-t">文稿页装配</div><div class="lane-d">封面 / 概览 / 索引 / 逐稿页；iframe 预览 + 字体自检</div></div></div>
+      <div class="lane-arrow">↓</div>
+      <div class="lane-step"><span class="lane-num">4</span><div class="lane-body"><div class="lane-t">就绪 → window.print()</div><div class="lane-d">屏幕顶部打印条提供按钮；打印媒体下自动隐藏</div></div></div>
+      <div class="lane-arrow">↓</div>
+      <div class="lane-step"><span class="lane-num">5</span><div class="lane-body"><div class="lane-t">打印对话框 →「另存为 PDF」</div><div class="lane-d">提示勾选「背景图形」；纸张方向由 <code>@page</code> 给出</div></div></div>
+      <div class="lane-arrow">↓</div>
+      <div class="lane-step"><span class="lane-num">6</span><div class="lane-body"><div class="lane-t">交付</div><div class="lane-d">与原生同样的页序与页码；不自研第二套 PDF 版式</div></div></div>
+      <div class="lane-badge">无渲染器 · 无服务端光栅化 · 单文件离线可打印</div>
+    </div>
+  </div>
+
+  <div style="position:absolute;left:56px;top:700px;display:flex;gap:12px;width:1314px">
+    <div class="statecard" style="flex:1"><div class="t">409 <code style="font-family:'JetBrains Mono',monospace">empty_project</code></div><div class="d">项目为空或只有分组框：提示先添加设计稿，不生成空白书。</div></div>
+    <div class="statecard" style="flex:1"><div class="t">501 <code style="font-family:'JetBrains Mono',monospace">pdf_unavailable</code></div><div class="d">当前形态没有渲染器：前端自动打开发印页，用户另存为 PDF。</div></div>
+    <div class="statecard" style="flex:1"><div class="t">502 <code style="font-family:'JetBrains Mono',monospace">pdf_failed</code></div><div class="d">页面加载失败 / 就绪超时 / PrintToPDF 失败：带原因与回退提示。</div></div>
+  </div>
+
+  <div class="scene-note">设计稿 · <b>渲染流程</b> · 1440 × 900 · 服务端只生成 HTML，PDF 由原生壳或浏览器完成</div>
+</div>

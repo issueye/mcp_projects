@@ -1,0 +1,114 @@
+<div class="pdfshot">
+  <div class="ghost-card" style="left:520px;top:210px;width:360px;height:240px"></div>
+  <div class="ghost-card" style="left:900px;top:120px;width:470px;height:280px"></div>
+
+  <div class="scene-head">
+    <div class="scene-kicker">01 · ENTRY / FEEDBACK</div>
+    <div class="scene-title">两个入口，同一条文稿管线</div>
+    <div class="scene-sub">
+      项目面板「⋯」菜单解决「当前项目」，项目管理弹层行内按钮解决「指定项目」；
+      两者都调用 <code>exportProjectPDF()</code>，原生形态 POST 下载，浏览器形态打开打印页。
+    </div>
+  </div>
+
+  <!-- 入口 1：项目面板 · ⋯ 菜单 -->
+  <div class="crop" style="left:56px;top:190px">
+    <div class="crop-label">Entry 01 · 项目面板</div>
+    <div class="dockmini">
+      <div class="dockmini-h">
+        <svg class="ic ic14"><use href="#ds-ic-folder"/></svg>项目<span class="hint">3 个项目 · 3 张稿</span>
+      </div>
+      <div class="dockmini-all">
+        <svg class="ic ic14"><use href="#ds-ic-chevron-down"/></svg>全部<span class="cnt">3</span>
+        <span style="margin-left:auto;color:var(--ui-ink-3)"><svg class="ic ic14"><use href="#ds-ic-more"/></svg></span>
+      </div>
+      <div class="dockmini-menu">
+        <div class="dockmini-item">项目管理…</div>
+        <div class="dockmini-item">导出当前项目<span class="key">.json</span></div>
+        <div class="dockmini-item on">导出项目 PDF（系统设计文稿）<span class="key">.pdf</span></div>
+        <div class="dockmini-item">导出全部项目</div>
+        <div class="dockmini-item">导入项目…</div>
+        <div class="dockmini-item">按项目重新排列</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 入口 2：项目管理行 -->
+  <div class="crop" style="left:760px;top:150px">
+    <div class="crop-label">Entry 02 · 项目管理</div>
+    <div class="modalmini">
+      <div class="modalmini-h">项目管理<span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ui-ink-3);font-weight:400">3</span><span class="x"><svg class="ic ic14"><use href="#ds-ic-close"/></svg></span></div>
+      <div class="modalmini-body">
+        <div class="modalmini-input">新项目名称（如「官网改版」）</div>
+        <div class="modalmini-row on">
+          <div class="modalmini-main">
+            <div class="modalmini-name">官网改版 · 设计文稿验证<span style="font-size:9px;color:var(--ui-ink-3);font-weight:400">当前</span></div>
+            <div class="modalmini-meta">2 个设计稿 · 画布 1920×1080 · p-1794797209686-0001</div>
+          </div>
+          <div class="modalmini-acts">
+            <span class="modalmini-btn">导出</span>
+            <span class="modalmini-btn pdf">PDF</span>
+            <span class="modalmini-btn">重命名</span>
+            <span class="modalmini-btn" style="color:var(--ui-danger-ink)">删除</span>
+          </div>
+        </div>
+        <div class="modalmini-row">
+          <div class="modalmini-main">
+            <div class="modalmini-name">桌面端改版 · 横向文稿</div>
+            <div class="modalmini-meta">1 个设计稿 · 画布 自由画布 · p-1794797717532-0001</div>
+          </div>
+          <div class="modalmini-acts">
+            <span class="modalmini-btn">切换</span>
+            <span class="modalmini-btn">导出</span>
+            <span class="modalmini-btn pdf">PDF</span>
+            <span class="modalmini-btn">重命名</span>
+          </div>
+        </div>
+        <div class="modalmini-row">
+          <div class="modalmini-main">
+            <div class="modalmini-name">空项目 · 文稿空态</div>
+            <div class="modalmini-meta">0 个设计稿 · 画布 自由画布 · p-1794797717630-0003</div>
+          </div>
+          <div class="modalmini-acts">
+            <span class="modalmini-btn">切换</span>
+            <span class="modalmini-btn">导出</span>
+            <span class="modalmini-btn pdf">PDF</span>
+            <span class="modalmini-btn">重命名</span>
+          </div>
+        </div>
+      </div>
+      <div class="modalmini-foot">设计稿必须归属项目；删除项目前需先清空它下面的设计稿（画布「清空」只作用于当前项目）。</div>
+    </div>
+  </div>
+
+  <!-- 三态反馈 -->
+  <div class="crop" style="left:56px;top:612px">
+    <div class="crop-label">Feedback · 生成中 / 成功 / 失败</div>
+    <div style="display:flex;flex-direction:column;gap:8px;width:660px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="toastmini"><span class="spinner"></span>正在生成「官网改版 · 设计文稿验证」的系统设计文稿…</span>
+        <span style="font-size:10px;color:var(--ui-ink-3)">常驻 toast，主画布仍可编辑</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="toastmini ok"><svg class="ic ic12"><use href="#ds-ic-check"/></svg>已导出…（616 KB，已存到下载目录）</span>
+        <span style="font-size:10px;color:var(--ui-ink-3)">原生：Blob 下载</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="toastmini err"><svg class="ic ic12"><use href="#ds-ic-close"/></svg>PDF 导出失败：项目里还没有设计稿</span>
+        <span style="font-size:10px;color:var(--ui-ink-3)">409 empty_project · 502 pdf_failed</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="anno" style="left:410px;top:236px;max-width:230px">
+    <span class="n">1</span><div><b>当前作用域</b><br>「全部」作用域没有唯一项目，点击时先提示选择项目；不猜测导出哪一个。</div>
+  </div>
+  <div class="anno" style="left:760px;top:612px;max-width:300px">
+    <span class="n">2</span><div><b>指定项目</b><br>行内 PDF 按钮不关闭弹层，可连续导出多个项目；与菜单共用同一函数与文件名规则。</div>
+  </div>
+  <div class="anno" style="left:760px;top:700px;max-width:320px">
+    <span class="n">3</span><div><b>浏览器回退</b><br>没有内嵌渲染器时打开 <code>/projects/{id}/print?print=1</code>，在打印对话框「另存为 PDF」。</div>
+  </div>
+
+  <div class="scene-note">设计稿 · <b>入口与反馈</b> · 1440 × 900 · 文案与 file 类型以实现为准</div>
+</div>

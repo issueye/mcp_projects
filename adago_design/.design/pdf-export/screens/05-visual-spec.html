@@ -1,0 +1,102 @@
+<div class="doc" style="min-height:1040px">
+  <div class="doc-h">
+    <div class="doc-mark">D</div>
+    <div>
+      <div class="doc-kicker">adago-design · 项目设计文稿 · 视觉规范</div>
+      <div class="doc-title">纸张、字号、色板与分页</div>
+    </div>
+    <div class="doc-meta"><span>A4 · 210×297 / 297×210</span><span>mm + pt</span><span>打印优先</span></div>
+  </div>
+
+  <p class="doc-lede">
+    文稿是「印刷物」，不是界面：所有尺寸用 mm、字号用 pt、颜色用固定纸墨色板。
+    屏幕与纸面共用一套结构，屏幕只多一条打印提示；打印媒体下提示条隐藏、页面盒贴纸边。
+    界面主题（纸面 / 墨纸）不参与文稿配色，避免深色界面导出整页黑底。
+  </p>
+
+  <div class="doc-row">
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>01 · 纸张与方向</b><span>PrintOrientation</span></div>
+      <table class="spec">
+        <tr><th>项</th><th>规则</th></tr>
+        <tr><td>横向</td><td><b>A4 landscape</b>：297×210mm，页面盒 296×209mm</td></tr>
+        <tr><td>纵向</td><td><b>A4 portrait</b>：210×297mm，页面盒 209×296mm</td></tr>
+        <tr><td>方向判定</td><td>非 frame 稿件中「高 &gt; 宽」记竖稿；竖稿 &lt; 横稿 → 横向，否则纵向（平票取纵向）</td></tr>
+        <tr><td>页边距</td><td>纸张 0；页内 padding 12/14mm（上下/左右）；页脚贴底</td></tr>
+        <tr><td>分页</td><td>每页固定盒 + <code>break-after: page</code>；最后一张 <code>auto</code>，避免尾页空白</td></tr>
+      </table>
+      <p class="doc-p">取舍：一份 PDF 只有一种纸张，混排项目必有一类稿被缩小；按多数决定，少数等比缩放、不裁切。浏览器打印时 <code>@page</code> 同向，原生 PrintToPDF 用 Go 侧选项。</p>
+    </section>
+
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>02 · 预览与缩放</b><span>只缩不放</span></div>
+      <table class="spec">
+        <tr><th>方向</th><th>可用框（px）</th><th>缩放</th></tr>
+        <tr><td>横向</td><td>1019 × 579</td><td><code>min(1019/w, 579/h, 1)</code></td></tr>
+        <tr><td>纵向</td><td>635 × 850</td><td><code>min(635/w, 850/h, 1)</code></td></tr>
+      </table>
+      <p class="doc-p">缩放只作用于 iframe 外层 <code>.frame</code> 的 <code>transform</code>，iframe 内部仍按原画板宽高排版：断点、字号关系与 1:1 结构不变。小于可用框的稿保持 100%，居中留白；逐稿页右上角显示「预览 97%」这类读数。</p>
+      <p class="doc-p">舞台底：画布色 <code>#EDE8DC</code> + 4mm 点阵（<code>#C9C0AC</code>），卡片白底 + 1.5mm 圆角 + 轻投影，与画布上的卡片同一视觉语言。</p>
+    </section>
+  </div>
+
+  <div class="doc-row">
+    <section class="doc-col wide">
+      <div class="doc-sec-h"><b>03 · 字号阶梯</b><span>pt，打印尺度</span></div>
+      <table class="spec">
+        <tr><th>用途</th><th>字号</th><th>说明</th></tr>
+        <tr><td>封面标题</td><td><b>36 / 32 / 27 / 22pt</b></td><td>按项目名长度收敛；行高 1.06，最多两行</td></tr>
+        <tr><td>页面标题</td><td><b>20–21pt</b></td><td>概览 / 索引页；行高 1.1</td></tr>
+        <tr><td>逐稿标题</td><td><b>18pt</b></td><td>行高 1.15；长标题换行不截断</td></tr>
+        <tr><td>正文 / 备注</td><td><b>10.5–11pt</b></td><td>行高 1.7；项目备注整段保留</td></tr>
+        <tr><td>表格 / 元信息</td><td><b>8–9.5pt</b></td><td>索引表 8.5pt，kicker 8pt 大写 + 字距</td></tr>
+        <tr><td>页脚</td><td><b>8pt</b></td><td>品牌 · 项目名 · 页码</td></tr>
+      </table>
+      <p class="doc-p">字族固定 <code>Inter → Noto Sans SC → 系统中文</code>；节点 ID 与尺寸用等宽、tabular-nums，避免页码/尺寸在不同页里跳动。</p>
+    </section>
+
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>04 · 纸墨色板</b><span>与界面令牌同源</span></div>
+      <table class="spec">
+        <tr><th>名</th><th>值</th><th>用在哪</th></tr>
+        <tr><td>纸面</td><td><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#FBF8F1;border:1px solid #DCD5C6;vertical-align:-1px"></span> <b>#FBF8F1</b></td><td>内页底</td></tr>
+        <tr><td>浅底</td><td><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#FFFDF8;border:1px solid #DCD5C6;vertical-align:-1px"></span> <b>#FFFDF8</b></td><td>面板 / 备注</td></tr>
+        <tr><td>画布</td><td><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#EDE8DC;border:1px solid #DCD5C6;vertical-align:-1px"></span> <b>#EDE8DC</b></td><td>预览舞台</td></tr>
+        <tr><td>墨</td><td><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#16171A;vertical-align:-1px"></span> <b>#16171A</b></td><td>封面底 / 正文</td></tr>
+        <tr><td>次级字</td><td><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#57544C;vertical-align:-1px"></span> <b>#57544C</b></td><td>说明 / 表格</td></tr>
+        <tr><td>辅助字</td><td><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#6E6A60;vertical-align:-1px"></span> <b>#6E6A60</b></td><td>kicker / 页脚</td></tr>
+        <tr><td>线</td><td><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#DCD5C6;vertical-align:-1px"></span> <b>#DCD5C6</b> / <b>#C9C0AC</b></td><td>分隔 / 页头</td></tr>
+      </table>
+      <p class="doc-p">体系主色只用于 4mm 圆点，且先做 <code>#RGB / #RRGGBB / #RRGGBBAA</code> 形状校验；非法值退化为描边空心点，不进样式。</p>
+    </section>
+  </div>
+
+  <div class="doc-row">
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>05 · 索引行数</b><span>分页口径</span></div>
+      <table class="spec">
+        <tr><th>方向</th><th>每页索引行</th><th>页数</th></tr>
+        <tr><td>横向</td><td><b>14</b></td><td><code>ceil(N / 14)</code></td></tr>
+        <tr><td>纵向</td><td><b>18</b></td><td><code>ceil(N / 18)</code></td></tr>
+        <tr><td>总页数</td><td colspan="2"><code>2 + 索引页数 + N</code>；空项目固定 3 页</td></tr>
+      </table>
+      <p class="doc-p">索引列宽（纵向内容宽 181mm）：# 8 / 体系 30 / 类型 16 / 画板 24 / 尺寸 26 / 文稿页 12，标题自适应；偶数行浅底 <code>rgba(242,237,226,.45)</code>。</p>
+    </section>
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>06 · 可读性</b><span>打印优先的硬约束</span></div>
+      <ul class="doc-p" style="padding-left:16px;display:flex;flex-direction:column;gap:6px">
+        <li>纸面文字对比度：墨 on 纸 <b>16.2:1</b>，次级 6.8:1，辅助 4.9:1。</li>
+        <li>封面纸字 on 墨底 <b>16.2:1</b>；统计标签用 8pt + 字距，避免小字发虚。</li>
+        <li>正文行高 ≥ 1.7；表格单元格不折行，超长用省略号（索引只做导航，详情在逐稿页）。</li>
+        <li>页码、尺寸、ID 一律 tabular-nums / 等宽，跨页对齐。</li>
+        <li>不依赖背景打印的设置：<code>print-color-adjust: exact</code> + PrintToPDF <code>Background:true</code>。</li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="doc-foot">
+    <div class="do"><b>做</b><span>A4 方向多数票</span><span>只缩不放</span><span>纸墨固定</span><span>页码可引用</span></div>
+    <div class="dont"><b>不做</b><span>跟界面主题</span><span>裁切预览</span><span>第二套色板</span><span>魔法数字</span></div>
+    <div class="end">视觉规范 · 2026-11-16</div>
+  </div>
+</div>

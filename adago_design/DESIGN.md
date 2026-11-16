@@ -263,6 +263,8 @@ type Node struct {
 | `GET /api/projects/{id}` | 单个项目（404 `unknown_project`） |
 | `PUT /api/projects/{id}` | 改名/改备注 |
 | `DELETE /api/projects/{id}` | 删除空项目；非空 409 `project_not_empty` |
+| `POST /api/projects/{id}/pdf` | 项目设计文稿 PDF；无渲染器 501 `pdf_unavailable`，空项目 409 `empty_project`，渲染失败 502 `pdf_failed` |
+| `GET /projects/{id}/print` | 只读设计文稿页（HTML）；`?print=1` 就绪后自动 `window.print()` |
 | `GET /api/canvas/presets` | 画布比例预设表 + 合法尺寸区间（UI 菜单数据源） |
 | `PUT /api/projects/{id}/canvas` | 设置画布版式 `{ratio}` / `{width,height}` / `{free:true}`；未知比例 400 `unknown_ratio`，尺寸非法 400 `bad_request` |
 | `GET /api/nodes` | 节点列表；`?project=<id>` 过滤（未知项目 404），`?system=` 兼容过滤；**默认剥 html**，`?include=html` 带正文 |
@@ -524,6 +526,37 @@ style-src 'unsafe-inline'; img-src data:; font-src data:`）—— `canvas_add`
 开发者工具、浏览器）；`-browser` 或 `ADAGO_DESIGN_UI=browser` 回到旧路径，
 数据格式与 HTTP API 完全不变。
 
+### 4.7 项目设计文稿（PDF）
+
+单项目导出为多页 PDF 设计文稿，完整设计见
+[DESIGN-PDF-EXPORT.md](DESIGN-PDF-EXPORT.md)，设计稿见 `.design/pdf-export/`。核心链路：
+
+```
+项目 ⋯ / 项目管理行 PDF
+   └─(原生) POST /api/projects/{id}/pdf
+              └─ handleProjectPDF：校验 → 过滤 frame → PrintOrientation
+                    └─ native.Shell.PrintPDF：隐藏窗口加载 /projects/{id}/print
+                          └─ 等 data-print-ready → WebView2 PrintToPDF(A4, 方向)
+              └─ 200 application/pdf → 前端 Blob 下载
+   └─(浏览器) GET /projects/{id}/print?print=1 → window.print() → 另存为 PDF
+```
+
+| 关注点 | 实现 |
+|---|---|
+| 文稿生成 | `canvas.PrintDocument`：封面 / 概览 / 设计索引 / 逐稿页；纯函数，可单测 |
+| 收录 | `PrintableNodes`：跳 frame，按画布位置行优先排序（64px 行桶 + X） |
+| 纸张 | `PrintOrientation`：竖稿不少于横稿 → A4 纵向，否则横向；平票取纵向 |
+| 分页 | 每页 `.sheet` 固定页面盒 + `break-after:page`；索引按 14/18 行分页 |
+| 缩放 | `scale = min(框宽/稿宽, 框高/稿高, 1.0)`；iframe 内仍按原画板排版 |
+| 安全 | 标题/备注/正文全部转义；正文仅作 `srcdoc`；iframe sandbox + 既有 CSP |
+| 原生渲染 | `internal/native/print.go`：Hidden + SkipTaskbar 窗口、20s 就绪轮询、`PrintToPDF(Background:true, Margins:0)`、`pdfMu` 串行、defer 关窗 |
+| 装配 | `app.WithPDFPrinter` 注入 `canvas.Server.PDF`：`serve`/`mcp -window` 有，`serve -browser`/`mcp` 无 |
+| 前端 | `js/project-pdf.js`：原生 POST 下载 / 浏览器打印页；`toastStay` 常驻反馈 |
+| 错误码 | `empty_project` / `pdf_unavailable` / `pdf_failed`（+ 沿用 `unknown_project`） |
+
+真机验证（2026-11-16）：混排项目 A4 纵向 5 页 616 KB（约 1.7s），桌面项目 A4
+横向 4 页 369 KB；PDF 中文可复制可搜索；空项目 / 只有分组框均 409。
+
 ## 5. MCP 工具（internal/mcpserver）
 SDK：`github.com/modelcontextprotocol/go-sdk v1.8.0`（与 mem-go 一致）。
 服务器名 `adago-design`；Instructions 指引：先 `design_systems` 再
@@ -690,7 +723,10 @@ stdio JSON-RPC 走继承管道不受影响）。日志写 `<data>/adago-design.l
   SSE 事件流、`ProbeInstance` 同数据目录判定；CSP 注入（`sanitize_test.go`）：
   注入位置（head/html/片段）、幂等、Add/Update/旧快照装载自愈；
   v4 分文件（`persistfile_test.go`）：round trip、索引零正文、清空删文件、
-  孤儿 GC；操作历史（`undo_test.go`）：增改删/连线/清空可逆、栈语义、HTTP 契约。
+  孤儿 GC；操作历史（`undo_test.go`）：增改删/连线/清空可逆、栈语义、HTTP 契约；
+  **设计文稿**（`print_test.go`）：纸张方向、节点排序与 frame 过滤、封面/概览/索引
+  页码、索引分页、HTML 转义、非法主色、文件名与 Content-Disposition、`/print`
+  与 `/api/projects/{id}/pdf` 的 200/404/409/501/502 全路径。
 - `internal/mcpserver`：内存 transport 走 `initialize` + `tools/list` +
   `tools/call`（design_tokens、design_preview、canvas_add、canvas_screenshot
   超时路径），断言结果结构；目录类工具与画板透传单测；

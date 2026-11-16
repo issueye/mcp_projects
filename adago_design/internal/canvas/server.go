@@ -113,6 +113,9 @@ type Server struct {
 	Admin SystemAdmin
 	// Icons 可选：SVG 图标管理（停用/新增/编辑/移除）。为 nil 时管理端点 501。
 	Icons IconAdmin
+	// PDF 可选：项目设计文稿的 PDF 渲染能力。为 nil 时 PDF 端点 501，
+	// 页面退化为打印页（浏览器「另存为 PDF」）。
+	PDF PDFPrinter
 	// Theme 是界面缺省主题（light|dark），来自 -theme；用户手动切换的
 	// localStorage 覆盖在页面 bootstrap 里完成（见 static/index.html）。
 	Theme string
@@ -154,6 +157,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("DELETE /api/projects/{id}", s.handleDeleteProject)
 	mux.HandleFunc("PUT /api/projects/{id}/canvas", s.handleSetProjectCanvas)
 	mux.HandleFunc("GET /api/projects/{id}/export", s.handleExportProject)
+	mux.HandleFunc("POST /api/projects/{id}/pdf", s.handleProjectPDF)
+	mux.HandleFunc("GET /projects/{id}/print", s.handlePrintDocument)
 	mux.HandleFunc("POST /api/import", s.handleImportProjects)
 	mux.HandleFunc("GET /api/export", s.handleExportWorkspace)
 	mux.HandleFunc("POST /api/artboards/resync", s.handleResyncArtboards)

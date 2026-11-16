@@ -21,6 +21,7 @@ func (s *Shell) buildMenu() *mygo.Menu {
 			mygo.Separator(),
 			{Label: "在浏览器中打开", Accelerator: "CmdOrCtrl+Shift+O", Click: func(*mygo.MenuItem, *mygo.Window) { s.OpenInBrowser() }},
 			{Label: "打开数据目录", Click: func(*mygo.MenuItem, *mygo.Window) { s.OpenDataDir() }},
+			{Label: "打开下载目录", Click: func(*mygo.MenuItem, *mygo.Window) { s.OpenDownloadsDir() }},
 		}},
 		{Label: "窗口", Submenu: []*mygo.MenuItem{
 			{Label: "隐藏窗口", Click: func(*mygo.MenuItem, *mygo.Window) { s.hide() }},
@@ -40,6 +41,7 @@ func startTray(s *Shell) *mygo.Tray {
 		{Label: "在浏览器中打开", Click: func(*mygo.MenuItem, *mygo.Window) { s.OpenInBrowser() }},
 		{Label: "复制 MCP 配置（HTTP）", Click: func(*mygo.MenuItem, *mygo.Window) { s.copyMCPConfig() }},
 		{Label: "打开数据目录", Click: func(*mygo.MenuItem, *mygo.Window) { s.OpenDataDir() }},
+		{Label: "打开下载目录", Click: func(*mygo.MenuItem, *mygo.Window) { s.OpenDownloadsDir() }},
 		mygo.Separator(),
 		{Label: "重新加载画布页", Click: func(*mygo.MenuItem, *mygo.Window) { s.Reload() }},
 		mygo.Separator(),
@@ -192,6 +194,7 @@ func (s *Shell) actions(c *ui.Context, tk tokens) {
 		ui.Row(c).Height(1).Margin(4, 6).Background(tk.line)
 		s.menuRow(c, tk, "在浏览器中打开", "", func() { s.more = false; s.OpenInBrowser() })
 		s.menuRow(c, tk, "打开数据目录", "", func() { s.more = false; s.OpenDataDir() })
+		s.menuRow(c, tk, "打开下载目录（导出文件）", "", func() { s.more = false; s.OpenDownloadsDir() })
 		s.menuRow(c, tk, "复制 MCP 配置", "", func() { s.more = false; s.copyMCPConfig() })
 	})
 }

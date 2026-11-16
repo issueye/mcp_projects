@@ -1,0 +1,137 @@
+<div class="doc" style="min-height:1120px">
+  <div class="doc-h">
+    <div class="doc-mark">D</div>
+    <div>
+      <div class="doc-kicker">adago-design · 项目设计文稿 · 实现契约</div>
+      <div class="doc-title">同一份文稿页，两条渲染出口</div>
+    </div>
+    <div class="doc-meta"><span>不改数据格式</span><span>原生 + 浏览器</span><span>v1</span></div>
+  </div>
+
+  <p class="doc-lede">
+    服务端只负责「项目 → 文稿 HTML」：<code>canvas.PrintDocument</code> 纯函数、只读节点元数据，
+    不写盘、不迁移。PDF 容器交给两条出口：原生隐藏窗口的 WebView2 <code>PrintToPDF</code>，
+    或浏览器的打印对话框。前端两个入口共用 <code>exportProjectPDF()</code>，不各写一套。
+  </p>
+
+  <div class="doc-row">
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>01 · 路由</b><span>HTTP</span></div>
+      <table class="spec">
+        <tr><th>方法 / 路径</th><th>职责</th></tr>
+        <tr><td><code>GET /projects/{id}/print</code></td><td>只读文稿页；<code>?print=1</code> 就绪后 <code>window.print()</code></td></tr>
+        <tr><td><code>POST /api/projects/{id}/pdf</code></td><td>原生生成 PDF；返回 <code>application/pdf</code> + <code>Content-Disposition</code></td></tr>
+        <tr><td><code>GET /api/projects/{id}/export</code></td><td>不变：JSON 工程文件</td></tr>
+      </table>
+      <p class="doc-p">PDF 端点无请求体；写操作仍走 Host 回环 + Origin 同源。文件名
+        <code>&lt;项目名&gt;-系统设计文稿-YYYYMMDD-HHmm.pdf</code>，ASCII 兜底 + RFC 5987 的
+        <code>filename*</code> 保留中文。</p>
+      <div class="flow" style="margin-top:6px">
+        <span class="step"><b>1</b>项目校验</span><span class="arw">→</span>
+        <span class="step"><b>2</b>过滤 frame</span><span class="arw">→</span>
+        <span class="step"><b>3</b>方向</span><span class="arw">→</span>
+        <span class="step"><b>4</b>渲染</span><span class="arw">→</span>
+        <span class="step"><b>5</b>下载</span>
+      </div>
+    </section>
+
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>02 · 数据</b><span>只读</span></div>
+      <table class="spec">
+        <tr><th>字段</th><th>用途</th></tr>
+        <tr><td><code>title / system / kind</code></td><td>标题、体系摘要、类型；frame 过滤</td></tr>
+        <tr><td><code>artboard / width / height</code></td><td>画板、尺寸、缩放与纸张方向</td></tr>
+        <tr><td><code>html</code></td><td>逐稿页 <code>srcdoc</code>；仅作属性值，不拼接</td></tr>
+        <tr><td><code>tags / id / updated_at</code></td><td>页脚来源与更新时间</td></tr>
+        <tr><td><code>x / y</code></td><td>阅读顺序（64px 行桶 + X），不进入 PDF 坐标</td></tr>
+        <tr><td><code>Project.name/note/canvas</code></td><td>封面、概览、文件名</td></tr>
+      </table>
+      <p class="doc-p">体系名称 / 厂商 / 主色来自 <code>Catalog.SystemSummaries()</code>；目录未注入时退化为体系 ID。已停用体系仍按 ID 显示，历史稿不丢。</p>
+    </section>
+  </div>
+
+  <div class="doc-row">
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>03 · 状态与错误</b><span>稳定 code</span></div>
+      <table class="spec">
+        <tr><th>状态</th><th>code</th><th>前端行为</th></tr>
+        <tr><td>404</td><td><code>unknown_project</code></td><td>toast；提示 project_list</td></tr>
+        <tr><td>409</td><td><code>empty_project</code></td><td>toast + hint（分组框不单独成页）</td></tr>
+        <tr><td>501</td><td><code>pdf_unavailable</code></td><td>自动打开发印页，另存为 PDF</td></tr>
+        <tr><td>502</td><td><code>pdf_failed</code></td><td>toast 原因 + 回退打印页</td></tr>
+        <tr><td>200</td><td>—</td><td>Blob 下载 + 成功 toast（含 KB）</td></tr>
+      </table>
+      <p class="doc-p">请求前 <code>toastStay()</code> 常驻；成功/失败由下一次 <code>toast()</code> 接管。所有文案进 <code>ui.js</code> 体系，不用原生 confirm/prompt。</p>
+    </section>
+
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>04 · 原生渲染</b><span>internal/native/print.go</span></div>
+      <table class="spec">
+        <tr><th>项</th><th>实现</th></tr>
+        <tr><td>窗口</td><td><code>Hidden + SkipTaskbar</code>，1122×794 或 794×1122，白底</td></tr>
+        <tr><td>就绪</td><td>轮询 <code>data-print-ready</code>；全部 iframe + 字体 + 180ms；上限 20s</td></tr>
+        <tr><td>打印</td><td><code>A4 + 方向 + Background:true + Margins:0</code></td></tr>
+        <tr><td>并发</td><td><code>pdfMu</code> 串行；<code>defer Close()</code> 无窗口泄漏</td></tr>
+        <tr><td>超时</td><td>HTTP context 45s；返回 502 带原因</td></tr>
+        <tr><td>注入</td><td><code>app.WithPDFPrinter</code> → <code>canvas.Server.PDF</code>；<code>serve</code>/<code>mcp -window</code> 有</td></tr>
+      </table>
+    </section>
+  </div>
+
+  <div class="doc-row">
+    <section class="doc-col wide">
+      <div class="doc-sec-h"><b>05 · 改动清单</b><span>文件级</span></div>
+      <table class="spec">
+        <tr><th>文件</th><th>改动</th></tr>
+        <tr><td><code>internal/canvas/print.go</code></td><td>文稿生成 / 方向 / 排序 / PDF 端点 / 文件名</td></tr>
+        <tr><td><code>internal/canvas/print_test.go</code></td><td>11 组门禁（见验收）</td></tr>
+        <tr><td><code>internal/canvas/server.go</code></td><td><code>PDF</code> 字段 + 两条路由</td></tr>
+        <tr><td><code>internal/app/app.go</code></td><td><code>WithPDFPrinter</code> 装配点</td></tr>
+        <tr><td><code>internal/native/print.go</code> · <code>shell.go</code></td><td>隐藏窗口打印 + <code>pdfMu</code></td></tr>
+        <tr><td><code>main.go</code></td><td>两种窗口形态注入 <code>sh.PrintPDF</code></td></tr>
+        <tr><td><code>static/index.html</code> · <code>js/panels.js</code> · <code>js/dock.js</code></td><td>两处入口 + 菜单项</td></tr>
+        <tr><td><code>js/project-pdf.js</code> · <code>js/ui.js</code></td><td>导出流程 / 打印回退 / <code>toastStay</code></td></tr>
+      </table>
+    </section>
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>06 · 验收</b><span>机器 + 真机</span></div>
+      <table class="spec">
+        <tr><th>项</th><th>通过条件</th></tr>
+        <tr><td>门禁</td><td><code>go test ./...</code> + <code>go vet ./...</code> 全绿</td></tr>
+        <tr><td>文稿</td><td>封面/概览/索引/逐稿页齐全；frame 不入稿；页码与索引一致</td></tr>
+        <tr><td>方向</td><td>竖稿项目纵向、横稿项目横向；混排平票纵向</td></tr>
+        <tr><td>PDF</td><td>A4、方向正确、中文可复制可搜索、背景与墨底保留</td></tr>
+        <tr><td>降级</td><td>浏览器 / 无窗口 → 打印页；501/502 → 有出口</td></tr>
+        <tr><td>空态</td><td>空项目 / 只有 frame → 409 <code>empty_project</code></td></tr>
+        <tr><td>不打扰</td><td>原生生成期间画布可继续编辑；隐藏窗口不进任务栏</td></tr>
+      </table>
+    </section>
+  </div>
+
+  <div class="doc-row">
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>07 · 兼容与风险</b><span>回退容易</span></div>
+      <p class="doc-p"><b>不改数据</b>：失败时回退前端两个入口即可，<code>canvas.json</code> 与已有 JSON 导出不受影响。<br>
+        <b>大项目</b>：45s 超时 + 502 原因提示；后续可分批或只导选中稿。<br>
+        <b>混排</b>：一份 PDF 一种纸张，少数派等比缩小；后续可分卷合并。<br>
+        <b>WebView2</b>：不可用 / 加载失败 → 打印页；服务端不引入浏览器引擎。</p>
+    </section>
+    <section class="doc-col">
+      <div class="doc-sec-h"><b>08 · 交付顺序</b><span>本板为设计</span></div>
+      <div class="flow">
+        <span class="step"><b>1</b>设计稿（本板）</span><span class="arw"><svg class="ic ic12"><use href="#ds-ic-chevron-right"/></svg></span>
+        <span class="step"><b>2</b>文稿生成器 + 门禁</span><span class="arw"><svg class="ic ic12"><use href="#ds-ic-chevron-right"/></svg></span>
+        <span class="step"><b>3</b>路由 / 端点</span><span class="arw"><svg class="ic ic12"><use href="#ds-ic-chevron-right"/></svg></span>
+        <span class="step"><b>4</b>原生 PrintToPDF</span><span class="arw"><svg class="ic ic12"><use href="#ds-ic-chevron-right"/></svg></span>
+        <span class="step"><b>5</b>入口 + 真机</span>
+      </div>
+      <p class="doc-p">设计图确认后按本契约落地；数据格式、JSON 导入导出、既有 MCP 工具保持不变。</p>
+    </section>
+  </div>
+
+  <div class="doc-foot">
+    <div class="do"><b>做</b><span>一份文稿页</span><span>两条出口</span><span>稳定错误码</span><span>只读</span></div>
+    <div class="dont"><b>不做</b><span>数据迁移</span><span>服务端光栅化</span><span>第二套版式</span><span>原生对话框</span></div>
+    <div class="end">契约 · 2026-11-16 · 已实现</div>
+  </div>
+</div>

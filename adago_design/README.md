@@ -61,6 +61,42 @@ project_create（或 project_list 选已有）
 版本不符或 `kind`、画布版式非法时整批拒绝（`bad_bundle`），不会留下半个项目。
 一次 `Ctrl+Z` 可整体撤销导入。
 
+### 项目设计文稿（PDF）
+
+左栏「项目 · ⋯ → **导出项目 PDF（系统设计文稿）**」与项目管理弹层行内的 **PDF**
+按钮，把当前项目生成一份可评审、可归档的多页 PDF：
+
+| 页 | 内容 |
+|---|---|
+| 封面 | 项目名、备注、设计稿/体系/分组框/文稿页计数、生成时间；墨底纸字 |
+| 概览 | 项目信息（画布/创建/更新/ID）、设计体系（名称/厂商/主色/稿数）、设计稿构成、项目备注 |
+| 设计索引 | # / 设计稿 / 体系 / 类型 / 画板 / 尺寸 / **文稿页**；稿多时自动分页 |
+| 逐稿页 | 一稿一页：编号、标题、体系/类型/画板/尺寸、等比预览、标签/ID/更新时间/页码 |
+
+- **一稿一页**，按画布位置（先上下、再左右）收录；**分组框不单独成页**（只作背板计数）。
+- 纸张按稿件宽高比自动选 **A4 横向 / 纵向**（竖稿不少于横稿时用纵向）；预览只缩不放，
+  逐稿页标出「预览 44%」这类印刷尺度，不裁切、不改画板结构。
+- 原生窗口（缺省）下直接下载 PDF：隐藏窗口加载只读文稿页 → WebView2
+  `PrintToPDF` → 前端 Blob 存到**系统下载目录**（Windows 通常是
+  `%USERPROFILE%\Downloads`），文件名为 `<项目名>-系统设计文稿-YYYYMMDD-HHmm.pdf`；
+  重名自动加 ` (2)`。生成时主画布仍可编辑，下载完成标题条会提示文件名；
+  找不到文件时用标题栏 `⋯ → 打开下载目录（导出文件）`，或托盘里的「打开下载目录」。
+- 浏览器 / 无窗口形态没有内嵌渲染器：打开 `/projects/{id}/print?print=1` 打印页，
+  在打印对话框选「另存为 PDF」（勾选「背景图形」）。
+- 空项目（或只有分组框）返回 `409 empty_project`；当前形态无渲染器返回
+  `501 pdf_unavailable`；渲染失败/超时 `502 pdf_failed`。
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/projects/{id}/print` | 只读设计文稿页（HTML）；`?print=1` 就绪后自动 `window.print()` |
+| POST | `/api/projects/{id}/pdf` | 生成并下载 PDF（原生形态）；无渲染器时 501 |
+
+文稿页与 PDF 生成都不写盘、不改项目数据；体系名称与主色来自目录摘要，
+非法主色值不会进入样式。完整设计见 [DESIGN-PDF-EXPORT.md](DESIGN-PDF-EXPORT.md)
+（PDF 版见 [DESIGN-PDF-EXPORT.pdf](DESIGN-PDF-EXPORT.pdf)）；设计稿在
+`.design/pdf-export/`（设计说明 / 入口与反馈 / 渲染流程 / 封面 / 内页 /
+视觉规范 / 实现契约）。
+
 ## 三层规范（先定尺寸 → 定体系 → 出预览）
 
 | 规范 | 入口 | 说明 |
@@ -251,7 +287,8 @@ bin\adago-design.exe mcp -window
   转交给已运行实例并把窗口前置，然后退出。不同 `-data` 可并存。
 - **窗口记忆**：`<data>/window.json` 记宽高/位置/最大化/主题；关闭或拖动后 700ms 落盘。
 - **日志**：`<data>/adago-design.log`（4MB 轮换，同时打 stderr）；GUI 构建没有控制台也能排障。
-- **托盘**：显示/隐藏窗口、在浏览器打开、复制 MCP 配置（HTTP）、打开数据目录、重载、退出。
+- **托盘**：显示/隐藏窗口、在浏览器打开、复制 MCP 配置（HTTP）、打开数据目录、
+  **打开下载目录**、重载、退出。
 - **快捷键**：`Ctrl+R` 重载、`Ctrl+Shift+I` 开发者工具、`F11` 全屏、`Ctrl+Shift+L` 换肤、
   `Ctrl+Shift+O` 浏览器打开、`Ctrl+Q` 退出；页面快捷键（空格平移、`0`/`F`、`Ctrl+Z`）照旧。
 - **截图不变**：`canvas_screenshot` 仍由页面里的离屏 iframe 光栅化；超时且 `AutoOpen` 时，
@@ -310,6 +347,7 @@ mygo 单实例锁之后运行；命中「无窗口实例」时窗口进故障卡
 `unknown_icon` / `icon_duplicate` / `icon_builtin_protected` / `invalid_icon` /
 `unknown_artboard` / `unknown_component` / `capture_timeout` / `confirm_required` /
 `bad_request` / `screen_failed` / `compare_failed` / `empty_canvas`。
+项目 PDF 端点另用 `empty_project` / `pdf_unavailable` / `pdf_failed`（见上一节）。
 
 ## 接入 ada-go（stdio）
 
@@ -525,7 +563,9 @@ nodes 捕获阶段接管 / CSS 光标规则）。
   部分更新指针语义、多实例探测，见 `hardening_test.go`）、
   **CSP 注入**（注入位置/幂等/旧快照自愈，见 `sanitize_test.go`）、
   **页面 embed 契约**（bootstrap 先于样式、两条隐藏规则、dataset 字段与接线，
-  见 `embed_test.go`）。
+  见 `embed_test.go`）、
+  **系统设计文稿**（方向/排序/页码/转义/非法主色/文件名/两条路由/501 与 409 路径，
+  见 `print_test.go`）。
 - `internal/config`：界面形态矩阵（serve/mcp × `-browser`/`-window`/`-no-open`/
   `-open` × `ADAGO_DESIGN_UI`，见 `config_test.go`）。
 - `internal/native`：无 GUI 的纯函数单测（锁名、`window.json` 归一化与 round trip、
@@ -544,5 +584,6 @@ nodes 捕获阶段接管 / CSS 光标规则）。
   自定义增改删/非法 JSON）、`internal/app/systems_test.go`（Catalog 集成）、
   `internal/canvas/admin_route_test.go`（管理端点路由与错误码）。
 
-设计细节见 [DESIGN.md](DESIGN.md)；六项历史问题的分析与改造记录见
+设计细节见 [DESIGN.md](DESIGN.md)，项目 PDF 文稿见
+[DESIGN-PDF-EXPORT.md](DESIGN-PDF-EXPORT.md)；六项历史问题的分析与改造记录见
 [IMPROVEMENTS.md](IMPROVEMENTS.md)。

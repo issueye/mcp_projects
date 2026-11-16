@@ -36,6 +36,14 @@ type Option func(*startOptions)
 type startOptions struct {
 	// mcp 返回 /mcp 的处理器；nil 表示不暴露 HTTP MCP。
 	mcp MCPHandlerFactory
+	// pdf 是项目设计文稿的 PDF 渲染器；nil 表示当前形态只能走浏览器打印。
+	pdf canvas.PDFPrinter
+}
+
+// WithPDFPrinter 注入项目设计文稿的 PDF 渲染能力（原生窗口形态）。
+// 不注入时 /api/projects/{id}/pdf 返回 501，页面改走打印页「另存为 PDF」。
+func WithPDFPrinter(f canvas.PDFPrinter) Option {
+	return func(o *startOptions) { o.pdf = f }
 }
 
 // MCPHandlerFactory 由调用方注入 HTTP MCP 端点（挂在 /mcp 上）。
@@ -112,6 +120,7 @@ func Start(ctx context.Context, cfg *config.Config, opts ...Option) (*Server, er
 	canvasSrv.Icons = Catalog{DataDir: cfg.DataDir}
 	canvasSrv.Theme = canvas.NormalizeTheme(cfg.Theme)
 	canvasSrv.DataDir = cfg.DataDir
+	canvasSrv.PDF = so.pdf
 	var ln net.Listener
 	for port := cfg.Port; port <= cfg.Port+20; port++ {
 		addr := fmt.Sprintf("127.0.0.1:%d", port)

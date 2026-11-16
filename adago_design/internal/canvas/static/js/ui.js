@@ -114,6 +114,14 @@ export function toast(msg, isErr) {
   toast._h = setTimeout(() => t.classList.add("hidden"), isErr ? 4200 : 2400);
 }
 
+// 常驻 toast：给「正在生成 PDF」这类可能超过普通 2.4s 的异步操作用。
+// 随后的 toast()/toastStay() 会自然接管并重新计时（_h 已被清空）。
+export function toastStay(msg) {
+  toast(msg);
+  clearTimeout(toast._h);
+  toast._h = 0;
+}
+
 // 更新图标按钮的 tooltip 与无障碍名称。
 export function setTip(id, text) {
   const el = $(id);

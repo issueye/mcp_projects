@@ -10,6 +10,8 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -97,6 +99,9 @@ type Shell struct {
 	more      bool
 	quit      sync.Once
 	saveTimer *time.Timer
+	// pdfMu 串行化文稿 PDF：每次渲染都开一个隐藏窗口，两个并发请求同时
+	// 开窗会把 WebView2 的初始化队列挤在一起，也没有必要并行。
+	pdfMu sync.Mutex
 }
 
 // Acquire 取单实例锁。名字按数据目录分区：不同 -data 的实例可以并存，
@@ -298,6 +303,19 @@ func (s *Shell) startPage() {
 	s.page = v
 	s.mu.Unlock()
 	p := v.Page()
+	// 导出（PDF / 项目 JSON）由 WebView2 下载到系统下载目录：完成时给一条
+	// 带文件名的反馈，避免「点了导出但不知道文件去哪了」。
+	p.OnDownloadDone(func(d *mygo.Download) {
+		if d == nil || d.Path == "" {
+			return
+		}
+		name := filepath.Base(d.Path)
+		if d.Err != nil {
+			s.showToast("下载失败：" + name)
+			return
+		}
+		s.showToast("已保存到下载目录：" + name)
+	})
 	p.OnDOMReady(func() {
 		mygo.RunOnMain(func() {
 			s.ph = phaseReady
@@ -442,6 +460,31 @@ func (s *Shell) OpenInBrowser() {
 func (s *Shell) OpenDataDir() {
 	if err := mygo.Shell.OpenPath(s.opt.DataDir); err != nil {
 		log.Printf("adago-design: open data dir: %v", err)
+	}
+}
+
+// DownloadsDir 返回系统下载目录。PDF / 项目 JSON 导出都落到这里
+// （mygo 默认下载行为：<下载目录>/<建议文件名>，重名自动加 (2)）。
+// 已知文件夹 API 失败时退到 %USERPROFILE%\Downloads，保证菜单始终可用。
+func DownloadsDir() string {
+	if dir, err := mygo.App.Path(mygo.PathDownloads); err == nil && strings.TrimSpace(dir) != "" {
+		return dir
+	}
+	if home, err := os.UserHomeDir(); err == nil && home != "" {
+		return filepath.Join(home, "Downloads")
+	}
+	return ""
+}
+
+// OpenDownloadsDir 打开系统下载目录，让「导出后去哪儿找」有直接出口。
+func (s *Shell) OpenDownloadsDir() {
+	dir := DownloadsDir()
+	if dir == "" {
+		s.showToast("找不到系统下载目录")
+		return
+	}
+	if err := mygo.Shell.OpenPath(dir); err != nil {
+		log.Printf("adago-design: open downloads dir: %v", err)
 	}
 }
 
