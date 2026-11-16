@@ -117,7 +117,7 @@ success-\*/warn-\*/danger-\*/focus/scrollbar/motion），便于未来并库时�
 | 字号 `--ui-text-*` | `xs` 11 / `sm` 12 / `md` 13 / `lg` 15 / `xl` 17 | **8px 与 10px 废止**，最小 11px |
 | 行高 `--ui-lh-*` | `tight` 1.25 / `base` 1.5 / `relaxed` 1.7 | — |
 | 描边 `--ui-border-w` | 1 / 2 | 2 只用于焦点环与选中框 |
-| 层级 `--ui-z-*` | `paper`0 / `edge`1 / `label`6 / `panel`20 / `solo`32 / `toolbar`34 / `toast`40 / `popover`45 / `modal`50 / `rel`60 / `debug`9999 | 取代 10 个魔法数 |
+| 层级 `--ui-z-*` | `paper`0 / `edge`1 / `label`6 / `panel`20 / `solo`32 / `toolbar`34 / `toast`40 / `popover`45 / `modal`50 / `ask`55 / `rel`60 / `debug`9999 | 取代 10 个魔法数；确认弹层压在管理/设计器弹层之上 |
 | 动效 `--ui-dur-*` | `fast` 120ms / `base` 180ms / `slow` 240ms；`--ui-ease` = `cubic-bezier(.2,.7,.3,1)` | 只做状态反馈 |
 
 布局常量（同时供 JS 读取，禁止 JS 复制数值）：
@@ -574,7 +574,8 @@ fill 的数据出现。设计稿在画布项目「adago-design · SVG 图标管�
 |---|---|
 | 列表行 | 32 图标格（`subtle` 底 + 1px line）+ 等宽名称 12/600 + 内置/自定义/已停用 chip + `group · 别名`；右端 32×18 开关；选中行左 2px 墨条 + `brand-soft` |
 | 详情 | 48 图标格、17/600 等宽名称、chips；尺寸档 5 格；两种用法行（等宽 10 + 复制）；kv 两列（分组/别名/来源/viewBox）；SVG 源码 `pre`（内部滚动，不换行折行） |
-| 新增 / 编辑 | 右侧面板；名称（内置/编辑态只读）+ 分组下拉 + 别名；SVG `textarea.icm-code` + 实时预览 + 允许/禁止清单；内置编辑只显示只读源码 |
+| 新增 / 编辑 | 右侧面板；名称（内置/编辑态只读）+ 分组下拉 + 别名；SVG `textarea.icm-code` + 实时预览 + 允许/禁止清单；内置编辑只显示只读源码；标题条另有「设计图标」进入 §15 |
+| 设计入口 | 详情头部：内置「以它为起点设计」、自定义「设计器编辑 / 用设计器改写」；有 design 的图标显示「可再设计」chip；表单底部「改用可视化设计」 |
 | 预览 | `DOMParser` 先校验再注入；拦截 script/foreignObject/text/image/style/use、`on*`、`style`、外链 `href`/`url()`；失败显示原因而不是空白 |
 | 错误 | 行内 `.sysm-err`：名称必填/格式/重名、SVG 必填/解析失败/不允许的元素 |
 | 强制 | 移除走 `uiConfirm` 并提示引用会变空白；Esc 分级；Tab 陷阱；关闭焦点回「图标库」；不新增颜色 |
@@ -592,10 +593,70 @@ fill 的数据出现。设计稿在画布项目「adago-design · SVG 图标管�
 ### 14.4 接线与门禁
 
 - 入口：工具条 `#icons-open`（栅格图标）；弹层 `#icons-modal`，DOM 为
-  `#icons-search / #icons-new / #icons-segs / #icons-rows / #icons-right`。
+  `#icons-search / #icons-design / #icons-new / #icons-segs / #icons-rows / #icons-right`。
+- 「设计图标」先收起图标库再打开 `#icd-modal`（两个弹层互斥）；返回/保存通过
+  `openIconManager(focusName)` 恢复并定位到刚编辑的图标。
 - 每次变更成功后重拉 `GET /api/catalog/icons`；停用不影响精灵与已有模板引用。
 - 与体系管理共用的 bug 修复：从「新增」返回时按 `selected` 重拉详情（不再停在
   「加载中…」）；列表滚动位置不随 `innerHTML` 丢失选中行（`scrollIntoView`）。
 - 门禁：`ui_tokens_test`（零色值/零字号字面量、新令牌存在）、
   `module_graph_test`（`icons-admin.js` 从入口可达、导出齐全）、
   `admin_route_test`（图标路由/状态码/错误码映射）、`design/icons_manage_test`。
+
+## 15. 图标设计器（24 网格画板，2026-11-16）
+
+图标库从「粘贴 SVG」扩到「画图标」：同一份几何文档既是画板状态，也是落库的 `design`，
+服务端再渲染出确定性 SVG。设计器是独立弹层，与图标库互斥打开，返回/保存后回到图标库。
+
+### 15.1 结构与尺寸
+
+`#icd-modal > .modal__box.icd-box > .icd`：头部 56、主体（左工具条 52 / 画板区 flex / 右属性栏 300）、底部操作条。
+
+| 令牌 | 值 | 用途 |
+|---|---|---|
+| `--ui-icd-w` | 1060 | 设计器弹层宽度 |
+| `--ui-icd-h` | 720 | 设计器弹层高度（视口 88vh 封顶） |
+| `--ui-icd-rail-w` | 52 | 左侧工具条 |
+| `--ui-icd-panel-w` | 300 | 右侧属性栏 |
+| `--ui-icd-board` | 372 | 24 网格画板边长（15.5px/格） |
+| `--ui-icd-tool` | 36 | 工具按钮 |
+| `--ui-icd-row-h` | 32 | 图层行 |
+| `--ui-icd-preview-tile` | 52 | 尺寸预览格 |
+| `--ui-icd-code-h` | 132 | SVG 交付物预览块 |
+| `--ui-icd-dark-bg/ink` | 恒深底/浅字 | 暗底检查，不随主题反转 |
+
+### 15.2 组件与规则
+
+| 部件 | 规格 |
+|---|---|
+| 工具条 | 52 宽竖排；V/L/R/O/P/G 六个等宽按键；选中 `brand` 底 + `on-brand` 字；`data-tip` 提示快捷键 |
+| 画板 | 372 方形、`elevated` 底、1px `line-strong` 边、`radius-xl`；网格 1 单位（0.5px 发丝线）、主网格每 4 单位、安全区 20×20 虚线、光学圆 r=10；`vector-effect:non-scaling-stroke` 保证缩放不变粗 |
+| 图形 | 与落库同一渲染语义：根 `<g fill=none stroke=currentColor stroke-width=1.8 cap/join=round>`；单图形可实心/无描边/透明度；`hidden` 不导出 |
+| 选中 | 蓝色（`ins-a`）虚线包围盒 + 4 角圆点；直线额外显示两个端点；包围盒用 `getBBox()` 量取（path 也适用） |
+| 属性栏 | 分段：图标信息（名称/分组/别名）、光学尺寸预览（12/16/20/24 + 暗底）、图形图层、选中图形（坐标/尺寸/圆角/实心/描边/不透明度/复制/层级/删除）、描边与网格、SVG 交付物、错误行 |
+| 预览 | 客户端按同一几何即时渲染 CSS 尺寸 12–24；保存时服务端重新校验并生成落库 SVG，二者语义一致 |
+| 底部 | 左说明（新建/编辑/以内置为起点三种文案）+ 取消 + 保存并启用/保存修改；错误同时进 toast 与行内 |
+
+### 15.3 状态与键盘
+
+| 状态 | 表达 |
+|---|---|
+| 新建 / 编辑 / 以内置为起点 | 头部 chip；编辑态名称只读；克隆预填 `<name>-custom` 且原图标不变 |
+| imported | 「改写现有图标」+ 说明由 SVG 反推；复杂 SVG（渐变/裁剪/transform）打开失败，提示改用源码编辑 |
+| 未保存 | `dirty` 时关闭/返回走 `uiConfirm`；保存成功后不确认，直接回图标库并定位 |
+| 撤销/重做 | 40 步快照；头部按钮禁用态随 `history index` 变化 |
+| 键盘 | V/L/R/O/P/G 切工具、Delete 删除选中、方向键 0.5（Shift 1）微移、Ctrl/⌘+Z 撤销、Shift+Z / Ctrl+Y 重做、Enter/双击结束折线、Esc 取消折线或关闭、Tab 陷阱 |
+
+设计器打开时 Del/Backspace、Ctrl+Z 必须 `stopImmediatePropagation`，不能落到画布的节点删除 / 服务端历史；
+Esc 要排在 main.js 的全局 Esc 之前（模块求值顺序 + capture）。
+
+### 15.4 接线与门禁
+
+- 文件：`static/js/icon-designer.js`（交互与客户端渲染）、`static/js/icons-admin.js`（入口/回调）、
+  `static/index.html`（`#icd-modal` 骨架）、`canvas.css` + `tokens.css`（§15.1 令牌与样式）。
+- 数据：`GET /api/catalog/icons/{name}/design` 打开；保存走 `POST/PUT /api/catalog/icons` 的 `design`；
+  设计稿持久化在 `custom-icons/<name>.json`。
+- 门禁：`ui_tokens_test`（令牌/零字面值/零原生对话框）、`module_graph_test`（新模块从入口可达）、
+  `canvas/admin_route_test`（design 路由）、`design/icondesign_test`（渲染/导入/持久化）、
+  `mcpserver/icons_test`（design 动作）。真机验证：ego-browser 画矩形+圆 → 保存 → 详情「可再设计」→
+  再打开编辑 → 撤销/重做 → 内置 close「以它为起点」另存。

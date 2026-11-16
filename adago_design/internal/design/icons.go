@@ -41,13 +41,14 @@ const IconDefaultViewBox = "0 0 24 24"
 
 // Icon 是图标库中的一项。
 type Icon struct {
-	Name    string   `json:"name"`              // 唯一名，kebab-case，如 "chevron-right"
-	Group   string   `json:"group"`             // arrow | action | status | nav | media | data
-	Tags    []string `json:"tags,omitempty"`    // 别名与检索词（含被替换掉的字符符号）
-	Body    string   `json:"-"`                 // <path/> / <circle/> 片段，不含 <svg> 外壳
-	Filled  bool     `json:"filled,omitempty"`  // 实心态（用 fill 而非 stroke）
-	ViewBox string   `json:"viewBox,omitempty"` // 视口，默认 0 0 24 24
-	Builtin bool     `json:"builtin,omitempty"` // 内置（icon_paths.go）不可删除
+	Name     string   `json:"name"`              // 唯一名，kebab-case，如 "chevron-right"
+	Group    string   `json:"group"`             // arrow | action | status | nav | media | data
+	Tags     []string `json:"tags,omitempty"`    // 别名与检索词（含被替换掉的字符符号）
+	Body     string   `json:"-"`                 // <path/> / <circle/> 片段，不含 <svg> 外壳
+	Filled   bool     `json:"filled,omitempty"`  // 实心态（用 fill 而非 stroke）
+	ViewBox  string   `json:"viewBox,omitempty"` // 视口，默认 0 0 24 24
+	Builtin  bool     `json:"builtin,omitempty"` // 内置（icon_paths.go）不可删除
+	Designed bool     `json:"-"`                 // 有可再编辑的设计文档（custom-icons/*.json 的 design 字段）
 }
 
 var (

@@ -277,8 +277,11 @@
             <svg class="ds-icon ds-icon--14" aria-hidden="true"><use href="#ds-ic-search"/></svg>
             <input id="icons-search" type="search" placeholder="搜索名称、别名或分组" autocomplete="off" aria-label="搜索图标">
           </label>
-          <button id="icons-new" class="btn btn--primary">
-            <svg class="ds-icon ds-icon--14" aria-hidden="true"><use href="#ds-ic-plus"/></svg>新增图标
+          <button id="icons-design" class="btn btn--primary">
+            <svg class="ds-icon ds-icon--14" aria-hidden="true"><use href="#ds-ic-edit"/></svg>设计图标
+          </button>
+          <button id="icons-new" class="btn" title="直接粘贴 SVG 源码新增">
+            <svg class="ds-icon ds-icon--14" aria-hidden="true"><use href="#ds-ic-plus"/></svg>粘贴 SVG
           </button>
           <button class="modal__x" data-icons-close title="关闭" aria-label="关闭图标库管理">
             <svg class="ds-icon ds-icon--14" aria-hidden="true"><use href="#ds-ic-close"/></svg>
@@ -296,6 +299,49 @@
           </div>
           <div id="icons-right" class="sysm-right"></div>
         </div>
+      </div>
+    </div>
+  </div>
+  <!-- 图标设计器：24 网格画板 + 基础图形绘制 + 图层 + 多尺寸预览。
+       与图标管理弹层互斥打开：进入设计器会先收起图标库，返回/保存后回到图标库。 -->
+  <div id="icd-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="icd-title">
+    <div class="modal__mask" data-icd-close></div>
+    <div class="modal__box icd-box">
+      <div class="icd">
+        <header class="icd-head">
+          <button class="sysm-back icd-back" data-icd-act="back">
+            <svg class="ds-icon ds-icon--14" aria-hidden="true"><use href="#ds-ic-arrow-left"/></svg>图标库
+          </button>
+          <span class="icd-title" id="icd-title">设计图标</span>
+          <span class="chip" id="icd-badge">新建</span>
+          <span class="grow"></span>
+          <button class="icd-iconbtn" data-icd-act="undo" id="icd-undo" data-tip="撤销 (Ctrl+Z)" aria-label="撤销">
+            <svg class="ds-icon ds-icon--14" aria-hidden="true"><use href="#ds-ic-undo"/></svg>
+          </button>
+          <button class="icd-iconbtn icd-iconbtn--flip" data-icd-act="redo" id="icd-redo" data-tip="重做 (Ctrl+Shift+Z)" aria-label="重做">
+            <svg class="ds-icon ds-icon--14" aria-hidden="true"><use href="#ds-ic-undo"/></svg>
+          </button>
+          <button class="modal__x" data-icd-close title="关闭" aria-label="关闭图标设计器">
+            <svg class="ds-icon ds-icon--14" aria-hidden="true"><use href="#ds-ic-close"/></svg>
+          </button>
+        </header>
+        <div class="icd-body">
+          <aside class="icd-rail" id="icd-tools" aria-label="绘图工具"></aside>
+          <main class="icd-stage">
+            <div class="icd-board" id="icd-board" tabindex="0" aria-label="24 网格图标画板">
+              <svg id="icd-svg" viewBox="0 0 24 24" role="img" aria-label="图标画板"></svg>
+            </div>
+            <span class="icd-stage-hint" id="icd-hint">拖拽绘制 · 0.5 网格吸附 · Alt 细调 · 方向键微移</span>
+          </main>
+          <aside class="icd-panel" id="icd-panel" aria-label="图标属性"></aside>
+        </div>
+        <footer class="icd-foot">
+          <span class="icd-note" id="icd-note"></span>
+          <span class="icd-err" id="icd-error" role="alert"></span>
+          <span class="grow"></span>
+          <button class="btn" data-icd-act="cancel">取消</button>
+          <button class="btn btn--primary" data-icd-act="save" id="icd-save">保存并启用</button>
+        </footer>
       </div>
     </div>
   </div>

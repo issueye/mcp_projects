@@ -174,8 +174,10 @@ ds-progress、ds-navbar、ds-tabbar、ds-list、ds-dialog、ds-toast
 |---|---|---|
 | 停用 / 启用 | 只影响**选择面**：`Icons/SearchIcons/IconCatalog/design_icons` 不再返回；精灵与已有模板引用不变 | `icon-settings.json` 的 `disabled` |
 | 编辑（内置） | 只改分组/别名；SVG 只读，「恢复默认」清除覆盖 | `icon-settings.json` 的 `overrides` |
-| 编辑（自定义） | 分组/别名/SVG 正文都可改（重新校验并写回） | `custom-icons/<name>.json` |
+| 编辑（自定义） | 分组/别名/SVG 正文都可改（重新校验并写回）；手改 SVG 会清掉 design | `custom-icons/<name>.json` |
 | 新增 | 名称（kebab-case）+ 分组 + 别名 + 粘贴 SVG/路径片段；解析出 body 与 viewBox | `custom-icons/<name>.json` |
+| 设计（新增 / 编辑） | 24 网格几何文档（`IconDoc`）→ 规范化 → 确定性 SVG 与 Body；自定义图标的 design 可反复打开编辑 | `custom-icons/<name>.json` 的 `design` |
+| 设计（内置） | 内置图标只读；从 SVG 反推设计稿（`imported=true`），可「以它为起点」另存为自定义图标 | 只读 + 新建文件 |
 | 移除 | 仅自定义图标；内置返回 `icon_builtin_protected` | 删除文件 + 注册表 |
 | 恢复默认 | 仅内置图标：清空覆盖并重新启用 | 清 settings 条目 |
 
@@ -190,6 +192,42 @@ ds-progress、ds-navbar、ds-tabbar、ds-list、ds-dialog、ds-toast
   `on*`、`style`、外链 `href`/`url()`、`<!DOCTYPE`；≤ 64 KB；viewBox 必须四数。
 - 启动顺序：`LoadCustomIcons(dir)` → `LoadIconSettings(dir)`（先注册再套用状态）；
   设置与图标文件均 tmp→rename 原子写。
+
+### 3.7 图标设计文档（IconDoc）
+
+图标库从「只能粘贴 SVG」扩到「能画图标」，关键在于把图形变成一份可校验、可还原的数据，
+而不是又一份不可编辑的源码。实现：`internal/design/icondesign.go`。
+
+```go
+type IconDoc struct {
+    Version     int
+    Grid        float64          // 默认 24，只支持正方形 viewBox（8–64）
+    StrokeWidth float64          // 默认 1.8（与 .ds-icon 对齐），0.5–8
+    Cap, Join   string           // round | butt/square、round | miter/bevel
+    Shapes      []IconShape
+}
+
+type IconShape struct {
+    Type  string   // line | rect | circle | ellipse | polyline | polygon | path
+    // 几何：x/y/width/height/radius、cx/cy/r/rx/ry、x1/y1/x2/y2、points、d
+    DX, DY float64 // 整体平移（导入 path 后仍可拖动）
+    Fill bool; Stroke *bool; Opacity, StrokeW float64; Hidden bool
+}
+```
+
+| 规则 | 说明 |
+|---|---|
+| 单一渲染路径 | `NormalizeIconDoc → IconDocSVG / IconDocBody`；设计器预览、HTTP 落库、MCP 返回共用同一份几何语义，避免「画板好看、落库变形」 |
+| 安全边界 | 复用 `parseIconSVG`：只允许基础图形/分组/渐变定义；path 只允许 SVG 命令与数字；拒绝脚本/文本/外链/事件；≤ 128 个图形 |
+| 统一皮肤 | 根 `<g>` 固定 `fill=none stroke=currentColor stroke-width=1.8 linecap/linejoin=round`；单图形可 `fill=true`（currentColor 实心）、`stroke=false`、`opacity`、局部 `strokeWidth` |
+| 坐标 | 允许轻微出血（-25%–125%），拒绝画到画板之外；线长/半径/宽高为 0 直接 `invalid_icon` |
+| 可再编辑 | 自定义图标 JSON 增 `design`；`Icon.Designed` 标记；手改 SVG 时 `UpdateIcon` 清空 design，避免下次打开看到旧形状 |
+| SVG 反推 | `ImportIconDoc` 只接受基础图形；支持顶层统一描边分组与 `translate` 位移；渐变/裁剪/嵌套样式/非正方形 viewBox 明确报错，让 UI 退回源码编辑 |
+| 漏洞面 | 落库仍走 `parseIconSVG`（第二道门禁）；设计文档不是绕过 SVG 校验的后门 |
+
+- 设计器 UI 规范见 DESIGN-SYSTEM-UI.md §15；HTTP：`GET /api/catalog/icons/{name}/design`，
+  新增/编辑在 `POST/PUT` 的 `design` 字段；MCP：`design_icon_manage` 的 `design` 动作
+  （文档 → SVG 预览、已有图标/SVG → 文档），`create/update` 可直接带 `design` 落库。
 
 ## 4. 无限画布（internal/canvas + static/）
 
@@ -290,9 +328,10 @@ type Node struct {
 | `POST /api/catalog/systems/{id}/reset` | 内置体系恢复默认显示信息并启用 |
 | `DELETE /api/catalog/systems/{id}` | 移除自定义体系；内置 409 `system_builtin_protected` |
 | `GET /api/catalog/icons` | 全部图标摘要（含停用/自定义，管理面，需装配 `IconAdmin`） |
-| `GET /api/catalog/icons/{name}` | 图标详情（summary + 归一化 SVG 源码） |
-| `POST /api/catalog/icons` | 新增自定义图标 `{name,group?,tags?,svg}` |
-| `PUT /api/catalog/icons/{name}` | 编辑 `{group?,tags?,svg?}`；内置传 `svg` → 409 |
+| `GET /api/catalog/icons/{name}` | 图标详情（summary + 归一化 SVG 源码；有 design 时附带几何文档） |
+| `GET /api/catalog/icons/{name}/design` | 设计器上下文：`{design, imported, builtin, designed, editable, group, tags}` |
+| `POST /api/catalog/icons` | 新增自定义图标 `{name,group?,tags?,svg?,design?}`（design 优先，渲染成 SVG 落库） |
+| `PUT /api/catalog/icons/{name}` | 编辑 `{group?,tags?,svg?,design?}`；内置传 `svg`/`design` → 409；手改 SVG 清空 design |
 | `POST /api/catalog/icons/{name}/state` | `{disabled:true\|false}` 停用/启用 |
 | `POST /api/catalog/icons/{name}/reset` | 内置图标恢复默认分组/别名并启用 |
 | `DELETE /api/catalog/icons/{name}` | 移除自定义图标；内置 409 `icon_builtin_protected` |
@@ -593,7 +632,7 @@ SDK：`github.com/modelcontextprotocol/go-sdk v1.8.0`（与 mem-go 一致）。
 | `design_derive` | `primary`(#RRGGBB), `name`, `base_system`, `addToCanvas?=true` | 10 阶品牌色板 + 派生体系（持久化注册）+ 色板节点 |
 | `design_register` | `name`, `tokens_json`, `dark_json?`, `base_system?` | 自定义体系注册（结构兜底 + 持久化） |
 | `design_system_manage` | `action`(list/create/update/disable/enable/remove/reset), `id?`, `name?`, `vendor?`, `family?`, `base?`, `primary?`, `description?`, `summary?`, `json?` | 体系管理：停用只影响选择面；内置可停用/改显示信息不可删；自定义可整体改 JSON/移除 |
-| `design_icon_manage` | `action`(list/create/update/disable/enable/remove/reset), `name?`, `group?`, `tags?`, `svg?`, `query?` | 图标管理：停用只影响 `design_icons`/检索；内置可停用/改分组别名、SVG 只读不可删；自定义可粘贴 SVG 新增/编辑/移除 |
+| `design_icon_manage` | `action`(list/design/create/update/disable/enable/remove/reset), `name?`, `group?`, `tags?`, `svg?`, `design?`, `query?` | 图标管理与设计：`design` 动作把几何文档渲染成确定性 SVG（也可从 name/svg 反推）；create/update 可带 `design`；停用只影响 `design_icons`/检索；内置可停用/改分组别名、SVG 只读不可删（可另存） |
 | `design_audit` | `system`（体系走查）, `theme?`, `addToCanvas?=true`；或 `nodeID`（节点级走查，优先） | 体系级：WCAG 对比度/字号/阶梯走查评分 + 报告节点；节点级：外链资源 / 图标与符号 / 尺寸契约 / 字体授权（`AuditNodeHTML`） |
 | `canvas_connect` | `from`, `to`, `label?` | 节点间贝塞尔连线（SVG，持久化） |
 | `canvas_group` | `title`, `node_ids[]`, `padding?` | 分组框（垫底虚线框，自动包住成员） |

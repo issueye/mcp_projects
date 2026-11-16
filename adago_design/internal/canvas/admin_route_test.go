@@ -200,6 +200,16 @@ func (fakeIcons) RemoveIcon(name string) error {
 	return nil
 }
 
+func (fakeIcons) IconDesign(name string) (any, error) {
+	if name != "probe" && name != "builtin" {
+		return nil, &AdminError{Code: "unknown_icon", Message: "不存在"}
+	}
+	return map[string]any{
+		"name": name, "editable": name != "builtin", "builtin": name == "builtin",
+		"design": map[string]any{"grid": 24, "shapes": []any{}},
+	}, nil
+}
+
 func TestIconAdminRoutes(t *testing.T) {
 	srv, ts := newTestServer(t)
 	srv.Icons = fakeIcons{}
@@ -210,6 +220,15 @@ func TestIconAdminRoutes(t *testing.T) {
 	}
 	if list, _ := data["icons"].([]any); len(list) != 1 {
 		t.Fatalf("icons list body = %v", data)
+	}
+
+	res, _ = doJSON(t, "GET", ts.URL+"/api/catalog/icons/probe/design", nil)
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("icon design = %d", res.StatusCode)
+	}
+	res, _ = doJSON(t, "GET", ts.URL+"/api/catalog/icons/nope/design", nil)
+	if res.StatusCode != http.StatusNotFound {
+		t.Fatalf("未知图标 design = %d", res.StatusCode)
 	}
 
 	res, _ = doJSON(t, "GET", ts.URL+"/api/catalog/icons/probe", nil)
@@ -231,6 +250,23 @@ func TestIconAdminRoutes(t *testing.T) {
 	res, _ = doJSON(t, "POST", ts.URL+"/api/catalog/icons", map[string]any{"name": "probe"})
 	if res.StatusCode != http.StatusCreated {
 		t.Fatalf("create = %d", res.StatusCode)
+	}
+
+	// 设计器上下文：可编辑图标 / 内置只读 / 未知图标
+	res, data = doJSON(t, "GET", ts.URL+"/api/catalog/icons/probe/design", nil)
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("design = %d", res.StatusCode)
+	}
+	if data["editable"] != true {
+		t.Fatalf("design editable = %v", data["editable"])
+	}
+	res, data = doJSON(t, "GET", ts.URL+"/api/catalog/icons/builtin/design", nil)
+	if res.StatusCode != http.StatusOK || data["editable"] != false {
+		t.Fatalf("builtin design = %d %v", res.StatusCode, data)
+	}
+	res, _ = doJSON(t, "GET", ts.URL+"/api/catalog/icons/missing/design", nil)
+	if res.StatusCode != http.StatusNotFound {
+		t.Fatalf("未知图标 design = %d", res.StatusCode)
 	}
 
 	res, _ = doJSON(t, "PUT", ts.URL+"/api/catalog/icons/builtin", map[string]any{"svg": "<path/>"})

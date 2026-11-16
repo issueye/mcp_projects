@@ -1,6 +1,8 @@
 package app
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -27,7 +29,7 @@ func iconAdminErr(err error) error {
 		hint = "内置图标 SVG 只读、不可删除；可停用或改分组/别名"
 	case errors.Is(err, design.ErrIconExists):
 		code = "icon_duplicate"
-		msg = strings.TrimPrefix(msg, design.ErrIconExists.Error()+": ")
+		msg = "名称已被占用：" + strings.TrimPrefix(msg, design.ErrIconExists.Error()+": ")
 		hint = "换一个名称，或先移除同名自定义图标"
 	case errors.Is(err, design.ErrIconInvalid):
 		code = "invalid_icon"
@@ -51,7 +53,21 @@ func iconSummary(ic design.Icon) map[string]any {
 		"overridden": over,
 		"svg":        design.IconInline(ic.Name, 24),
 		"usage":      design.IconUsage(ic.Name),
+		"designed":   ic.Designed,
 	}
+}
+
+// designFromRaw 把 HTTP 入参里的 design 原样解析成设计文档（缺省 / null 视为未提供）。
+func designFromRaw(raw json.RawMessage) (*design.IconDoc, error) {
+	trimmed := bytes.TrimSpace(raw)
+	if len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
+		return nil, nil
+	}
+	var doc design.IconDoc
+	if err := json.Unmarshal(trimmed, &doc); err != nil {
+		return nil, fmt.Errorf("%w: design JSON 解析失败：%v", design.ErrIconInvalid, err)
+	}
+	return &doc, nil
 }
 
 // IconSummariesAll 返回全部图标（含停用），管理弹层用。
@@ -64,7 +80,7 @@ func (Catalog) IconSummariesAll() any {
 }
 
 // IconDetail 返回单个图标的详情（含 SVG 源码）。
-func (Catalog) IconDetail(name string) (any, error) {
+func (c Catalog) IconDetail(name string) (any, error) {
 	ic, ok := design.GetIcon(name)
 	if !ok {
 		return nil, iconAdminErr(fmt.Errorf("%w: %s", design.ErrIconNotFound, name))
@@ -75,16 +91,29 @@ func (Catalog) IconDetail(name string) (any, error) {
 	}
 	detail := iconSummary(ic)
 	detail["source"] = src
+	if info, derr := design.IconDesign(ic.Name, c.DataDir); derr == nil {
+		detail["design"] = info.Doc
+		detail["designImported"] = info.Imported
+		detail["designEditable"] = !info.Builtin
+		detail["designed"] = info.Designed
+	} else {
+		detail["designError"] = derr.Error()
+	}
 	return detail, nil
 }
 
 // CreateIcon 新增一个自定义图标。
 func (c Catalog) CreateIcon(in canvas.IconInput) (any, error) {
+	doc, err := designFromRaw(in.Design)
+	if err != nil {
+		return nil, iconAdminErr(err)
+	}
 	ic, err := design.CreateIcon(design.IconInput{
-		Name:  strings.TrimSpace(in.Name),
-		Group: in.Group,
-		Tags:  in.Tags,
-		SVG:   in.SVG,
+		Name:   strings.TrimSpace(in.Name),
+		Group:  in.Group,
+		Tags:   in.Tags,
+		SVG:    in.SVG,
+		Design: doc,
 	}, c.DataDir)
 	if err != nil {
 		return nil, iconAdminErr(err)
@@ -94,8 +123,13 @@ func (c Catalog) CreateIcon(in canvas.IconInput) (any, error) {
 
 // UpdateIcon 编辑图标：内置只改分组/别名，自定义可整体替换 SVG。
 func (c Catalog) UpdateIcon(name string, in canvas.IconInput) (any, error) {
+	doc, err := designFromRaw(in.Design)
+	if err != nil {
+		return nil, iconAdminErr(err)
+	}
 	patch := design.IconPatch{}
 	patch.SVG = in.SVG
+	patch.Design = doc
 	if g := strings.TrimSpace(in.Group); g != "" {
 		patch.Group = &g
 	}
@@ -108,6 +142,25 @@ func (c Catalog) UpdateIcon(name string, in canvas.IconInput) (any, error) {
 		return nil, iconAdminErr(err)
 	}
 	return iconSummary(ic), nil
+}
+
+// IconDesign 返回设计器上下文（几何文档 + 只读/反推标记）。
+func (c Catalog) IconDesign(name string) (any, error) {
+	info, err := design.IconDesign(name, c.DataDir)
+	if err != nil {
+		return nil, iconAdminErr(err)
+	}
+	ic, _ := design.GetIcon(strings.TrimSpace(name))
+	return map[string]any{
+		"name":     ic.Name,
+		"group":    ic.Group,
+		"tags":     ic.Tags,
+		"design":   info.Doc,
+		"imported": info.Imported,
+		"builtin":  info.Builtin,
+		"designed": info.Designed,
+		"editable": !info.Builtin,
+	}, nil
 }
 
 // SetIconDisabled 停用 / 启用图标。

@@ -81,6 +81,9 @@ type IconInput struct {
 	Tags  []string `json:"tags,omitempty"`
 	// SVG 非空表示「替换 SVG 正文」（仅自定义图标；内置图标返回 409）。
 	SVG string `json:"svg,omitempty"`
+	// Design 是设计器提交的几何文档（原样透传给 design 包解析）；
+	// 与 SVG 同时出现时 Design 优先，保证设计稿与交付物同源。
+	Design json.RawMessage `json:"design,omitempty"`
 }
 
 // IconAdmin 是 SVG 图标管理的可选能力：未注入时管理端点返回 501。
@@ -92,6 +95,8 @@ type IconAdmin interface {
 	SetIconDisabled(name string, disabled bool) (any, error)
 	ResetIcon(name string) (any, error)
 	RemoveIcon(name string) error
+	// IconDesign 返回设计器上下文：design 文档 + 是否反推 / 是否内置 / 可否原地保存。
+	IconDesign(name string) (any, error)
 }
 
 // AdminError 是管理端点的稳定错误（code 供前端/Agent 分支）。
@@ -192,6 +197,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("DELETE /api/catalog/systems/{id}", s.handleDeleteSystem)
 	mux.HandleFunc("GET /api/catalog/icons", s.handleCatalogIcons)
 	mux.HandleFunc("GET /api/catalog/icons/{name}", s.handleCatalogIcon)
+	mux.HandleFunc("GET /api/catalog/icons/{name}/design", s.handleIconDesign)
 	mux.HandleFunc("POST /api/catalog/icons", s.handleCreateIcon)
 	mux.HandleFunc("PUT /api/catalog/icons/{name}", s.handleUpdateIcon)
 	mux.HandleFunc("POST /api/catalog/icons/{name}/state", s.handleIconState)
@@ -984,6 +990,19 @@ func (s *Server) handleCatalogIcon(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"icon": out})
+}
+
+func (s *Server) handleIconDesign(w http.ResponseWriter, r *http.Request) {
+	if s.Icons == nil {
+		writeErr(w, http.StatusNotImplemented, APIError("no_admin", "图标管理未装配", ""))
+		return
+	}
+	out, err := s.Icons.IconDesign(r.PathValue("name"))
+	if err != nil {
+		writeAdminErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, out)
 }
 
 func (s *Server) handleCreateIcon(w http.ResponseWriter, r *http.Request) {

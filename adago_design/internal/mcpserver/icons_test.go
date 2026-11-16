@@ -1,14 +1,155 @@
 package mcpserver
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 
 	"adagodesign/internal/design"
 )
 
+func mcpDesignDoc() map[string]any {
+	return map[string]any{
+		"grid": 24, "strokeWidth": 2, "cap": "round", "join": "round",
+		"shapes": []any{
+			map[string]any{"type": "rect", "x": 4, "y": 4, "width": 16, "height": 16, "radius": 4},
+			map[string]any{"type": "circle", "cx": 12, "cy": 12, "r": 3, "fill": true, "stroke": false},
+			map[string]any{"type": "line", "x1": 8, "y1": 12, "x2": 16, "y2": 12},
+		},
+	}
+}
+
 // design_icon_manage 与画布弹层共用同一套 design 函数：
 // 新增 / 检索 / 停用 / 启用 / 内置保护 / 移除 走一遍 MCP 契约。
+// design_icon_manage 的 design 动作：几何文档 → 确定性 SVG；已有图标 / SVG 可反推；
+// create/update 带 design 落库后仍能取回设计稿。
+func TestDesignIconDesignTool(t *testing.T) {
+	_, _ = design.LoadCustomIcons("")
+	_ = design.LoadIconSettings("")
+	t.Cleanup(func() {
+		_, _ = design.LoadCustomIcons("")
+		_ = design.LoadIconSettings("")
+	})
+
+	sess, d := newTestSession(t)
+	const name = "mcp-design-probe"
+	t.Cleanup(func() { _ = design.RemoveIcon(name, d.DataDir) })
+
+	res := callTool(t, sess, "design_icon_manage", map[string]any{"action": "design", "design": mcpDesignDoc()})
+	if res.IsError {
+		t.Fatalf("design 失败: %s", contentText(t, res))
+	}
+	var out iconManageOut
+	if raw, _ := json.Marshal(res.StructuredContent); len(raw) > 0 {
+		if err := json.Unmarshal(raw, &out); err != nil {
+			t.Fatalf("结构化输出解析失败: %v (%s)", err, raw)
+		}
+	}
+	if out.SVG == "" || !strings.Contains(out.SVG, "<rect") || !strings.Contains(out.SVG, "stroke-width=\"2\"") {
+		t.Fatalf("design 未返回预期 SVG: %s", out.SVG)
+	}
+	if out.Design == nil || len(out.Design.Shapes) != 3 {
+		t.Fatalf("design 未返回规范化文档: %+v", out.Design)
+	}
+	if txt := contentText(t, res); !strings.Contains(txt, "3 个图形") {
+		t.Fatalf("design 文案异常: %s", txt)
+	}
+
+	// 从 SVG 反推
+	res = callTool(t, sess, "design_icon_manage", map[string]any{
+		"action": "design",
+		"svg":    `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>`,
+	})
+	if res.IsError {
+		t.Fatalf("design 反推失败: %s", contentText(t, res))
+	}
+	raw, _ := json.Marshal(res.StructuredContent)
+	out = iconManageOut{}
+	if err := json.Unmarshal(raw, &out); err != nil {
+		t.Fatal(err)
+	}
+	if !out.Imported || out.Design == nil || len(out.Design.Shapes) != 1 {
+		t.Fatalf("反推结果异常: %+v", out)
+	}
+
+	// 打开内置图标：只读，可另存
+	res = callTool(t, sess, "design_icon_manage", map[string]any{"action": "design", "name": "close"})
+	if res.IsError {
+		t.Fatalf("打开内置图标失败: %s", contentText(t, res))
+	}
+	if strings.Contains(contentText(t, res), "只读") == false {
+		t.Fatalf("内置图标文案应提示只读: %s", contentText(t, res))
+	}
+	out = iconManageOut{}
+	raw, _ = json.Marshal(res.StructuredContent)
+	if err := json.Unmarshal(raw, &out); err != nil {
+		t.Fatal(err)
+	}
+	if !out.Builtin || out.Editable {
+		t.Fatalf("内置图标标记异常: %+v", out)
+	}
+
+	// 缺少来源参数
+	res = callTool(t, sess, "design_icon_manage", map[string]any{"action": "design"})
+	if !res.IsError || !strings.Contains(contentText(t, res), "bad_request") {
+		t.Fatalf("design 缺参数应报 bad_request: %s", contentText(t, res))
+	}
+
+	// 带 design 新增，再取回
+	res = callTool(t, sess, "design_icon_manage", map[string]any{
+		"action": "create", "name": name, "group": "action", "tags": []string{"design-probe"},
+		"design": mcpDesignDoc(),
+	})
+	if res.IsError {
+		t.Fatalf("create design 失败: %s", contentText(t, res))
+	}
+	if got, _ := design.GetIcon(name); !got.Designed {
+		t.Fatal("create 后 Designed 应为 true")
+	}
+	res = callTool(t, sess, "design_icon_manage", map[string]any{"action": "design", "name": name})
+	if res.IsError {
+		t.Fatalf("取回设计稿失败: %s", contentText(t, res))
+	}
+	out = iconManageOut{}
+	raw, _ = json.Marshal(res.StructuredContent)
+	if err := json.Unmarshal(raw, &out); err != nil {
+		t.Fatal(err)
+	}
+	if out.Imported || out.Design == nil || len(out.Design.Shapes) != 3 {
+		t.Fatalf("取回的设计稿异常: %+v", out)
+	}
+
+	// 用设计稿更新
+	next := map[string]any{
+		"grid": 24, "strokeWidth": 2,
+		"shapes": []any{map[string]any{"type": "circle", "cx": 12, "cy": 12, "r": 7}},
+	}
+	res = callTool(t, sess, "design_icon_manage", map[string]any{
+		"action": "update", "name": name, "design": next,
+	})
+	if res.IsError {
+		t.Fatalf("update design 失败: %s", contentText(t, res))
+	}
+	res = callTool(t, sess, "design_icon_manage", map[string]any{"action": "design", "name": name})
+	out = iconManageOut{}
+	raw, _ = json.Marshal(res.StructuredContent)
+	if err := json.Unmarshal(raw, &out); err != nil {
+		t.Fatal(err)
+	}
+	if out.Design == nil || len(out.Design.Shapes) != 1 {
+		t.Fatalf("update 后设计稿异常: %+v", out)
+	}
+
+	// 非法设计稿：空 shapes
+	res = callTool(t, sess, "design_icon_manage", map[string]any{
+		"action": "create", "name": "mcp-design-bad",
+		"design": map[string]any{"shapes": []any{}},
+	})
+	if !res.IsError || !strings.Contains(contentText(t, res), "invalid_icon") {
+		t.Fatalf("空设计稿应报 invalid_icon: %s", contentText(t, res))
+	}
+}
+
 func TestDesignIconManageTool(t *testing.T) {
 	_, _ = design.LoadCustomIcons("")
 	_ = design.LoadIconSettings("")

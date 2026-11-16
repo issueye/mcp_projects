@@ -54,7 +54,8 @@ func NewServer(d Deps) *mcp.Server {
 				"⑤ design_audit 走查（体系级：字体授权、图标一致性、尺寸规范；传 node_id 可走查单个已生成节点的外链/图标/尺寸契约）→ canvas_arrange 排版 → " +
 				"canvas_screenshot 回看 → canvas_export 导出独立 HTML。" +
 				"体系本身可管理（停用/新增/编辑/移除）用 design_system_manage；停用后目录与预览不再出现它。" +
-				"图标库可管理（新增自定义 SVG / 停用 / 移除）用 design_icon_manage；design_icons 自动包含自定义、隐藏停用。" +
+				"图标库可管理、可设计：design_icon_manage 的 design 动作把 24 网格几何文档渲染成确定性 SVG（也能从已有 SVG 反推），" +
+				"create/update 可直接带 design 落库；design_icons 自动包含自定义、隐藏停用。" +
 				"硬规则：设计稿必须归属于已存在的项目 —— 任何新增设计稿的工具（design_preview / design_screen / " +
 				"canvas_add / design_audit / design_derive / design_compare）都必须传 project；没有项目就先 project_create，" +
 				"否则会返回 project_required。" +
@@ -183,8 +184,10 @@ func registerTools(server *mcp.Server, d Deps) {
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name: "design_icon_manage",
-		Description: "SVG 图标库管理：list / create / update / disable / enable / remove / reset。" +
-			"内置图标可停用、可改分组/别名，SVG 只读、不可删除；自定义图标可粘贴 SVG 新增、整体编辑、移除。" +
+		Description: "SVG 图标库管理与设计：list / design / create / update / disable / enable / remove / reset。" +
+			"design 动作接受几何文档（design）直接渲染 SVG，或传 name 打开已有图标、传 svg 反推设计文档；" +
+			"create/update 可带 design 保存为可再编辑的自定义图标（24 网格，描边 1.8，currentColor）。" +
+			"内置图标可停用、可改分组/别名，SVG 只读、不可删除（但可把 design 另存为新自定义图标）；" +
 			"停用只影响 design_icons / 检索 / 目录（精灵仍保留，旧模板引用不会变空白）。",
 	}, iconManageTool(d))
 

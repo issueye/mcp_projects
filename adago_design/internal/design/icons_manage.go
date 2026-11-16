@@ -92,27 +92,34 @@ type iconSettings struct {
 }
 
 // iconFile 是 <data>/custom-icons/<name>.json 的结构。
+// Design 是设计器的可再编辑源；SVG 是唯一交付物。两者不一致时以 SVG 为准，
+// 手改 SVG（UpdateIcon 的 SVG patch）会清掉 Design（见 UpdateIcon）。
 type iconFile struct {
-	Name  string   `json:"name"`
-	Group string   `json:"group,omitempty"`
-	Tags  []string `json:"tags,omitempty"`
-	SVG   string   `json:"svg"`
+	Name   string   `json:"name"`
+	Group  string   `json:"group,omitempty"`
+	Tags   []string `json:"tags,omitempty"`
+	SVG    string   `json:"svg"`
+	Design *IconDoc `json:"design,omitempty"`
 }
 
-// IconInput 是「新增图标」的入参。
+// IconInput 是「新增图标」的入参。SVG 与 Design 二选一（都给时 Design 优先）：
+// Design 会先规范化再渲染成 SVG，保证设计稿与交付物同源。
 type IconInput struct {
-	Name  string
-	Group string
-	Tags  []string
-	SVG   string
+	Name   string
+	Group  string
+	Tags   []string
+	SVG    string
+	Design *IconDoc
 }
 
 // IconPatch 是「编辑图标」的部分更新：Group 为 nil 表示不改；TagsSet 表示整体替换别名。
+// Design 非 nil 表示用设计稿整体替换 SVG；SVG 非空（且 Design 为 nil）表示手改源码。
 type IconPatch struct {
 	Group   *string
 	Tags    []string
 	TagsSet bool
 	SVG     string
+	Design  *IconDoc
 }
 
 // IconSettingsPath 返回图标设置文件路径。
@@ -265,6 +272,7 @@ func LoadCustomIcons(dir string) (int, error) {
 			}
 			continue
 		}
+		ic.Designed = f.Design != nil
 		iconMu.Lock()
 		if _, dup := iconRegistry[ic.Name]; dup {
 			iconMu.Unlock()
@@ -353,7 +361,7 @@ func SetIconDisabled(name, dir string, off bool) (Icon, error) {
 	return iconRegistry[ic.Name], nil
 }
 
-// CreateIcon 新增一个自定义图标并持久化。
+// CreateIcon 新增一个自定义图标并持久化（可来自 SVG 源码或设计文档）。
 func CreateIcon(in IconInput, dir string) (Icon, error) {
 	name, err := normalizeIconName(in.Name)
 	if err != nil {
@@ -363,11 +371,24 @@ func CreateIcon(in IconInput, dir string) (Icon, error) {
 	if err != nil {
 		return Icon{}, err
 	}
-	body, viewBox, err := parseIconSVG(in.SVG)
+	svg := strings.TrimSpace(in.SVG)
+	var design *IconDoc
+	if in.Design != nil {
+		doc, docErr := NormalizeIconDoc(*in.Design)
+		if docErr != nil {
+			return Icon{}, docErr
+		}
+		rendered, renderErr := IconDocSVG(doc)
+		if renderErr != nil {
+			return Icon{}, renderErr
+		}
+		saved := doc
+		design, svg = &saved, rendered
+	}
+	body, viewBox, err := parseIconSVG(svg)
 	if err != nil {
 		return Icon{}, fmt.Errorf("%w: %v", ErrIconInvalid, err)
 	}
-	svg := strings.TrimSpace(in.SVG)
 	tags := normalizeIconTags(in.Tags)
 
 	iconStoreMu.Lock()
@@ -378,10 +399,12 @@ func CreateIcon(in IconInput, dir string) (Icon, error) {
 	if _, dup := iconRegistry[name]; dup {
 		return Icon{}, fmt.Errorf("%w: %s", ErrIconExists, name)
 	}
-	if err := writeIconFile(dir, iconFile{Name: name, Group: group, Tags: tags, SVG: svg}); err != nil {
+	if err := writeIconFile(dir, iconFile{Name: name, Group: group, Tags: tags, SVG: svg, Design: design}); err != nil {
 		return Icon{}, err
 	}
-	registerIconLocked(Icon{Name: name, Group: group, Tags: tags, Body: body, ViewBox: viewBox}, false)
+	registerIconLocked(Icon{
+		Name: name, Group: group, Tags: tags, Body: body, ViewBox: viewBox, Designed: design != nil,
+	}, false)
 	return iconRegistry[name], nil
 }
 
@@ -400,6 +423,9 @@ func UpdateIcon(name, dir string, patch IconPatch) (Icon, error) {
 		return Icon{}, fmt.Errorf("%w: %s", ErrIconNotFound, name)
 	}
 	if ic.Builtin {
+		if patch.Design != nil {
+			return Icon{}, fmt.Errorf("%w: 内置图标设计稿只读；请以它为起点新建自定义图标", ErrIconBuiltin)
+		}
 		if strings.TrimSpace(patch.SVG) != "" {
 			return Icon{}, fmt.Errorf("%w: 内置图标 SVG 只读", ErrIconBuiltin)
 		}
@@ -432,7 +458,13 @@ func UpdateIcon(name, dir string, patch IconPatch) (Icon, error) {
 		return cp, nil
 	}
 
-	f := iconFile{Name: key, Group: ic.Group, Tags: ic.Tags, SVG: formatIconSource(ic)}
+	f, hasFile := readIconFile(dir, key)
+	if !hasFile {
+		// 兼容只存在于内存的旧自定义图标（正常路径都有 JSON 文件）。
+		f = iconFile{Name: key, SVG: formatIconSource(ic)}
+	}
+	f.Name = key
+	f.Group, f.Tags = ic.Group, ic.Tags
 	if patch.Group != nil {
 		group, err := normalizeIconGroup(*patch.Group)
 		if err != nil {
@@ -444,19 +476,54 @@ func UpdateIcon(name, dir string, patch IconPatch) (Icon, error) {
 		ic.Tags = normalizeIconTags(patch.Tags)
 		f.Tags = ic.Tags
 	}
-	if svg := strings.TrimSpace(patch.SVG); svg != "" {
+	switch {
+	case patch.Design != nil:
+		doc, err := NormalizeIconDoc(*patch.Design)
+		if err != nil {
+			return Icon{}, err
+		}
+		svg, err := IconDocSVG(doc)
+		if err != nil {
+			return Icon{}, err
+		}
 		body, viewBox, err := parseIconSVG(svg)
 		if err != nil {
 			return Icon{}, fmt.Errorf("%w: %v", ErrIconInvalid, err)
 		}
-		ic.Body, ic.ViewBox = body, viewBox
-		f.SVG = svg
+		saved := doc
+		f.SVG, f.Design = svg, &saved
+		ic.Body, ic.ViewBox, ic.Filled, ic.Designed = body, viewBox, false, true
+	case strings.TrimSpace(patch.SVG) != "":
+		svg := strings.TrimSpace(patch.SVG)
+		body, viewBox, err := parseIconSVG(svg)
+		if err != nil {
+			return Icon{}, fmt.Errorf("%w: %v", ErrIconInvalid, err)
+		}
+		// 手改源码后设计文档即失效：清掉，避免下次打开设计器看到旧形状。
+		f.SVG, f.Design = svg, nil
+		ic.Body, ic.ViewBox, ic.Designed = body, viewBox, false
 	}
 	if err := writeIconFile(dir, f); err != nil {
 		return Icon{}, err
 	}
 	iconRegistry[key] = ic
 	return ic, nil
+}
+
+// readIconFile 读取自定义图标 JSON；文件不存在或解析失败时返回 false。
+func readIconFile(dir, name string) (iconFile, bool) {
+	if dir == "" || name == "" {
+		return iconFile{}, false
+	}
+	raw, err := os.ReadFile(filepath.Join(CustomIconsDir(dir), name+".json"))
+	if err != nil {
+		return iconFile{}, false
+	}
+	var f iconFile
+	if err := json.Unmarshal(raw, &f); err != nil {
+		return iconFile{}, false
+	}
+	return f, true
 }
 
 // ResetIcon 恢复内置图标的分组/别名并重新启用（自定义图标不支持重置）。
@@ -527,6 +594,42 @@ func IconSource(name string) (string, error) {
 		return "", fmt.Errorf("%w: %s", ErrIconNotFound, name)
 	}
 	return formatIconSource(ic), nil
+}
+
+// IconDesignInfo 是「打开设计器」需要的一份完整上下文。
+type IconDesignInfo struct {
+	Doc      IconDoc // 可编辑的几何文档
+	Imported bool    // 由 SVG 反推（没有保存过 design），形状可能只是近似拆分
+	Builtin  bool    // 内置图标：只读，可「以它为起点」另存为自定义
+	Designed bool    // 自定义图标且已有 design 字段（可原地继续编辑）
+}
+
+// IconDesign 返回图标的设计文档。自定义图标优先读已保存的 design；
+// 没有 design 的（包括全部内置图标）从当前 SVG 反推，Imported=true。
+// 含渐变/裁剪/transform 的 SVG 无法反推，返回 ErrIconInvalid，让 UI 退回源码编辑。
+func IconDesign(name, dir string) (IconDesignInfo, error) {
+	ic, ok := GetIcon(name)
+	if !ok {
+		return IconDesignInfo{}, fmt.Errorf("%w: %s", ErrIconNotFound, name)
+	}
+	if !ic.Builtin && ic.Designed {
+		if f, has := readIconFile(dir, ic.Name); has && f.Design != nil {
+			doc, err := NormalizeIconDoc(*f.Design)
+			if err != nil {
+				return IconDesignInfo{}, err
+			}
+			return IconDesignInfo{Doc: doc, Designed: true}, nil
+		}
+	}
+	src, err := IconSource(ic.Name)
+	if err != nil {
+		return IconDesignInfo{}, err
+	}
+	doc, err := ImportIconDoc(src)
+	if err != nil {
+		return IconDesignInfo{}, fmt.Errorf("%w: 该图标含设计器暂不支持的 SVG 结构（渐变/裁剪/transform），可继续用源码编辑", err)
+	}
+	return IconDesignInfo{Doc: doc, Imported: true, Builtin: ic.Builtin}, nil
 }
 
 // IconUsage 返回精灵引用写法。

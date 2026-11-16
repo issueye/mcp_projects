@@ -11,6 +11,7 @@ import { $ } from "./state.js";
 import { esc, toast, uiConfirm } from "./ui.js";
 import { api } from "./net.js";
 import { icon } from "./icons-bridge.js";
+import { openIconDesigner } from "./icon-designer.js";
 
 const RIGHT = () => $("icons-right");
 const GROUPS = [
@@ -42,8 +43,9 @@ function isIconManagerOpen() {
   return !!box && !box.classList.contains("hidden");
 }
 
-function openIconManager() {
-  selected = "";
+// focusName 可选：设计器保存/返回后用它把列表定位回刚编辑的图标。
+function openIconManager(focusName) {
+  selected = focusName || "";
   detail = null;
   mode = "detail";
   $("icons-modal").classList.remove("hidden");
@@ -160,6 +162,7 @@ function chipsOf(ic) {
   const out = [`<span class="chip">${ic.builtin ? "内置" : "自定义"}</span>`];
   if (ic.disabled) out.push(`<span class="chip chip--warn">已停用</span>`);
   else if (ic.overridden) out.push(`<span class="chip">已改分组/别名</span>`);
+  if (ic.designed) out.push(`<span class="chip">可再设计</span>`);
   return out.join("");
 }
 
@@ -216,13 +219,18 @@ function renderRight() {
 
 function renderNoSelection() {
   RIGHT().innerHTML = `<div class="icm-empty">${icon("grid", 24)}` +
-    `<b>图标是检索对象，不是设置项</b>` +
-    `<p>用名称、别名或分组搜到图标后，右侧显示 12–24 尺寸档、两种用法、元信息与 SVG 源码；自定义图标还能改 SVG。</p>` +
-    `<span><button class="btn icm-copy" data-act="new">${icon("plus", 14)}新增图标</button></span></div>`;
+    `<b>图标是检索对象，也是设计对象</b>` +
+    `<p>用名称、别名或分组搜到图标后，右侧显示 12–24 尺寸档、两种用法、元信息与 SVG 源码；` +
+    `自定义图标可用设计器画图形，内置图标可「以它为起点」另存。</p>` +
+    `<span class="icm-empty-acts">` +
+    `<button class="btn" data-act="design-new">${icon("edit", 14)}设计图标</button>` +
+    `<button class="btn icm-copy" data-act="new">${icon("plus", 14)}粘贴 SVG</button></span></div>`;
 }
 
 function renderDetail(d) {
-  const actions = `<button class="btn" data-act="edit">${icon("settings", 14)}` +
+  const designLabel = d.builtin ? "以它为起点设计" : (d.designed ? "设计器编辑" : "用设计器改写");
+  const actions = `<button class="btn" data-act="design">${icon("edit", 14)}${designLabel}</button>` +
+    `<button class="btn" data-act="edit">${icon("settings", 14)}` +
     `${d.builtin ? "编辑分组与别名" : "编辑 SVG"}</button>`;
   const sizes = [12, 14, 16, 20, 24].map((s) =>
     `<div class="icm-size"><span class="icm-size-glyph" style="width:${s}px;height:${s}px">${d.svg}</span>` +
@@ -244,6 +252,7 @@ function renderDetail(d) {
     `<span class="chip">${d.builtin ? "内置" : "自定义"}</span>` +
     (d.disabled ? `<span class="chip chip--warn">已停用</span>` : `<span class="chip chip--ok">已启用</span>`) +
     (d.overridden ? `<span class="chip">已改分组/别名</span>` : "") +
+    (d.designed ? `<span class="chip">可再设计</span>` : "") +
     `</div><div class="sysm-det-sub"><span>${esc(d.group)}</span><span>·</span>` +
     `<span>别名 ${esc(tags)}</span><span>·</span><span class="mono">${esc(d.viewBox || "0 0 24 24")}</span>` +
     `</div></div><div class="sysm-acts">${actions}</div></header>` +
@@ -266,7 +275,8 @@ function renderDetail(d) {
     `<div class="sysm-kv"><span class="k">分组</span><span class="v">${esc(d.group)}</span></div>` +
     `<div class="sysm-kv"><span class="k">别名</span><span class="v">${esc(tags)}</span></div>` +
     `<div class="sysm-kv"><span class="k">来源</span><span class="v">` +
-    `${d.builtin ? "内置 · icon_paths.go" : "custom-icons/" + esc(d.name) + ".json"}</span></div>` +
+    `${d.builtin ? "内置 · icon_paths.go" : "custom-icons/" + esc(d.name) + ".json" +
+      (d.designed ? "（含 design）" : "")}</span></div>` +
     `<div class="sysm-kv"><span class="k">viewBox</span><span class="v mono">${esc(d.viewBox || "0 0 24 24")}</span></div>` +
     `</div>` +
     `<div class="sysm-sec">SVG 源码 <span class="line"></span>` +
@@ -316,7 +326,7 @@ function renderForm() {
   const svgBlock = builtin
     ? `<div class="sysm-sec">SVG 源码 <span class="line"></span><span class="chip">只读</span></div>` +
       `<pre class="icm-src">${esc(svgVal)}</pre>` +
-      `<p class="sysm-hint">内置图标 SVG 只读；需要不同形态请新增自定义图标。</p>`
+      `<p class="sysm-hint">内置图标 SVG 只读；需要不同形态请用「以它为起点设计」另存为自定义图标。</p>`
     : `<div class="sysm-sec">SVG 源码 <span class="line"></span>` +
       `<span class="chip">${editing ? "可编辑" : "必填"}</span></div>` +
       `<textarea id="icm-svg" class="icm-code" spellcheck="false" aria-label="SVG 源码" ` +
@@ -326,7 +336,10 @@ function renderForm() {
       `<div class="icm-rules">` +
       `<span>允许：path / circle / rect / line / polyline / polygon / ellipse / g / defs 渐变</span>` +
       `<span>禁止：script / foreignObject / text / image / style / 外链 href / on* 事件 · 上限 64 KB</span>` +
-      `</div>`;
+      `</div>` +
+      (editing && d && d.designed
+        ? `<div class="icm-note warn">${icon("warning", 14)}<div>手改 SVG 会清掉设计稿（design 字段）；` +
+          `之后仍可用设计器重画。只改分组/别名不会影响设计稿。</div></div>` : "");
 
   RIGHT().innerHTML = `<div class="sysm-det">` +
     `<div class="sysm-form-head">${head}</div>` +
@@ -336,7 +349,10 @@ function renderForm() {
     `<footer class="sysm-foot"><span class="sysm-hint">${editing
       ? "Esc 返回详情 · 校验失败不会写盘"
       : "保存后立即生效：design_icons 可检索、预览精灵自动包含"}</span>` +
-    `<span class="grow"></span><button class="btn" data-act="back">取消</button>` +
+    `<span class="grow"></span>` +
+    (builtin ? "" : `<button class="btn" data-act="${editing ? "design" : "design-new"}">` +
+      `${icon("edit", 14)}${editing ? "改用设计器编辑" : "改用可视化设计"}</button>`) +
+    `<button class="btn" data-act="back">取消</button>` +
     `<button class="btn btn--primary" data-act="save">${editing ? "保存" : "保存并启用"}</button>` +
     `</footer></div>`;
 }
@@ -406,6 +422,19 @@ function formValues() {
     tags: tags ? splitTags(tags.value) : [],
     svg: svg ? svg.value : "",
   };
+}
+
+// ---------------- 设计器 ----------------
+
+// 打开设计器前收起图标库（两个弹层互斥），返回/保存后由设计器回调恢复列表。
+function openDesigner(name) {
+  const backName = selected;
+  closeIconManager();
+  openIconDesigner({
+    name: name || undefined,
+    onSaved: (saved) => openIconManager(saved),
+    onClosed: () => openIconManager(backName),
+  });
 }
 
 // ---------------- 操作 ----------------
@@ -541,6 +570,12 @@ RIGHT().addEventListener("click", (ev) => {
       mode = "edit";
       renderRight();
       break;
+    case "design":
+      if (detail) openDesigner(detail.name);
+      break;
+    case "design-new":
+      openDesigner();
+      break;
     case "back":
       if (mode === "create") {
         mode = "detail";
@@ -633,13 +668,17 @@ $("icons-modal").addEventListener("keydown", (e) => {
     mode = "create";
     detail = null;
     renderRight();
+  } else if (e.key === "d" || e.key === "D") {
+    e.preventDefault();
+    openDesigner();
   } else if (e.key === "/") {
     e.preventDefault();
     $("icons-search").focus();
   }
 });
 
-document.querySelectorAll("[data-icons-close]").forEach((el) => el.addEventListener("click", closeIconManager));
-$("icons-open").addEventListener("click", openIconManager);
+document.querySelectorAll("[data-icons-close]").forEach((el) => el.addEventListener("click", () => closeIconManager()));
+$("icons-open").addEventListener("click", () => openIconManager());
+$("icons-design").addEventListener("click", () => openDesigner());
 
 export { openIconManager, closeIconManager, isIconManagerOpen };

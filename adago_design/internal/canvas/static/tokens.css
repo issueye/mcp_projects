@@ -145,6 +145,20 @@
   --ui-icm-code-h: 148px;        /* 表单 SVG 编辑区高度 */
   --ui-icm-prev-h: 84px;         /* 表单实时预览区高度 */
   --ui-icm-empty-max-w: 320px;   /* 图标空态文案宽度 */
+
+  /* ---------- 图标设计器 ---------- */
+  --ui-icd-w: 1060px;            /* 设计器弹层宽度 */
+  --ui-icd-h: 720px;             /* 设计器弹层高度 */
+  --ui-icd-rail-w: 52px;         /* 左侧工具条 */
+  --ui-icd-panel-w: 300px;       /* 右侧属性栏 */
+  --ui-icd-board: 372px;         /* 24 网格画板边长（÷24 = 15.5px/格） */
+  --ui-icd-tool: 36px;           /* 工具按钮 */
+  --ui-icd-row-h: 32px;          /* 图层行 */
+  --ui-icd-preview-tile: 52px;   /* 尺寸预览格 */
+  --ui-icd-code-h: 132px;        /* SVG 预览块 */
+  --ui-icd-dark-bg: #1B1C20;     /* 暗底检查（与主题无关，恒为深色） */
+  --ui-icd-dark-ink: #F4F1E9;
+
   --ui-ask-w: 420px;
   --ui-toast-max-w: 560px;
   --ui-empty-max-w: 440px;
@@ -172,6 +186,7 @@
   --ui-z-toast: 40;
   --ui-z-popover: 45;
   --ui-z-modal: 50;
+  --ui-z-ask: 55;             /* 确认弹层永远压在管理/设计器弹层之上 */
   --ui-z-rel: 60;
   --ui-z-drag: 9999;
 

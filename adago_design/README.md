@@ -103,7 +103,7 @@ project_create（或 project_list 选已有）
 |---|---|---|
 | 画板（尺寸） | `design_artboard` | 8 块画板：iPhone 15 / SE、Android 360、微信小程序、iPad、Web 1280/1440、桌面应用壳。给出内容区、安全区、栅格、导出倍率与「尺寸契约」文本 |
 | 字体（授权） | `design_fonts` | 字体注册表带商用/嵌入/再分发三个标记；默认栈是 Inter + Noto Sans SC（OFL），全平台可复现 |
-| 图标 | `design_icons` | 74 个内置 24 网格线性图标 + 运行期自定义 SVG；`{{icon:name:size}}` 占位符在渲染时展开为内联精灵 |
+| 图标 | `design_icons` | 74 个内置 24 网格线性图标 + 运行期自定义 SVG；画布内可视化设计器可画图形并落库为可再编辑的 design + SVG；`{{icon:name:size}}` 占位符在渲染时展开为内联精灵 |
 
 三条硬规则：
 
@@ -154,43 +154,58 @@ JSON / 空态 / 视觉规范 / 实现契约）。
 
 错误码：`unknown_system` / `system_duplicate` / `system_builtin_protected` / `invalid_system`。
 
-## SVG 图标管理（动态）
+## SVG 图标管理与设计（动态）
 
 画布工具条上的 **图标库** 按钮（栅格图标，主题切换左侧）打开管理弹层。
 与体系管理同壳：**960×720 两栏**，左 360 = 搜索 + 过滤（全部/内置/自定义/已停用）+ 列表，
 右 560 = 详情（尺寸档 / 用法 / 元信息 / SVG 源码）或新增/编辑表单。
+标题条的 **设计图标** 打开独立的 **24 网格图标设计器**（见下节）。
 
 | 能力 | 说明 |
 |---|---|
-| 浏览 | 每行 32 图标格 + 等宽名称 + 分组/别名 + 行内开关；glyph 始终跟随 currentColor |
-| 详情 | 尺寸档 12 / 14 / 16 / 20 / 24、精灵引用与独立 SVG 两种用法（一键复制）、分组/别名/来源/viewBox、SVG 源码 |
-| 新增 | 粘贴完整 SVG 或路径片段 + 名称（kebab-case）+ 分组 + 别名；**实时预览**并即时拦截 script/text/外链/on* 事件等 |
-| 编辑 | **内置**：只能改分组/别名（写覆盖），SVG 只读；**自定义**：分组/别名/SVG 都可改 |
+| 浏览 | 每行 32 图标格 + 等宽名称 + 分组/别名 + 行内开关；glyph 始终跟随 currentColor；有设计稿的图标带「可再设计」 |
+| 详情 | 尺寸档 12 / 14 / 16 / 20 / 24、精灵引用与独立 SVG 两种用法（一键复制）、分组/别名/来源/viewBox、SVG 源码；「设计器编辑 / 以它为起点设计」 |
+| 设计 | 24 网格画板：直线 / 矩形 / 圆 / 椭圆 / 折线 / 多边形 / 路径；0.5 吸附、Shift 约束、Alt 细调；图层顺序/显隐；40 步撤销；12–24 实时预览与暗底检查 |
+| 新增 | 两种入口：**设计图标**（画图形，保存 design + SVG）或 **粘贴 SVG**（完整 SVG / 路径片段 + 实时预览并拦截 script/text/外链/on*） |
+| 编辑 | **内置**：只能改分组/别名（写覆盖），SVG 只读；**自定义**：分组/别名/SVG 都可改；有 design 的用设计器继续编辑，手改 SVG 会清掉 design |
 | 停用 / 启用 | 行内开关；只影响「选择面」（`design_icons`、列表计数、检索），**精灵仍包含**，旧模板与已有设计稿引用不会变空白 |
 | 恢复默认 | 仅内置图标：清掉分组/别名覆盖并重新启用 |
 | 移除 | 仅自定义图标；内置图标受保护（提示改为停用）；移除前确认，并说明画布上引用会变空白 |
-| 键盘 | Up/Down 选择、Enter 编辑、Space 停用/启用、n 新增、/ 搜索、Esc 分级返回/关闭、Tab 陷阱 |
+| 键盘 | Up/Down 选择、Enter 编辑、Space 停用/启用、n 粘贴 SVG、d 设计图标、/ 搜索、Esc 分级返回/关闭、Tab 陷阱 |
 
-- 持久化：自定义图标在 `<data>/custom-icons/<name>.json`（名称 + 分组 + 别名 + SVG 原文）；
+### 图标设计器（24 网格）
+
+- 入口：图标库标题条 **设计图标**（新建）或详情 **设计器编辑 / 以它为起点设计**。
+- 画板：24×24 网格、2 单位安全区、视觉直径 20 的光学圆；所有图形统一 `currentColor` + 1.8 描边（可调 1.2–3）。
+- 工具：选择/移动（拖动 + 方向键 0.5 微移）、直线、矩形、圆、椭圆、折线/多边形（逐点点击，Enter/双击结束，点回起点闭合）。
+- 图层：后画的在上；可显隐、复制、上移/下移、删除；选中后在右侧改坐标/尺寸/圆角/实心/描边/不透明度。
+- 预览：12 / 16 / 20 / 24 四档 + 暗底检查；SVG 交付物实时生成，所见即落库内容。
+- 保存：`POST /api/catalog/icons`（新建）或 `PUT /api/catalog/icons/{name}`（编辑），请求体带 `design`；
+  内置图标只读，保存会以 `name-custom` 新建，原图标不变。
+- 打开已有图标：优先读 `custom-icons/*.json` 的 `design`；没有 design 的（含全部内置）从 SVG 反推为几何图形（标记 `imported`），含渐变/裁剪/transform 的复杂 SVG 会拒绝并提示改用源码编辑。
+
+- 持久化：自定义图标在 `<data>/custom-icons/<name>.json`（名称 + 分组 + 别名 + SVG 原文 + 可选 `design`）；
   内置图标的停用列表与分组/别名覆盖在 `<data>/icon-settings.json`（tmp→rename 原子写）。
   启动顺序：先加载自定义图标，再套用设置。
 - 同一套能力也暴露给 Agent：MCP 工具 **`design_icon_manage`**
-  （`list / create / update / disable / enable / remove / reset`）。
+  （`list / design / create / update / disable / enable / remove / reset`）；
+  `design` 动作接受几何文档并返回确定性 SVG，也可传 `name` 打开已有图标或传 `svg` 反推文档。
 - `design_icons` 自动包含自定义图标、隐藏已停用图标；`format=inline` 保留自定义 viewBox。
 - 管理 API（全部回环 + 写操作同源校验）：
 
 | 方法/路径 | 说明 |
 |---|---|
-| `GET /api/catalog/icons` | 全部图标摘要（含停用与自定义，管理面） |
-| `GET /api/catalog/icons/{name}` | 图标详情（含归一化 SVG 源码） |
-| `POST /api/catalog/icons` | 新增 `{name, group?, tags?, svg}` |
-| `PUT /api/catalog/icons/{name}` | 编辑 `{group?, tags?, svg?}`；内置传 `svg` 返回 409 |
+| `GET /api/catalog/icons` | 全部图标摘要（含停用/自定义/designed，管理面） |
+| `GET /api/catalog/icons/{name}` | 图标详情（含归一化 SVG 源码；有 design 时附带几何文档） |
+| `GET /api/catalog/icons/{name}/design` | 设计器上下文：`{design, imported, builtin, designed, editable}` |
+| `POST /api/catalog/icons` | 新增 `{name, group?, tags?, svg?, design?}`（design 优先） |
+| `PUT /api/catalog/icons/{name}` | 编辑 `{group?, tags?, svg?, design?}`；内置传 `svg`/`design` 返回 409 |
 | `POST /api/catalog/icons/{name}/state` | `{disabled: true\|false}` |
 | `POST /api/catalog/icons/{name}/reset` | 内置恢复默认分组/别名并启用 |
 | `DELETE /api/catalog/icons/{name}` | 移除自定义图标 |
 
 设计稿：画布项目「adago-design · SVG 图标管理」（说明 / 默认 / 自定义 / 新增 / 空态 /
-视觉规范 / 实现契约）。
+视觉规范 / 实现契约）；设计器为 2.0 新增能力，布局规范见 DESIGN-SYSTEM-UI.md §15。
 
 错误码：`unknown_icon` / `icon_duplicate` / `icon_builtin_protected` / `invalid_icon`。
 
@@ -318,7 +333,7 @@ mygo 单实例锁之后运行；命中「无窗口实例」时窗口进故障卡
 | `design_artboard` | **画板（尺寸规范）**：列表 / 按 ID 取推导值；返回内容区、安全区、栅格、导出倍率与尺寸契约 |
 | `design_fonts` | **字体授权**：可商用 / 可嵌入 / 可再分发标记，各脚本默认字族栈，授权策略 |
 | `design_icons` | **图标库**：按名称/分组/别名检索（内置 + 自定义，停用隐藏），返回 `<use>` 引用或独立 `<svg>` |
-| `design_icon_manage` | SVG 图标管理：`list/create/update/disable/enable/remove/reset`；内置可停用/改分组别名、SVG 只读，自定义可新增/编辑/移除 |
+| `design_icon_manage` | SVG 图标管理与设计：`list/design/create/update/disable/enable/remove/reset`；`design` 动作接受 24 网格几何文档并返回确定性 SVG（也可从 name/svg 反推）；create/update 可带 `design` 落库为可再编辑图标；内置可停用/改分组别名、SVG 只读（可另存） |
 | `design_systems` | 列出全部设计体系（含默认画板） |
 | `design_tokens` | 查询 Token（system/theme/category：color/type/spacing/radius/shadow/motion）；`brief=true` 精简输出：关键语义色的值、字阶尺寸/字重、间距与圆角阶梯，省略阴影/动效/变体色 |
 | `design_components` | 组件清单；指定 component 返回详情与 HTML 片段 |
